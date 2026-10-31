@@ -1,77 +1,93 @@
 # m3 inspo
 
-A self-hosted, private design library for you and your coding agents. Collect website captures and screenshots, record what to take and what to avoid, and let agents query approved references through MCP.
+### Your taste. In your agent's context.
 
-The app includes collections, marked image regions, saved color schemes, typography pairings and brand-specific design briefings. The current interface is German. Each installation has one owner; it is not a multi-user service.
+A private taste library for the things you want to build. Save design references, write down what works, and give your coding agents access through MCP.
 
-## Local setup
+**Self-hosted · One owner · Approved references only · MIT**
 
-You need Node.js 24 or newer, pnpm 11.5.3, Docker with Compose, and a GitHub account. Use your own GitHub OAuth app. API keys for AI, embeddings and Adobe Fonts are optional.
+[Get started](#local-setup) · [Connect your agent](#connect-your-agent) · [Self-hosting](docs/self-hosting.md) · [Contributing](CONTRIBUTING.md)
 
-### 1. Install and configure
+![m3 inspo gallery with six design references, project tags and favorites](docs/images/taste-library.png)
 
-Clone this repository, then run from its root:
+*Your references, organized by the way you think about design. App screenshots use fictional projects and original demo artwork. The current interface is German.*
 
-```sh
-pnpm install --frozen-lockfile
-cp .env.example .env
-```
+## Give your agent a sense of your taste
 
-Edit `.env` and set:
+You save a hotel homepage for its typography. A product screen for its spacing. A booking flow for the way it makes the next step obvious. The useful part is knowing **why you saved each one**.
 
-- `BETTER_AUTH_SECRET`: at least 32 random characters. Generate it with `openssl rand -base64 32`.
-- `GITHUB_CLIENT_ID` and `GITHUB_CLIENT_SECRET`: credentials from your GitHub OAuth app.
-- `OWNER_GITHUB_ID`: your numeric GitHub user ID, not your username. If you use GitHub CLI, `gh api user --jq .id` prints it.
-- `WORKER_TOKEN`: a separate random value of at least 32 characters, shared by the web app and worker.
+m3 inspo keeps that judgment beside the image. "Take the generous spacing and warm palette. Avoid the rotating hero and urgency banners." When an agent retrieves the reference, it gets your notes with it.
 
-In [GitHub developer settings](https://github.com/settings/developers), create an OAuth app with:
+Your library grows across projects. You can reuse a reference, organize it into collections, or tag it for a specific project without explaining the same preferences in every new conversation.
 
-| Field | Local value |
-| --- | --- |
-| Homepage URL | `http://localhost:3000` |
-| Authorization callback URL | `http://localhost:3000/api/auth/callback/github` |
+## Collect → curate → approve → build
 
-Keep `INSPO_BASE_URL`, `BETTER_AUTH_URL` and `INSPO_API_URL` at `http://localhost:3000` for local development. `STORAGE_DIR=../../.storage` stores private images in the ignored repository-local folder. Leave optional provider keys empty to start without AI or Adobe Fonts.
+1. **Collect** a public URL or upload a screenshot. Keep desktop and mobile references together in your library.
+2. **Curate** what to take and what to avoid. Add tags, favorites and collections. Mark a region when one part of a screen matters.
+3. **Approve** the references and brand kits you want agents to use. Drafts and archived items stay out of MCP results.
+4. **Build** with an MCP-connected agent that can retrieve the images, notes and brand decisions relevant to the task.
 
-### 2. Start Postgres and apply migrations
+![Reference detail with an approved Harbor design and the owner's take and avoid notes beside the image](docs/images/reference-notes.png)
 
-```sh
-docker compose up -d --wait
-pnpm --filter @m3-inspo/db db:migrate
-```
+*The screenshot shows the design. Your notes tell the agent which decisions matter.*
 
-Compose binds Postgres to `127.0.0.1:54330` and stores its data in a named volume. If that port is occupied, set `POSTGRES_PORT` in `.env` and update the port in `DATABASE_URL`. For tests using that port, also set `TEST_DATABASE_SERVER_URL` when invoking `pnpm test`.
+## Connect your agent
 
-### 3. Start the app and capture worker
+MCP, the Model Context Protocol, lets a coding agent query your library while it works. Your client connects to your own instance with a revocable token.
 
-In one terminal:
-
-```sh
-pnpm dev
-```
-
-In another terminal:
-
-```sh
-pnpm --filter @m3-inspo/worker playwright:install
-pnpm --filter @m3-inspo/worker start
-```
-
-Open `http://localhost:3000`, sign in with the owner account, then add a screenshot or import a public URL. Review the reference and approve it to make it available to agents. Screenshots can be uploaded without a running worker; URL imports and captured font previews need it.
-
-On Linux, Chromium may also need system libraries. Install them using `pnpm --filter @m3-inspo/worker exec playwright install --with-deps chromium` on a development machine where you manage those dependencies. Keep Chromium's sandbox enabled when the host supports it; see [self-hosting](docs/self-hosting.md).
-
-## Connect an MCP client
-
-Sign in, open **Einstellungen**, and create a token. It is shown once. The page provides a command with your actual origin and token:
+Create a token under **Einstellungen**, then add it to Claude Code:
 
 ```sh
 claude mcp add --transport http m3-inspo http://localhost:3000/api/mcp --header "Authorization: Bearer <your-token>"
 ```
 
-Other HTTP MCP clients use the same URL and bearer header. Clients that cannot send `Authorization` can use `x-api-key` instead. Expired or revoked tokens are refused. Agents receive approved references and kits only, including your notes and inline images.
+Other HTTP MCP clients can use the same endpoint and bearer header. See [client setup](docs/getting-started.md#connect-an-mcp-client) for details.
 
-The existing `INSPO_*` environment variables and `inspo_mcp_` token prefix remain supported. The package rename does not require replacing existing credentials or renaming databases. To keep an existing client's configuration, leave its local server alias as it is.
+Then give your agent a task like this:
+
+> Build the booking page for Harbor. Use m3 inspo to find references
+> for a calm, editorial hero. Read my take and avoid notes, use the
+> approved Harbor brand kit, and explain which decisions you carry
+> into the implementation.
+
+The agent can use these tools to gather context before writing code:
+
+| Tool | What it brings into the conversation |
+| --- | --- |
+| `recommend` | References ranked for a design brief |
+| `search_screens` | References filtered by project, collection or design attributes |
+| `get_screen` | A reference's image, your notes and available analysis |
+| `find_components` | Marked regions and references for a specific component |
+| `get_brand_kit` | Approved colors, typography, CSS and a brand's design briefing |
+
+Image display depends on the MCP client's support for image responses. The agent writes the implementation in your project using the context it retrieves.
+
+## Keep a brand's decisions together
+
+Save color schemes, typography pairings and a Markdown design briefing in a brand kit. Approve a kit for a project so your agent can retrieve the saved choices while using other references for layout and composition.
+
+The color generator includes color scales, light and dark roles, contrast checks and CSS exports for CSS variables or Tailwind v4. Design briefings can also be exported as `DESIGN.md`.
+
+![Harbor brand kit with forest green, cream and sand colors, usage notes and a CSS export](docs/images/brand-kit.png)
+
+## Your own library, on your own instance
+
+Each installation has one owner, authenticated through GitHub. The library is private, and agents need a token to read approved content. You decide where to host the app, database and images.
+
+Upload, capture, curation and text search work without AI keys. Optional AI analysis and semantic search add generated descriptions, tags and ranking. When enabled, these services send content to their configured providers. [Read about external services and data](docs/self-hosting.md#external-services-and-data).
+
+## Local setup
+
+You need **Node.js 24+**, **pnpm 11.5.3**, **Docker with Compose** and your own **GitHub OAuth app**.
+
+```sh
+git clone https://github.com/dmontinaro/m3-inspo.git
+cd m3-inspo
+pnpm install --frozen-lockfile
+cp .env.example .env
+```
+
+Follow the [setup guide](docs/getting-started.md) to configure owner access, start Postgres, apply migrations and run the app and capture worker. For a hosted installation, use the [self-hosting guide](docs/self-hosting.md).
 
 ## Optional services and data
 
@@ -82,7 +98,7 @@ The existing `INSPO_*` environment variables and `inspo_mcp_` token prefix remai
 | Adobe font previews | `ADOBE_FONTS_API_TOKEN` and your own font permissions | System font fallback |
 | Image storage | `STORAGE_DIR` or S3-compatible credentials | A storage backend is required |
 
-Enabling AI sends screenshots and reference text to Anthropic. Embeddings send text to your configured endpoint, OpenRouter by default. Font metadata sync and font previews also contact external services. See the [data flows](docs/self-hosting.md#external-services-and-data) before enabling them.
+AI analysis sends screenshots and reference text to Anthropic. Embeddings send text to your configured endpoint, OpenRouter by default. Font metadata sync and previews also contact external services.
 
 ## Development
 
