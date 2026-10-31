@@ -3,6 +3,7 @@ import { tanstackStart } from "@tanstack/react-start/plugin/vite";
 import viteReact from "@vitejs/plugin-react";
 import tailwindcss from "@tailwindcss/vite";
 import { nitro } from "nitro/vite";
+import { paraglideVitePlugin } from "@inlang/paraglide-js";
 
 // Nitro builds a Node server (.output/server/index.mjs) that Railway runs via `pnpm start`.
 // Its plugin starts the job runner (AI analysis, embeddings) with the server.
@@ -13,6 +14,7 @@ export default defineConfig(({ mode }) => ({
   plugins: [
     mode !== "test" && nitro({ plugins: ["./src/server/job-runner.plugin.ts"] }),
     tailwindcss(),
+    paraglideVitePlugin({ project: "./project.inlang" }),
     tanstackStart(),
     viteReact(),
   ],

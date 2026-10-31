@@ -16,6 +16,7 @@ import { Route as LibraryEinstellungenRouteImport } from './routes/_library/eins
 import { Route as LibraryGeneratorRouteImport } from './routes/_library/generator'
 import { Route as LibraryHochladenRouteImport } from './routes/_library/hochladen'
 import { Route as LibraryImporteRouteImport } from './routes/_library/importe'
+import { Route as LibraryParaglideSpikeRouteImport } from './routes/_library/paraglide-spike'
 import { Route as LibraryWerkzeugeRouteImport } from './routes/_library/werkzeuge'
 import { Route as ApiMcpRouteImport } from './routes/api/mcp'
 import { Route as LibraryBrandKitsIndexRouteImport } from './routes/_library/brand-kits.index'
@@ -63,6 +64,11 @@ const LibraryHochladenRoute = LibraryHochladenRouteImport.update({
 const LibraryImporteRoute = LibraryImporteRouteImport.update({
   id: '/importe',
   path: '/importe',
+  getParentRoute: () => LibraryRoute,
+} as any)
+const LibraryParaglideSpikeRoute = LibraryParaglideSpikeRouteImport.update({
+  id: '/paraglide-spike',
+  path: '/paraglide-spike',
   getParentRoute: () => LibraryRoute,
 } as any)
 const LibraryWerkzeugeRoute = LibraryWerkzeugeRouteImport.update({
@@ -145,6 +151,7 @@ export interface FileRoutesByFullPath {
   '/generator': typeof LibraryGeneratorRoute
   '/hochladen': typeof LibraryHochladenRoute
   '/importe': typeof LibraryImporteRoute
+  '/paraglide-spike': typeof LibraryParaglideSpikeRoute
   '/werkzeuge': typeof LibraryWerkzeugeRoute
   '/api/mcp': typeof ApiMcpRoute
   '/brand-kits/$slug': typeof LibraryBrandKitsSlugRoute
@@ -166,6 +173,7 @@ export interface FileRoutesByTo {
   '/generator': typeof LibraryGeneratorRoute
   '/hochladen': typeof LibraryHochladenRoute
   '/importe': typeof LibraryImporteRoute
+  '/paraglide-spike': typeof LibraryParaglideSpikeRoute
   '/werkzeuge': typeof LibraryWerkzeugeRoute
   '/api/mcp': typeof ApiMcpRoute
   '/': typeof LibraryIndexRoute
@@ -190,6 +198,7 @@ export interface FileRoutesById {
   '/_library/generator': typeof LibraryGeneratorRoute
   '/_library/hochladen': typeof LibraryHochladenRoute
   '/_library/importe': typeof LibraryImporteRoute
+  '/_library/paraglide-spike': typeof LibraryParaglideSpikeRoute
   '/_library/werkzeuge': typeof LibraryWerkzeugeRoute
   '/api/mcp': typeof ApiMcpRoute
   '/_library/': typeof LibraryIndexRoute
@@ -215,6 +224,7 @@ export interface FileRouteTypes {
     | '/generator'
     | '/hochladen'
     | '/importe'
+    | '/paraglide-spike'
     | '/werkzeuge'
     | '/api/mcp'
     | '/brand-kits/$slug'
@@ -236,6 +246,7 @@ export interface FileRouteTypes {
     | '/generator'
     | '/hochladen'
     | '/importe'
+    | '/paraglide-spike'
     | '/werkzeuge'
     | '/api/mcp'
     | '/'
@@ -259,6 +270,7 @@ export interface FileRouteTypes {
     | '/_library/generator'
     | '/_library/hochladen'
     | '/_library/importe'
+    | '/_library/paraglide-spike'
     | '/_library/werkzeuge'
     | '/api/mcp'
     | '/_library/'
@@ -334,6 +346,13 @@ declare module '@tanstack/react-router' {
       path: '/importe'
       fullPath: '/importe'
       preLoaderRoute: typeof LibraryImporteRouteImport
+      parentRoute: typeof LibraryRoute
+    }
+    '/_library/paraglide-spike': {
+      id: '/_library/paraglide-spike'
+      path: '/paraglide-spike'
+      fullPath: '/paraglide-spike'
+      preLoaderRoute: typeof LibraryParaglideSpikeRouteImport
       parentRoute: typeof LibraryRoute
     }
     '/_library/werkzeuge': {
@@ -442,6 +461,7 @@ interface LibraryRouteChildren {
   LibraryGeneratorRoute: typeof LibraryGeneratorRoute
   LibraryHochladenRoute: typeof LibraryHochladenRoute
   LibraryImporteRoute: typeof LibraryImporteRoute
+  LibraryParaglideSpikeRoute: typeof LibraryParaglideSpikeRoute
   LibraryWerkzeugeRoute: typeof LibraryWerkzeugeRoute
   LibraryIndexRoute: typeof LibraryIndexRoute
   LibraryBrandKitsSlugRoute: typeof LibraryBrandKitsSlugRoute
@@ -460,6 +480,7 @@ const LibraryRouteChildren: LibraryRouteChildren = {
   LibraryGeneratorRoute: LibraryGeneratorRoute,
   LibraryHochladenRoute: LibraryHochladenRoute,
   LibraryImporteRoute: LibraryImporteRoute,
+  LibraryParaglideSpikeRoute: LibraryParaglideSpikeRoute,
   LibraryWerkzeugeRoute: LibraryWerkzeugeRoute,
   LibraryIndexRoute: LibraryIndexRoute,
   LibraryBrandKitsSlugRoute: LibraryBrandKitsSlugRoute,

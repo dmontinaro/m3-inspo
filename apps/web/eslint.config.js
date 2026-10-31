@@ -15,6 +15,6 @@ export default [
     },
   },
   {
-    ignores: ['eslint.config.js', '.output/**', '.nitro/**', '.tanstack/**', 'src/routeTree.gen.ts'],
+    ignores: ['eslint.config.js', '.output/**', '.nitro/**', '.tanstack/**', 'src/routeTree.gen.ts', 'src/paraglide/**'],
   },
 ]

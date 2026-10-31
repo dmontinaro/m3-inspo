@@ -15,3 +15,6 @@ captures
 
 # Local private material and preparation artifacts; never distribute.
 .private/
+
+# Generated translations for the disposable Paraglide spike.
+apps/web/src/paraglide/

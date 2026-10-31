@@ -1,3 +1,4 @@
+import { m } from "../paraglide/messages.js";
 import logoUrl from "#/assets/m3-inspo-logo.svg?url";
 import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
@@ -35,7 +36,7 @@ function SignIn() {
         <h1>
           <img src={logoUrl} alt="m3 inspo" width={1520} height={432} className="h-8 w-auto" />
         </h1>
-        <p className="mt-3 text-sm text-neutral-600">Private Designbibliothek</p>
+        <p className="mt-3 text-sm text-neutral-600">{m.spike_library_description()}</p>
 
         {error && (
           <p role="alert" className="mt-6 rounded-md bg-red-50 px-3 py-2 text-sm text-red-700">
@@ -49,7 +50,7 @@ function SignIn() {
           disabled={pending}
           className="mt-6 w-full rounded-md bg-neutral-900 px-4 py-2.5 text-sm font-medium text-white hover:bg-neutral-800 disabled:opacity-60"
         >
-          {pending ? "Weiter zu GitHub …" : "Mit GitHub anmelden"}
+          {pending ? m.spike_signing_in() : m.spike_sign_in()}
         </button>
       </div>
     </main>

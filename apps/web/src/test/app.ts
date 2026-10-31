@@ -124,6 +124,9 @@ function createBrowser(fetchApp: ServerEntry["default"]["fetch"]) {
   }
 
   return {
+    setCookie(name: string, value: string) {
+      cookies.set(name, value);
+    },
     send,
     get: (path: string, headers?: HeadersInit) => send(path, { headers }),
     post: (path: string, body?: unknown, headers?: HeadersInit) =>
