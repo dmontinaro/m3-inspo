@@ -404,6 +404,7 @@ function RegionForm({
   const form = useRef<HTMLFormElement>(null);
   const languageForm = useFormLanguageGuard();
   const [componentType, setComponentType] = useState<ComponentType | null>(region?.componentType ?? null);
+  useLanguageGuard({ dirty: componentType !== (region?.componentType ?? null) });
   const [pending, setPending] = useState(false);
   const [problem, setProblem] = useState<string | null>(null);
 
