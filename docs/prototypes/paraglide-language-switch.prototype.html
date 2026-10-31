@@ -1,0 +1,382 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Sprachwechsel mit ungespeicherten Eingaben · Logik-Prototyp</title>
+  <style>
+    :root { color-scheme: light dark; font-family: var(--font-sans, system-ui, sans-serif); color: var(--foreground, #192221); --line: var(--border, #b5c1bd); --ink: var(--foreground, #192221); --paper: var(--card, #f4f7f5); --tone: var(--primary, #14584b); --on-tone: var(--primary-foreground, #fff); --quiet: var(--muted-foreground, #4a5c55); --focus: var(--ring, #14584b); }
+    * { box-sizing: border-box; }
+    html, body { margin: 0; background: transparent; }
+    main { max-width: 1040px; margin: 0 auto; }
+    h1 { font-size: clamp(1.55rem, 4vw, 2.15rem); line-height: 1.16; letter-spacing: -.025em; margin: 12px 0; text-wrap: balance; }
+    h2 { font-size: 1.25rem; margin: 0 0 12px; }
+    h3 { font-size: 1rem; margin: 0 0 8px; }
+    p { line-height: 1.55; margin: 8px 0; max-width: 73ch; }
+    .quiet, small { color: var(--quiet); }
+    small { display: block; line-height: 1.5; margin-top: 8px; }
+    section { margin: 24px 0; }
+    .panel { background: var(--paper); border-radius: var(--radius, 12px); padding: 16px; }
+    .toolbar, .actions, .tabs { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+    .toolbar { justify-content: space-between; border-bottom: 1px solid var(--line); padding-bottom: 12px; }
+    button, select, input, textarea { font: inherit; color: var(--ink); }
+    button, select { min-height: 42px; border: 1px solid var(--line); border-radius: 7px; padding: 8px 12px; background: var(--paper); }
+    button { cursor: pointer; text-align: left; }
+    button:hover:not(:disabled) { border-color: var(--tone); }
+    button:disabled { opacity: .48; cursor: default; }
+    .primary, [role="tab"][aria-selected="true"] { background: var(--tone); color: var(--on-tone); border-color: var(--tone); }
+    button:focus-visible, select:focus-visible, textarea:focus-visible, input:focus-visible, [tabindex]:focus-visible { outline: 3px solid var(--focus); outline-offset: 3px; }
+    ::selection { background: var(--tone); color: var(--on-tone); }
+    label { display: block; font-size: .9rem; font-weight: 600; margin: 12px 0 6px; }
+    textarea, input { width: 100%; padding: 10px; background: var(--paper); border: 1px solid var(--line); border-radius: 7px; caret-color: var(--tone); }
+    textarea { resize: vertical; line-height: 1.5; min-height: 76px; }
+    dl { display: grid; grid-template-columns: minmax(130px, 1fr) minmax(0, 2fr); gap: 8px 16px; margin: 12px 0 0; font-size: .9rem; }
+    dt { color: var(--quiet); }
+    dd { margin: 0; overflow-wrap: anywhere; white-space: pre-wrap; font-variant-numeric: tabular-nums; }
+    .columns { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 24px; }
+    .notice { border: 1px solid var(--line); border-radius: 8px; padding: 12px; margin-top: 12px; }
+    .tabs { gap: 6px; margin: 12px 0; }
+    .tabs button { font-size: .85rem; min-height: 38px; }
+    ol { padding-left: 24px; }
+    li { padding: 4px 0; }
+    .step { width: 100%; }
+    .outcome { min-height: 48px; margin: 12px 0 0; font-weight: 600; }
+    dialog { width: min(480px, calc(100% - 32px)); color: var(--ink); background: var(--paper); border: 0; border-radius: 12px; padding: 24px; box-shadow: 0 20px 60px #0005; }
+    dialog::backdrop { background: #0006; }
+    dialog .actions { margin-top: 20px; }
+    [hidden] { display: none !important; }
+    @media (max-width: 620px) { .columns { grid-template-columns: 1fr; gap: 16px; } dl { grid-template-columns: 1fr; gap: 4px; } dd { margin-bottom: 8px; } }
+  </style>
+</head>
+<body>
+<main>
+  <h1>Was darf beim Sprachwechsel verloren gehen?</h1>
+  <p>Dieser verwerfbare Logik-Prototyp prüft Warnung, Abbrechen und Neuladen bei lokalen Eingaben und Briefing-Entwürfen. Alle Daten sind erfunden. Cookie und Reload sind nur simuliert; die echte Browser-Adresse bleibt unverändert.</p>
+  <p class="quiet">Alles bleibt im Arbeitsspeicher. Kein Netzwerk, keine Speicherung und keine echten Weiterleitungen. Die Bedienoberfläche dieser Demo bleibt Deutsch; die Warnung zeigt die aktive simulierte UI-Sprache.</p>
+
+  <section class="panel" aria-labelledby="state-title">
+    <div class="toolbar">
+      <h2 id="state-title">Aktueller Zustand</h2>
+      <div>
+        <label for="language" id="language-label">Sprache / Language</label>
+        <select id="language" aria-describedby="language-help">
+          <option value="en" lang="en">English</option>
+          <option value="de" lang="de">Deutsch</option>
+        </select>
+      </div>
+    </div>
+    <small id="language-help">Direkt erreichbar, auch während der Bearbeitung. Dieselbe Auswahl ist für Anmeldung, Einstellungen und offene Editoren vorgesehen.</small>
+    <p class="outcome" id="outcome" role="status" aria-live="polite"></p>
+    <dl id="state"></dl>
+  </section>
+
+  <section aria-labelledby="play-title">
+    <h2 id="play-title">Frei ausprobieren</h2>
+    <p class="quiet">Die Felder stehen stellvertretend für lokale Formulare. Die Ansichten Anmeldung und Einstellungen simulieren hier nur ihren URL-Kontext.</p>
+    <div class="columns">
+      <div>
+        <label for="note">Hinweise des Brand Kits</label>
+        <textarea id="note" rows="2"></textarea>
+        <label for="briefing">Design-Briefing, auch bei geschlossenem Panel im Speicher</label>
+        <textarea id="briefing" rows="3"></textarea>
+        <div class="actions">
+          <button data-action="restore">Gespeicherte Werte einsetzen</button>
+          <button data-action="toggle-editor">Briefing-Panel öffnen / schließen</button>
+          <button data-action="draft-start">KI-Entwurf starten</button>
+          <button data-action="draft-done">KI-Entwurf empfangen</button>
+        </div>
+      </div>
+      <div>
+        <h3>Vorgänge simulieren</h3>
+        <div class="actions">
+          <button data-action="save-start">Speichern starten</button>
+          <button data-action="save-done">Speichern erfolgreich</button>
+          <button data-action="operation-failed">Vorgang fehlgeschlagen</button>
+          <button data-action="file-pick">Lokale Bilddatei wählen</button>
+          <button data-action="upload-start">Dateiübertragung starten</button>
+          <button data-action="upload-done">Datei serverseitig angenommen</button>
+          <button data-action="job-import">Import-Job ist angenommen</button>
+          <button data-action="job-tick">Hintergrund-Job arbeitet weiter</button>
+        </div>
+        <small>Dateiübertragungen blockieren den Reload bis zur Antwort. Angenommene Jobs laufen unabhängig davon weiter. Hier laufen keine echten Prozesse.</small>
+        <div class="actions" style="margin-top:16px">
+          <button data-action="context-settings">Einstellungen simulieren</button>
+          <button data-action="context-sign-in">Anmeldung simulieren</button>
+          <button data-action="reset">Alles zurücksetzen</button>
+        </div>
+        <small>Ein Ansichtswechsel hier setzt die Demo zurück. Er ist kein App-Routing.</small>
+      </div>
+    </div>
+  </section>
+
+  <section aria-labelledby="walk-title">
+    <h2 id="walk-title">Geführte Fälle</h2>
+    <p class="quiet">Ein Tab startet mit einem definierten Ausgangszustand. Die Schritte führen echte Aktionen dieser Simulation aus. Eine offene Warnung beantwortest du direkt im Dialog; das schließt auch den entsprechenden Schritt ab. Im freien Spiel kannst du jederzeit davon abweichen und den Fall neu starten.</p>
+    <div class="tabs" id="tabs" role="tablist" aria-label="Fälle für den Sprachwechsel"></div>
+    <div id="walkthrough" role="tabpanel" tabindex="0" class="panel"></div>
+  </section>
+
+  <dialog id="warning" aria-labelledby="warning-title" aria-describedby="warning-copy">
+    <h2 id="warning-title"></h2>
+    <p id="warning-copy"></p>
+    <div class="actions">
+      <button id="cancel"></button>
+      <button class="primary" id="confirm"></button>
+    </div>
+  </dialog>
+</main>
+
+<script id="language-switch-logic">
+// Pure state transitions. Cookie writes, reloads and background work are counters only.
+const LanguageSwitch = (() => {
+  const baselineNote = "Orange nur für Haupt-Aktionen.";
+  const initialState = (context = "kit") => ({
+    context, locale: "en", cookie: null, selected: "en", target: null,
+    url: context === "sign-in" ? "/sign-in?next=%2Fbrand-kits%2Fharbor%3Fpool%3Dproject%253Aharbor" : context === "settings" ? "/settings" : "/brand-kits/harbor?pool=project%3Aharbor",
+    savedNote: baselineNote, note: baselineNote, savedBriefing: "", briefing: "",
+    briefingOrigin: "saved", editorOpen: false, localFile: false,
+    pending: null, job: null, reloads: 0, cookieWrites: 0,
+    message: "Englisch als Basissprache, noch kein Sprach-Cookie."
+  });
+  const dirty = (state) => state.note !== state.savedNote || state.briefing !== state.savedBriefing || state.localFile;
+  const busyText = (kind) => ({ save: "Speichern läuft. Warte auf das Ergebnis und wähle die Sprache danach erneut.", draft: "Das Briefing wird erstellt. Warte auf das Ergebnis und wähle die Sprache danach erneut.", upload: "Dateien werden übertragen. Warte bis alle Dateien angenommen oder fehlgeschlagen sind und wähle die Sprache danach erneut." })[kind];
+  const switchLocale = (state, locale) => ({ ...state,
+    locale, selected: locale, cookie: locale, target: null,
+    note: state.savedNote, briefing: state.savedBriefing, briefingOrigin: "saved", editorOpen: false, localFile: false,
+    reloads: state.reloads + 1, cookieWrites: state.cookieWrites + 1,
+    message: "Sprach-Cookie gesetzt und genau einmal dieselbe URL geladen. Nur Simulation. Lokale Änderungen verworfen."
+  });
+  function reduce(state, action) {
+    if (action.type === "reset") return initialState(action.context);
+    // A modal warning freezes editor actions; server-owned jobs may still progress.
+    if (state.target && !["confirm", "cancel", "job-tick"].includes(action.type)) return state;
+    switch (action.type) {
+      case "select":
+        if (action.locale === state.locale) return { ...state, selected: state.locale, message: "Die aktive Sprache ist gewählt. Kein Cookie-Schreiben, keine Warnung, kein Reload." };
+        if (state.pending) return { ...state, selected: state.locale, message: busyText(state.pending) };
+        if (dirty(state)) return { ...state, selected: action.locale, target: action.locale, message: "Warnung offen. Cookie, URL und Eingaben sind noch unverändert." };
+        return switchLocale(state, action.locale);
+      case "cancel":
+        return state.target ? { ...state, target: null, selected: state.locale, message: "Abgebrochen. Auswahl zurückgesetzt; Eingaben, Cookie und URL bleiben erhalten." } : state;
+      case "confirm":
+        return state.target && !state.pending ? switchLocale(state, state.target) : state;
+      case "edit-note":
+        return !state.pending ? { ...state, note: action.value, message: "Hinweise bearbeitet. Vergleich mit dem gespeicherten Stand neu berechnet." } : state;
+      case "edit-briefing":
+        return !state.pending ? { ...state, briefing: action.value, briefingOrigin: "manual", message: "Briefing bearbeitet. Der Text wird nicht übersetzt und noch nicht gespeichert." } : state;
+      case "restore":
+        return !state.pending ? { ...state, note: state.savedNote, briefing: state.savedBriefing, briefingOrigin: "saved", localFile: false, message: "Werte entsprechen wieder dem gespeicherten Stand. Keine ungespeicherten Eingaben." } : state;
+      case "toggle-editor":
+        return { ...state, editorOpen: !state.editorOpen, message: "Panel-Sichtbarkeit geändert. Ein versteckter Entwurf bleibt ungespeichert." };
+      case "save-start":
+        return !state.pending && dirty(state) && !state.localFile ? { ...state, pending: "save", message: "Speichern gestartet. Sprachwechsel wartet auf die Antwort, ohne ihn vorzumerken." } : state;
+      case "save-done":
+        return state.pending === "save" ? { ...state, savedNote: state.note, savedBriefing: state.briefing, pending: null, briefingOrigin: "saved", message: "Server hat gespeichert. Neuer Vergleichsstand; kein automatischer Sprachwechsel." } : state;
+      case "draft-start":
+        return !state.pending ? { ...state, pending: "draft", message: "Briefing wird in der aktuellen UI-Sprache erstellt. Vorhandener Text bleibt bis zur Antwort erhalten. Ersetzen-Bestätigung ist hier vorausgesetzt." } : state;
+      case "draft-done":
+        return state.pending === "draft" ? { ...state, pending: null, briefing: state.locale === "en" ? "# Harbor\nUse orange only for primary actions." : "# Harbor\nOrange nur für Haupt-Aktionen verwenden.", briefingOrigin: state.locale === "en" ? "AI English" : "AI Deutsch", editorOpen: true, message: "Neuer KI-Entwurf eingefügt, noch nicht gespeichert. Auch ohne Tippen ungespeichert." } : state;
+      case "operation-failed":
+        return state.pending ? { ...state, pending: null, message: "Vorgang fehlgeschlagen. Eingaben bleiben erhalten; Sprachwechsel muss erneut gewählt werden." } : state;
+      case "file-pick":
+        return !state.pending ? { ...state, localFile: true, message: "hotel-lobby.png nur lokal ausgewählt. Noch nicht hochgeladen, beim bestätigten Wechsel verloren." } : state;
+      case "upload-start":
+        return !state.pending && state.localFile ? { ...state, pending: "upload", message: "Browser überträgt die Datei. Ein Reload könnte sie unterbrechen; Wechsel vorübergehend blockiert." } : state;
+      case "upload-done":
+        return state.pending === "upload" ? { ...state, pending: null, localFile: false, job: { id: "upload-demo-1", kind: "Upload-Nachverarbeitung", progress: 35 }, message: "Datei serverseitig angenommen. Der Hintergrund-Job kann nach dem Wechsel weiterarbeiten." } : state;
+      case "job-import":
+        return { ...state, job: { id: "import-demo-1", kind: "URL-Import", progress: 35 }, message: "Ein unabhängiger URL-Import ist serverseitig angenommen. Kein ungespeichertes Formular." };
+      case "job-tick":
+        return state.job ? { ...state, job: { ...state.job, progress: Math.min(100, state.job.progress + 35) }, message: "Der gleiche Hintergrund-Job arbeitet weiter. Sprach-Cookie und Reload-Zähler bleiben unverändert." } : state;
+      default: return state;
+    }
+  }
+  return { initialState, dirty, reduce };
+})();
+
+const walkthroughs = [
+  { title: "Aktive Sprache", description: "Auch mit Änderungen bleibt die aktive Sprache ein vollständiger No-op.", steps: [
+    ["Hinweise ändern", { type: "edit-note", value: "Orange sparsamer einsetzen." }],
+    ["English erneut wählen", { type: "select", locale: "en" }]
+  ] },
+  { title: "Sauber wechseln", description: "Ein echter Wechsel setzt das Cookie einmal und lädt dieselbe URL mitsamt Query genau einmal.", steps: [
+    ["Deutsch wählen", { type: "select", locale: "de" }],
+    ["Deutsch nochmals wählen", { type: "select", locale: "de" }]
+  ] },
+  { title: "Abbrechen", description: "Die Warnung darf nichts vorzeitig ändern. Abbrechen erhält Text, Cookie und URL; die Auswahl springt auf English zurück.", steps: [
+    ["Hinweise ändern", { type: "edit-note", value: "Orange sparsamer einsetzen." }],
+    ["Deutsch wählen", { type: "select", locale: "de" }],
+    ["Warnung abbrechen", { type: "cancel" }]
+  ] },
+  { title: "Verwerfen", description: "Eine Warnung schützt mehrere lokale Änderungen gemeinsam. Bestätigen verwirft Hinweise und Briefing, doppelte Bestätigung lädt nicht erneut.", steps: [
+    ["Hinweise ändern", { type: "edit-note", value: "Orange sparsamer einsetzen." }],
+    ["Briefing ändern", { type: "edit-briefing", value: "# Harbor\nMehr Weißraum." }],
+    ["Deutsch wählen", { type: "select", locale: "de" }],
+    ["Verwerfen und wechseln", { type: "confirm" }],
+    ["Bestätigung erneut simulieren", { type: "confirm" }]
+  ] },
+  { title: "Wieder sauber", description: "Nicht die erste Bearbeitung zählt, sondern die Abweichung vom gespeicherten Stand.", steps: [
+    ["Hinweise ändern", { type: "edit-note", value: "Orange sparsamer einsetzen." }],
+    ["Originaltext wieder einsetzen", { type: "edit-note", value: "Orange nur für Haupt-Aktionen." }],
+    ["Ohne Warnung Deutsch wählen", { type: "select", locale: "de" }]
+  ] },
+  { title: "KI-Entwurf", description: "Ein neuer Briefing-Entwurf gilt sofort als ungespeichert. Schließen des Panels entfernt den Schutz nicht.", steps: [
+    ["KI-Entwurf anfordern", { type: "draft-start" }],
+    ["KI-Entwurf empfangen", { type: "draft-done" }],
+    ["Briefing-Panel schließen", { type: "toggle-editor" }],
+    ["Deutsch wählen", { type: "select", locale: "de" }],
+    ["Entwurf behalten, abbrechen", { type: "cancel" }],
+    ["Deutsch erneut wählen", { type: "select", locale: "de" }],
+    ["Entwurf verwerfen und wechseln", { type: "confirm" }]
+  ] },
+  { title: "Speichern läuft", description: "Während Speichern läuft, bleibt die aktive Sprache erhalten. Es wird kein Wechsel vorgemerkt. Nach Erfolg ist die neue Basis sauber.", steps: [
+    ["Hinweise ändern", { type: "edit-note", value: "Orange sparsamer einsetzen." }],
+    ["Speichern starten", { type: "save-start" }],
+    ["Deutsch versuchen, bleibt blockiert", { type: "select", locale: "de" }],
+    ["Speichern erfolgreich abschließen", { type: "save-done" }],
+    ["Deutsch erneut wählen", { type: "select", locale: "de" }]
+  ] },
+  { title: "Speicherfehler", description: "Bei einem Speicherfehler bleiben Eingaben ungespeichert und der nächste Wechsel fragt wieder nach.", steps: [
+    ["Hinweise ändern", { type: "edit-note", value: "Orange sparsamer einsetzen." }],
+    ["Speichern starten", { type: "save-start" }],
+    ["Speicherfehler empfangen", { type: "operation-failed" }],
+    ["Deutsch wählen", { type: "select", locale: "de" }],
+    ["Eingaben behalten, abbrechen", { type: "cancel" }]
+  ] },
+  { title: "Import läuft", description: "Ein bereits angenommener Import behält seine Identität und seinen Fortschritt beim Wechsel. Er arbeitet danach weiter.", steps: [
+    ["Unabhängigen Import starten", { type: "job-import" }],
+    ["Deutsch wählen", { type: "select", locale: "de" }],
+    ["Denselben Job weiterlaufen lassen", { type: "job-tick" }]
+  ] },
+  { title: "Datei-Upload", description: "Eine lokale Übertragung muss erst enden. Nach der serverseitigen Annahme darf die Nachverarbeitung beim Wechsel weiterlaufen.", steps: [
+    ["Bilddatei lokal auswählen", { type: "file-pick" }],
+    ["Übertragung starten", { type: "upload-start" }],
+    ["Deutsch versuchen, bleibt blockiert", { type: "select", locale: "de" }],
+    ["Server nimmt Datei an", { type: "upload-done" }],
+    ["Deutsch erneut wählen", { type: "select", locale: "de" }],
+    ["Nachverarbeitung weiterlaufen lassen", { type: "job-tick" }]
+  ] },
+  { title: "KI läuft", description: "Eine laufende Briefing-Anfrage wird nicht durch den Reload abgeschnitten. Nach Empfang schützt die normale Warnung den neuen Entwurf.", steps: [
+    ["KI-Entwurf anfordern", { type: "draft-start" }],
+    ["Deutsch versuchen, bleibt blockiert", { type: "select", locale: "de" }],
+    ["KI-Entwurf empfangen", { type: "draft-done" }],
+    ["Deutsch erneut wählen", { type: "select", locale: "de" }],
+    ["Entwurf behalten, abbrechen", { type: "cancel" }]
+  ] }
+];
+</script>
+
+<script id="prototype-shell">
+let state = LanguageSwitch.initialState();
+let activeCase = 0;
+let completedSteps = 0;
+const byId = (id) => document.getElementById(id);
+const names = { en: "English", de: "Deutsch" };
+const warning = byId("warning");
+
+function dispatch(action) {
+  state = LanguageSwitch.reduce(state, action);
+  render();
+}
+function render() {
+  byId("language").value = state.selected;
+  byId("outcome").textContent = state.message;
+  byId("note").value = state.note;
+  byId("briefing").value = state.briefing;
+  byId("note").disabled = byId("briefing").disabled = Boolean(state.pending || state.target);
+  const rows = [
+    ["Ansicht", state.context === "kit" ? "Brand Kit Harbor" : state.context === "settings" ? "Einstellungen, URL-Kontext" : "Anmeldung, URL-Kontext"],
+    ["Aktuelle URL", state.url],
+    ["Aktive Sprache", names[state.locale]],
+    ["Auswahl / offenes Ziel", `${names[state.selected]} / ${state.target ? names[state.target] : "keines"}`],
+    ["Sprach-Cookie, simuliert", state.cookie ?? "nicht gesetzt, Basissprache English"],
+    ["Cookie-Schreibvorgänge / Reloads", `${state.cookieWrites} / ${state.reloads}`],
+    ["Ungespeicherte Eingaben", LanguageSwitch.dirty(state) ? "Ja" : "Nein"],
+    ["Hinweise, gespeichert", state.savedNote],
+    ["Hinweise, aktuell", state.note || "leer"],
+    ["Briefing, gespeichert", state.savedBriefing || "leer"],
+    ["Briefing, aktuell", state.briefing || "leer"],
+    ["Briefing-Herkunft / Panel", `${({ saved: "Gespeicherter Stand", manual: "Manuell", "AI English": "KI-Entwurf auf Englisch", "AI Deutsch": "KI-Entwurf auf Deutsch" })[state.briefingOrigin]} / ${state.editorOpen ? "offen" : "geschlossen"}`],
+    ["Lokale Datei", state.localFile ? "hotel-lobby.png, noch nicht angenommen" : "keine"],
+    ["Laufender Browser-Vorgang", ({ save: "Speichern", draft: "Briefing-Erzeugung", upload: "Dateiübertragung" })[state.pending] ?? "keiner"],
+    ["Unabhängiger Hintergrund-Job", state.job ? `${state.job.id} · ${state.job.kind} · ${state.job.progress}% · ${state.job.progress === 100 ? "fertig" : "läuft"}` : "keiner"]
+  ];
+  byId("state").replaceChildren(...rows.flatMap(([label, value]) => {
+    const term = document.createElement("dt"); term.textContent = label;
+    const detail = document.createElement("dd"); detail.textContent = value;
+    return [term, detail];
+  }));
+  if (state.target && !warning.open) {
+    const german = state.locale === "de";
+    warning.lang = state.locale;
+    byId("warning-title").textContent = german ? "Sprache wechseln?" : "Change language?";
+    byId("warning-copy").textContent = german
+      ? "Nicht gespeicherte Eingaben und Briefing-Entwürfe gehen verloren. Die Seite wird in der gewählten Sprache neu geladen. Gespeicherte Inhalte und gestartete Hintergrund-Jobs bleiben erhalten."
+      : "Unsaved input and briefing drafts will be lost. The page will reload in the selected language. Saved content and accepted background jobs will be kept.";
+    byId("cancel").textContent = german ? "Abbrechen" : "Cancel";
+    byId("confirm").textContent = german ? "Verwerfen und wechseln" : "Discard and switch";
+    warning.showModal(); byId("cancel").focus();
+  } else if (!state.target && warning.open) {
+    warning.close(); byId("language").focus();
+  }
+}
+function renderWalkthrough() {
+  byId("tabs").replaceChildren(...walkthroughs.map((scenario, index) => {
+    const tab = document.createElement("button");
+    tab.id = `tab-${index}`; tab.type = "button"; tab.role = "tab";
+    tab.setAttribute("aria-selected", String(index === activeCase));
+    tab.setAttribute("aria-controls", "walkthrough");
+    tab.tabIndex = index === activeCase ? 0 : -1;
+    tab.textContent = scenario.title;
+    tab.onclick = () => startCase(index);
+    tab.onkeydown = (event) => {
+      const directions = { ArrowRight: 1, ArrowLeft: -1, Home: -index, End: walkthroughs.length - index - 1 };
+      if (!(event.key in directions)) return;
+      event.preventDefault();
+      const next = (index + directions[event.key] + walkthroughs.length) % walkthroughs.length;
+      startCase(next); byId(`tab-${next}`).focus();
+    };
+    return tab;
+  }));
+  const scenario = walkthroughs[activeCase];
+  byId("walkthrough").setAttribute("aria-labelledby", `tab-${activeCase}`);
+  const description = document.createElement("p"); description.textContent = scenario.description;
+  const list = document.createElement("ol");
+  scenario.steps.forEach(([label, action], index) => {
+    const item = document.createElement("li");
+    const button = document.createElement("button");
+    button.className = "step"; button.type = "button";
+    button.disabled = index !== completedSteps;
+    button.textContent = `${index < completedSteps ? "Erledigt: " : ""}${label}`;
+    button.onclick = () => { completedSteps++; dispatch(action); renderWalkthrough(); };
+    item.append(button); list.append(item);
+  });
+  const restart = document.createElement("button"); restart.type = "button";
+  restart.textContent = "Diesen Fall neu starten"; restart.onclick = () => startCase(activeCase);
+  byId("walkthrough").replaceChildren(description, list, restart);
+}
+function startCase(index) {
+  activeCase = index; completedSteps = 0;
+  dispatch({ type: "reset" }); renderWalkthrough();
+}
+byId("language").onchange = (event) => dispatch({ type: "select", locale: event.target.value });
+byId("note").oninput = (event) => dispatch({ type: "edit-note", value: event.target.value });
+byId("briefing").oninput = (event) => dispatch({ type: "edit-briefing", value: event.target.value });
+function decide(type) {
+  if (walkthroughs[activeCase].steps[completedSteps]?.[1].type === type) completedSteps++;
+  dispatch({ type }); renderWalkthrough();
+}
+byId("cancel").onclick = () => decide("cancel");
+byId("confirm").onclick = () => decide("confirm");
+warning.oncancel = (event) => { event.preventDefault(); decide("cancel"); };
+document.querySelectorAll("[data-action]").forEach((button) => {
+  button.onclick = () => {
+    const action = button.dataset.action;
+    if (action.startsWith("context-")) dispatch({ type: "reset", context: action.slice(8) });
+    else dispatch({ type: action });
+  };
+});
+render(); renderWalkthrough();
+</script>
+</body>
+</html>
