@@ -38,7 +38,9 @@ describe("request-time formatting and validation", () => {
   });
 
   it.each(["", "xx", "fr"])("uses English for invalid cookie %j regardless of Accept-Language", async (locale) => {
-    await localized(locale, () => expect(getLocale()).toBe("en"));
+    await localized(locale, () => {
+      expect(getLocale()).toBe("en");
+    });
     expect(contentLanguageForUi(locale)).toBe("en");
   });
 });
