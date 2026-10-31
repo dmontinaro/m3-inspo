@@ -1,0 +1,22 @@
+{
+  "name": "@m3-inspo/mcp",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    "./http": "./src/http-handler.ts",
+    "./server": "./src/server.ts",
+    "./tools": "./src/tools.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc -p tsconfig.json"
+  },
+  "dependencies": {
+    "@m3-inspo/db": "workspace:*",
+    "@m3-inspo/shared": "workspace:*",
+    "@m3-inspo/taxonomy": "workspace:*",
+    "@modelcontextprotocol/sdk": "^1.30.0",
+    "zod": "^4.6.5"
+  },
+  "license": "MIT"
+}

@@ -1,0 +1,17 @@
+node_modules
+.DS_Store
+dist
+.env
+.env.*
+!.env.example
+.nitro
+.tanstack
+.output
+.vinxi
+captures
+.storage
+*.tsbuildinfo
+.claude/worktrees
+
+# Local private material and preparation artifacts; never distribute.
+.private/

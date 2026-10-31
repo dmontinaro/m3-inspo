@@ -1,0 +1,307 @@
+/**
+ * Single source of truth for tag allow-lists.
+ *
+ * Imported by the worker (LLM tagging prompt), the web filter rail,
+ * and the MCP server. Hard allow-lists prevent taxonomy drift across
+ * thousands of captures.
+ *
+ * STYLES, MACROSTRUCTURES, and the three AXES vocabularies are Inspo's
+ * canonical design vocabulary, so a screenshot tagged here can be
+ * referenced directly by an agent picking a named whole-page shape or
+ * constructing a design system from measured evidence.
+ */
+
+export const STYLES = [
+  "minimalism",
+  "editorial",
+  "brutalism",
+  "glassmorphism",
+  "swiss",
+  "maximalism",
+  "playful",
+  "dark-mode",
+  "monochrome",
+  "vintage",
+  "futurist",
+] as const;
+
+/**
+ * Industry allow-list, rebuilt 2026-09-01 from a full re-audit of the
+ * 767-site corpus. The original 14-value list forced whole clusters
+ * (car brands, architecture firms, type foundries, museums, fashion
+ * houses) into whichever value was least wrong - Porsche was tagged
+ * "real-estate". Every value below has real sites behind it; every
+ * site was re-classified against this list.
+ */
+export const INDUSTRIES = [
+  "agency",
+  "ai",
+  "architecture",
+  "automotive",
+  "consumer-tech",
+  "creator",
+  "crypto",
+  "culture",
+  "developer-tools",
+  "ecommerce",
+  "education",
+  "fashion",
+  "fintech",
+  "food-beverage",
+  "furniture",
+  "gaming",
+  "health",
+  "media",
+  "music",
+  "non-profit",
+  "portfolio",
+  "saas",
+  "travel",
+  "type-foundry",
+] as const;
+
+/** Human-readable labels for the industry filter rail. */
+export const INDUSTRY_LABELS: Record<(typeof INDUSTRIES)[number], string> = {
+  agency: "Agency",
+  ai: "AI",
+  architecture: "Architecture",
+  automotive: "Automotive",
+  "consumer-tech": "Consumer Tech",
+  creator: "Creator Economy",
+  crypto: "Crypto & Web3",
+  culture: "Culture & Museums",
+  "developer-tools": "Developer Tools",
+  ecommerce: "Ecommerce",
+  education: "Education",
+  fashion: "Fashion & Beauty",
+  fintech: "Fintech",
+  "food-beverage": "Food & Beverage",
+  furniture: "Furniture & Interiors",
+  gaming: "Gaming",
+  health: "Health & Fitness",
+  media: "Media",
+  music: "Music",
+  "non-profit": "Non-Profit",
+  portfolio: "Portfolio",
+  saas: "SaaS",
+  travel: "Travel & Hospitality",
+  "type-foundry": "Type Foundry",
+};
+
+export const COMPONENTS = [
+  "sticky-nav",
+  "hero-with-cta",
+  "hero-fullbleed",
+  "logo-cloud",
+  "bento-grid",
+  "feature-trio",
+  "feature-alternating",
+  "testimonial-wall",
+  "testimonial-quote",
+  "pricing-3-col",
+  "faq-accordion",
+  "footer-compact",
+  "case-study-card",
+  "stat-strip",
+  "marquee-logos",
+  "newsletter-signup",
+  "blog-grid",
+] as const;
+
+/**
+ * Component types: the coarse kinds of page section an agent asks
+ * `find_components` for, and the type the owner gives a marked region
+ * (apps/web, "Bereiche markieren"). Coarser than COMPONENTS, which name
+ * variants ("sticky-nav", "hero-with-cta") the AI analysis tags a whole
+ * page with; find_components maps one to the other for its tag fallback.
+ */
+export const COMPONENT_TYPES = [
+  "nav",
+  "hero",
+  "features",
+  "pricing",
+  "cta",
+  "testimonial",
+  "logo-cloud",
+  "stat",
+  "faq",
+  "footer",
+] as const;
+
+export const VIBES = [
+  "calm",
+  "loud",
+  "playful",
+  "serious",
+  "luxe",
+  "raw",
+  "soft",
+  "technical",
+  "warm",
+  "cold",
+] as const;
+
+export const COLOR_WORDS = [
+  "warm",
+  "cool",
+  "monochrome",
+  "neon",
+  "earthy",
+  "pastel",
+  "saturated",
+  "muted",
+  "high-contrast",
+] as const;
+
+export const MODES = ["light", "dark"] as const;
+
+/**
+ * Roles in a type ramp. The worker's in-page extractor walks these
+ * selectors in order and pulls computed-style tokens for each.
+ */
+export const TYPE_ROLES = [
+  "h1",
+  "h2",
+  "h3",
+  "body",
+  "caption",
+  "button",
+] as const;
+
+export const VIEWPORTS = ["desktop", "tablet", "mobile"] as const;
+
+/** Devices a capture pair actually ships for (tablet is shot but not
+ *  surfaced). Used by the `device` search filter. */
+export const CAPTURE_DEVICES = ["desktop", "mobile"] as const;
+
+/**
+ * The 19 named macrostructures, Inspo's named whole-page shapes. The
+ * agent picks one before writing code; Inspo lets it browse real
+ * exemplars per name. ("workbench" and "quote-led" were retired
+ * 2026-09-01: zero screens in the 2,141-capture corpus embodied
+ * either, so they were dead filter values.)
+ */
+export const MACROSTRUCTURES = [
+  "bento-grid",
+  "long-document",
+  "marquee-hero",
+  "stat-led",
+  "conversational-faq",
+  "manifesto",
+  "photographic",
+  "specimen",
+  "catalogue",
+  "letter",
+  "index-first",
+  "narrative-workflow",
+  "split-studio",
+  "feature-stack",
+  "type-specimen",
+  "portfolio-grid",
+  "map-diagram",
+  "ecosystem-index",
+  "component-playground",
+] as const;
+
+/**
+ * The three diversification axes.
+ *
+ * Replaces the old 12-name theme enum, which named themes
+ * from one specific version of one design skill and went stale the
+ * moment that skill's catalogue changed. The axes are orthogonal,
+ * derivable from data every row already carries (palette + fonts), and
+ * version-independent: they describe the design, not somebody's name
+ * for it.
+ *
+ * A design skill constructing a system from Inspo's evidence reads the
+ * distribution of these three across the matched exemplars, then takes
+ * a deliberate position with or against it. See `deriveAxes` in
+ * @m3-inspo/shared for how each is measured.
+ */
+
+/** Surface lightness band, from the OKLCH L of the dominant colour. */
+export const PAPER_BANDS = ["dark", "mid", "light"] as const;
+
+/** The display face's construction. Ordered loosest to most specific;
+ *  `grotesk-sans` is the fallback because most web faces are neo-
+ *  grotesques and a wrong-but-common guess beats a null. */
+export const DISPLAY_CLASSES = [
+  "grotesk-sans",
+  "geometric-sans",
+  "roman-serif",
+  "italic-serif",
+  "slab-serif",
+  "mono",
+  "display-condensed-bold",
+  "display-heavy",
+  "system-native",
+  "handwritten",
+] as const;
+
+/** Accent temperature, from the highest-chroma palette entry. Anything
+ *  chromatic outside the warm/cool arcs is `chromatic-other`; the exact
+ *  hue angle rides alongside in `Axes.accentDeg`. */
+export const ACCENT_HUE_BANDS = [
+  "warm",
+  "cool",
+  "neutral",
+  "chromatic-other",
+] as const;
+
+export type Style = (typeof STYLES)[number];
+export type Industry = (typeof INDUSTRIES)[number];
+export type Component = (typeof COMPONENTS)[number];
+export type ComponentType = (typeof COMPONENT_TYPES)[number];
+export type Vibe = (typeof VIBES)[number];
+export type ColorWord = (typeof COLOR_WORDS)[number];
+export type Mode = (typeof MODES)[number];
+export type Viewport = (typeof VIEWPORTS)[number];
+export type CaptureDevice = (typeof CAPTURE_DEVICES)[number];
+export type Macrostructure = (typeof MACROSTRUCTURES)[number];
+export type PaperBand = (typeof PAPER_BANDS)[number];
+export type DisplayClass = (typeof DISPLAY_CLASSES)[number];
+export type AccentHueBand = (typeof ACCENT_HUE_BANDS)[number];
+export type TypeRole = (typeof TYPE_ROLES)[number];
+
+/** Allow-list validators - used to reject LLM tag output that drifts. */
+export const isStyle = (v: string): v is Style =>
+  (STYLES as readonly string[]).includes(v);
+export const isIndustry = (v: string): v is Industry =>
+  (INDUSTRIES as readonly string[]).includes(v);
+export const isComponent = (v: string): v is Component =>
+  (COMPONENTS as readonly string[]).includes(v);
+export const isComponentType = (v: string): v is ComponentType =>
+  (COMPONENT_TYPES as readonly string[]).includes(v);
+export const isVibe = (v: string): v is Vibe =>
+  (VIBES as readonly string[]).includes(v);
+export const isMacrostructure = (v: string): v is Macrostructure =>
+  (MACROSTRUCTURES as readonly string[]).includes(v);
+export const isPaperBand = (v: string): v is PaperBand =>
+  (PAPER_BANDS as readonly string[]).includes(v);
+export const isDisplayClass = (v: string): v is DisplayClass =>
+  (DISPLAY_CLASSES as readonly string[]).includes(v);
+export const isAccentHueBand = (v: string): v is AccentHueBand =>
+  (ACCENT_HUE_BANDS as readonly string[]).includes(v);
+
+/** Human-readable labels for filter rails. */
+export const MACROSTRUCTURE_LABELS: Record<Macrostructure, string> = {
+  "bento-grid": "Bento Grid",
+  "long-document": "Long Document",
+  "marquee-hero": "Marquee Hero",
+  "stat-led": "Stat-Led",
+  "conversational-faq": "Conversational FAQ",
+  manifesto: "Manifesto",
+  photographic: "Photographic",
+  specimen: "Specimen",
+  catalogue: "Catalogue",
+  letter: "Letter",
+  "index-first": "Index-First",
+  "narrative-workflow": "Narrative Workflow",
+  "split-studio": "Split Studio",
+  "feature-stack": "Feature Stack",
+  "type-specimen": "Type Specimen",
+  "portfolio-grid": "Portfolio Grid",
+  "map-diagram": "Map / Diagram",
+  "ecosystem-index": "Ecosystem Index",
+  "component-playground": "Component Playground",
+};

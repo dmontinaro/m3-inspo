@@ -1,0 +1,22 @@
+{
+  "name": "m3-inspo",
+  "private": true,
+  "type": "module",
+  "packageManager": "pnpm@11.5.3",
+  "engines": {
+    "node": ">=24"
+  },
+  "scripts": {
+    "dev": "pnpm --filter @m3-inspo/web dev",
+    "build": "pnpm --filter @m3-inspo/web build",
+    "typecheck": "pnpm -r --parallel typecheck",
+    "lint": "pnpm -r lint",
+    "test": "vitest run"
+  },
+  "devDependencies": {
+    "@types/node": "^24.10.0",
+    "typescript": "^6.0.3",
+    "vitest": "^5.0.1"
+  },
+  "license": "MIT"
+}

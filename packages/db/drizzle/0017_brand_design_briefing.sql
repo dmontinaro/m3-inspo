@@ -1,0 +1,1 @@
+ALTER TABLE "brand_kits" ADD COLUMN "design_briefing" text;

@@ -1,0 +1,47 @@
+# Typecheck, lint and tests for every PR and every push to main.
+# The tests need Postgres with pgvector on port 54330, like compose.yaml provides locally,
+# and Playwright's headless Chromium for the worker.
+name: Checks
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+concurrency:
+  group: checks-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  checks:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    services:
+      postgres:
+        image: pgvector/pgvector:pg17
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: inspo
+        ports:
+          - 54330:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d inspo"
+          --health-interval 2s
+          --health-timeout 3s
+          --health-retries 20
+    steps:
+      - uses: actions/checkout@v5
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 24
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      # The worker's capture tests drive a real headless Chromium.
+      - run: pnpm --filter @m3-inspo/worker exec playwright install --with-deps --only-shell chromium
+      # The worker keeps Chromium's sandbox on; Ubuntu 24.04's AppArmor blocks the user namespaces it needs.
+      - run: sudo sysctl -w kernel.apparmor_restrict_unprivileged_userns=0
+      - run: pnpm typecheck
+      - run: pnpm lint
+      - run: pnpm test

@@ -1,0 +1,6 @@
+{
+  "extends": "../../tsconfig.base.json",
+  // Node runs the sources as they are (type stripping): imports name their .ts files, and only erasable syntax is allowed.
+  "compilerOptions": { "lib": ["ES2022", "DOM"], "allowImportingTsExtensions": true, "erasableSyntaxOnly": true },
+  "include": ["src"]
+}

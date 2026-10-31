@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+<!-- The m3 monogram, using the wordmark geometry. -->
+<defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
+<stop offset="0" stop-color="#5F0F40"/><stop offset=".25" stop-color="#9A031E"/><stop offset=".5" stop-color="#FB8B24"/><stop offset=".75" stop-color="#E36414"/><stop offset="1" stop-color="#0F4C5C"/></linearGradient></defs>
+<rect width="64" height="64" rx="14" fill="url(#g)"/>
+<g transform="translate(7 23) scale(.4)" fill="#fff"><path d="M69.2,17.49v29.48h-11.6v-26.48c0-6.28-2.42-9.67-8.22-9.67-6.09,0-8.99,5.9-8.99,5.9v30.25h-11.6v-26.48c0-6.28-2.42-9.67-8.22-9.67-6.09,0-8.99,5.9-8.99,5.9v30.25H0V1.16h10.82v6.67S14.98,0,24.36,0C35.38,0,38.57,8.02,38.57,8.02,38.57,8.02,42.44,0,53.16,0,62.44,0,69.2,6.48,69.2,17.49Z"/><path d="M84 7 C99 -1 120 1 120 13 C120 20 114 23 106 24 C115 24 122 29 122 36 C122 50 98 53 84 43" fill="none" stroke="#fff" stroke-width="10.5" stroke-linecap="round"/></g>
+</svg>

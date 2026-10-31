@@ -1,0 +1,25 @@
+# Local Postgres with pgvector for dev and tests: `docker compose up -d`.
+# POSTGRES_PORT selects the host port; COMPOSE_PROJECT_NAME isolates containers and volumes.
+# Dev uses the `inspo` database; tests create an isolated database for each run.
+name: m3-inspo
+
+services:
+  postgres:
+    image: pgvector/pgvector:pg17
+    container_name: m3-inspo-postgres
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: inspo
+    ports:
+      - "127.0.0.1:${POSTGRES_PORT:-54330}:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d inspo"]
+      interval: 2s
+      timeout: 3s
+      retries: 20
+
+volumes:
+  postgres-data:

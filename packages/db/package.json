@@ -1,0 +1,34 @@
+{
+  "name": "@m3-inspo/db",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts",
+    "./schema": "./src/schema.ts",
+    "./auth-schema": "./src/auth-schema.ts",
+    "./library-schema": "./src/library-schema.ts",
+    "./mcp-schema": "./src/mcp-schema.ts",
+    "./catalogue": "./src/catalogue.ts",
+    "./vector": "./src/vector.ts",
+    "./client": "./src/client.ts",
+    "./test-setup": "./test/global-setup.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc -p tsconfig.json",
+    "db:generate": "drizzle-kit generate",
+    "db:migrate": "drizzle-kit migrate",
+    "db:studio": "drizzle-kit studio"
+  },
+  "dependencies": {
+    "@m3-inspo/shared": "workspace:*",
+    "@m3-inspo/taxonomy": "workspace:*",
+    "drizzle-orm": "^0.45.3",
+    "postgres": "^3.4.9"
+  },
+  "devDependencies": {
+    "dotenv": "^17.4.2",
+    "drizzle-kit": "^0.31.11"
+  },
+  "license": "MIT"
+}

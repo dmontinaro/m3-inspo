@@ -1,0 +1,1124 @@
+{
+  "compare": {
+    "description": "Compare 2-4 captured sites across palette, typefaces, macrostructure, mode, style tags, type/spacing/radius scales and container width. Returns per-site breakdowns plus what they share - triangulates a house style from a few references. Each site's `provenance` says where its values come from; an empty or null value was not measured.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "slugs": {
+          "description": "2-4 screen slugs to compare, e.g. ['linear-app','stripe-com','vercel-com']. Discover slugs with search_screens / find_similar.",
+          "minItems": 2,
+          "maxItems": 4,
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      "required": [
+        "slugs"
+      ]
+    },
+    "annotations": {
+      "readOnlyHint": true,
+      "destructiveHint": false,
+      "idempotentHint": true,
+      "openWorldHint": false
+    },
+    "execution": {
+      "taskSupport": "forbidden"
+    }
+  },
+  "find_by_color": {
+    "description": "Real sites whose extracted palette sits near a hex colour (OKLAB distance, so 'close' means the same colour family, not just the same hue). Each hit's `match` names the closest palette colour and its provenance (vision = an AI estimate, with confidence). Use when a brief names a brand colour.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "hex": {
+          "description": "Target colour as a hex string ('#c7402f', 'c7402f', '#fff'). Case-insensitive. 3- or 6-digit.",
+          "type": "string"
+        },
+        "tolerance": {
+          "description": "Max OKLAB distance to count as a match. Defaults to 0.15 ('same family'). 0.05 ≈ 'near-identical', 0.30 ≈ 'in the same hue zip code'.",
+          "type": "number",
+          "minimum": 0.02,
+          "maximum": 0.5
+        },
+        "limit": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 40
+        },
+        "detail": {
+          "description": "'standard' (default): northstar, palette, fonts, axes, macro and tags per row, plus the fold-by-fold autopsy on the top 3. 'full': the autopsy on every row (~300 tokens each; only if you will read them all). 'concise': northstar, palette, fonts. Text profile defaults to concise.",
+          "type": "string",
+          "enum": [
+            "concise",
+            "standard",
+            "full"
+          ]
+        },
+        "maxTokens": {
+          "description": "Approximate token ceiling for this response. Trims lower-ranked results and thumbnails; the top result and all URLs survive.",
+          "type": "integer",
+          "minimum": 300,
+          "maximum": 200000
+        }
+      },
+      "required": [
+        "hex"
+      ]
+    },
+    "annotations": {
+      "readOnlyHint": true,
+      "destructiveHint": false,
+      "idempotentHint": true,
+      "openWorldHint": false
+    },
+    "execution": {
+      "taskSupport": "forbidden"
+    }
+  },
+  "find_components": {
+    "description": "Regions the owner marked on references as one UI component (hero, pricing, features, cta, nav, footer, testimonial, logo-cloud, faq, stat): the cropped image, the owner's note on it and the parent reference (`slug`, for get_screen). Without a marked region of the type, whole references whose analysis tags the component. For copy-pasteable code use get_reference_jsx.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "type": {
+          "description": "Which component type to find",
+          "type": "string",
+          "enum": [
+            "hero",
+            "pricing",
+            "features",
+            "cta",
+            "nav",
+            "footer",
+            "testimonial",
+            "logo-cloud",
+            "faq",
+            "stat"
+          ]
+        },
+        "style": {
+          "description": "Filter the parent site's style",
+          "type": "string",
+          "enum": [
+            "minimalism",
+            "editorial",
+            "brutalism",
+            "glassmorphism",
+            "swiss",
+            "maximalism",
+            "playful",
+            "dark-mode",
+            "monochrome",
+            "vintage",
+            "futurist"
+          ]
+        },
+        "industry": {
+          "type": "string",
+          "enum": [
+            "agency",
+            "ai",
+            "architecture",
+            "automotive",
+            "consumer-tech",
+            "creator",
+            "crypto",
+            "culture",
+            "developer-tools",
+            "ecommerce",
+            "education",
+            "fashion",
+            "fintech",
+            "food-beverage",
+            "furniture",
+            "gaming",
+            "health",
+            "media",
+            "music",
+            "non-profit",
+            "portfolio",
+            "saas",
+            "travel",
+            "type-foundry"
+          ]
+        },
+        "macrostructure": {
+          "type": "string",
+          "enum": [
+            "bento-grid",
+            "long-document",
+            "marquee-hero",
+            "stat-led",
+            "conversational-faq",
+            "manifesto",
+            "photographic",
+            "specimen",
+            "catalogue",
+            "letter",
+            "index-first",
+            "narrative-workflow",
+            "split-studio",
+            "feature-stack",
+            "type-specimen",
+            "portfolio-grid",
+            "map-diagram",
+            "ecosystem-index",
+            "component-playground"
+          ]
+        },
+        "mode": {
+          "type": "string",
+          "enum": [
+            "light",
+            "dark"
+          ]
+        },
+        "vibe": {
+          "description": "Mood - 'calm', 'loud', 'luxe', etc.",
+          "type": "string",
+          "enum": [
+            "calm",
+            "loud",
+            "playful",
+            "serious",
+            "luxe",
+            "raw",
+            "soft",
+            "technical",
+            "warm",
+            "cold"
+          ]
+        },
+        "color": {
+          "description": "Color word - 'warm', 'cool', 'monochrome', etc.",
+          "type": "string",
+          "enum": [
+            "warm",
+            "cool",
+            "monochrome",
+            "neon",
+            "earthy",
+            "pastel",
+            "saturated",
+            "muted",
+            "high-contrast"
+          ]
+        },
+        "pageType": {
+          "description": "Only components from this page kind (e.g. 'pricing')",
+          "type": "string",
+          "enum": [
+            "landing",
+            "pricing",
+            "features",
+            "auth",
+            "about",
+            "blog",
+            "changelog",
+            "docs",
+            "other"
+          ]
+        },
+        "device": {
+          "description": "'mobile' restricts to sites with a 375px capture pair or a mobile app screen and inlines the mobile thumbnail. Default: desktop.",
+          "type": "string",
+          "enum": [
+            "desktop",
+            "mobile"
+          ]
+        },
+        "limit": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 40
+        },
+        "maxTokens": {
+          "description": "Approximate token ceiling for this response. Trims lower-ranked results and thumbnails; the top result and all URLs survive.",
+          "type": "integer",
+          "minimum": 300,
+          "maximum": 200000
+        }
+      },
+      "required": [
+        "type"
+      ]
+    },
+    "annotations": {
+      "readOnlyHint": true,
+      "destructiveHint": false,
+      "idempotentHint": true,
+      "openWorldHint": false
+    },
+    "execution": {
+      "taskSupport": "forbidden"
+    }
+  },
+  "find_examples_for_macrostructure": {
+    "description": "Real sites exemplifying one of the 19 named macrostructures. Call it at the macrostructure-pick step. Accepts slugs ('bento-grid') or display names ('Bento Grid').",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "description": "Macrostructure name. e.g. 'bento-grid', 'Bento Grid', 'specimen', 'Marquee Hero'.",
+          "type": "string"
+        },
+        "limit": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 20
+        },
+        "device": {
+          "description": "'mobile' restricts to sites with a 375px capture pair or a mobile app screen and inlines the mobile thumbnail. Default: desktop.",
+          "type": "string",
+          "enum": [
+            "desktop",
+            "mobile"
+          ]
+        },
+        "detail": {
+          "description": "'standard' (default): northstar, palette, fonts, axes, macro and tags per row, plus the fold-by-fold autopsy on the top 3. 'full': the autopsy on every row (~300 tokens each; only if you will read them all). 'concise': northstar, palette, fonts. Text profile defaults to concise.",
+          "type": "string",
+          "enum": [
+            "concise",
+            "standard",
+            "full"
+          ]
+        },
+        "maxTokens": {
+          "description": "Approximate token ceiling for this response. Trims lower-ranked results and thumbnails; the top result and all URLs survive.",
+          "type": "integer",
+          "minimum": 300,
+          "maximum": 200000
+        }
+      },
+      "required": [
+        "name"
+      ]
+    },
+    "annotations": {
+      "readOnlyHint": true,
+      "destructiveHint": false,
+      "idempotentHint": true,
+      "openWorldHint": false
+    },
+    "execution": {
+      "taskSupport": "forbidden"
+    }
+  },
+  "find_reference_components": {
+    "description": "The owner's code templates as an index: id, label, macrostructure and a note per hero / pricing / cta / nav / footer template. None are maintained yet; the call says so. Pick one, then get_reference_jsx(type, id) for its source.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "type": {
+          "description": "Component category (hero, pricing, cta, …). Omit to scan all types.",
+          "type": "string",
+          "enum": [
+            "hero",
+            "pricing",
+            "features",
+            "cta",
+            "nav",
+            "footer",
+            "testimonial",
+            "logo-cloud",
+            "faq",
+            "stat"
+          ]
+        },
+        "macro": {
+          "description": "Substring match on the component's macro field - e.g. 'Marquee' matches 'Marquee Hero'.",
+          "type": "string"
+        }
+      }
+    },
+    "annotations": {
+      "readOnlyHint": true,
+      "destructiveHint": false,
+      "idempotentHint": true,
+      "openWorldHint": false
+    },
+    "execution": {
+      "taskSupport": "forbidden"
+    }
+  },
+  "find_similar": {
+    "description": "A screen's nearest design neighbours - ranked by design-similarity embeddings where available, else by macrostructure / industry / style overlap. One result per site.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "slug": {
+          "type": "string"
+        },
+        "limit": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 20
+        },
+        "sameSite": {
+          "description": "Include other pages of the same site (default false: neighbours are other sites).",
+          "type": "boolean"
+        },
+        "detail": {
+          "description": "'standard' (default): northstar, palette, fonts, axes, macro and tags per row, plus the fold-by-fold autopsy on the top 3. 'full': the autopsy on every row (~300 tokens each; only if you will read them all). 'concise': northstar, palette, fonts. Text profile defaults to concise.",
+          "type": "string",
+          "enum": [
+            "concise",
+            "standard",
+            "full"
+          ]
+        },
+        "maxTokens": {
+          "description": "Approximate token ceiling for this response. Trims lower-ranked results and thumbnails; the top result and all URLs survive.",
+          "type": "integer",
+          "minimum": 300,
+          "maximum": 200000
+        }
+      },
+      "required": [
+        "slug"
+      ]
+    },
+    "annotations": {
+      "readOnlyHint": true,
+      "destructiveHint": false,
+      "idempotentHint": true,
+      "openWorldHint": false
+    },
+    "execution": {
+      "taskSupport": "forbidden"
+    }
+  },
+  "generate_color_scheme": {
+    "description": "Designs a Color Scheme from start colours: 11 shadcn roles (hex, oklch(), derivation, WCAG 2 contrast to their counterpart), an 11-step scale (50-950) per colour plus `danger`, contrast warnings, a ready CSS block (:root, a .dark block with the dark roles under the same names, and Tailwind v4 @theme inline), the seed used and a `generatorUrl` that opens the scheme in the owner's generator, where they adjust and save it. A brand or neutral you leave out is rolled from the measured palettes of the owner's approved references (`references`, else `project`, else all of them); each such colour names its reference. When the pool has no fitting colour, it is rolled freely; those colours, harmony hues for extras and colours moved by a hue lock carry origin 'rolled'. Stateless: nothing is saved. Use the roles in code; scale names are not stable.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "brand": {
+          "description": "Brand colour. A hex string stays exactly as given; { hex, lock: 'hue' } keeps it too, and the generator keeps only its hue when the owner rolls again. Omit to roll one.",
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "object",
+              "properties": {
+                "hex": {
+                  "type": "string"
+                },
+                "lock": {
+                  "type": "string",
+                  "enum": [
+                    "hue",
+                    "exact"
+                  ]
+                }
+              },
+              "required": [
+                "hex"
+              ]
+            }
+          ]
+        },
+        "neutral": {
+          "description": "Neutral (greys for surfaces, text, borders), same form as brand. Omit to roll one from the grey colours in the pool (freely, with a hint of the brand's hue, when it has none).",
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "object",
+              "properties": {
+                "hex": {
+                  "type": "string"
+                },
+                "lock": {
+                  "type": "string",
+                  "enum": [
+                    "hue",
+                    "exact"
+                  ]
+                }
+              },
+              "required": [
+                "hex"
+              ]
+            }
+          ]
+        },
+        "extras": {
+          "description": "0-5 extra colours for charts, tags and illustrations, same form as brand, optionally with a scale `name` (lowercase letters and '-'). Without a name it is suggested from the nearest Tailwind colour ('teal'). Extras get a scale, no role.",
+          "maxItems": 5,
+          "type": "array",
+          "items": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "hex": {
+                    "type": "string"
+                  },
+                  "lock": {
+                    "type": "string",
+                    "enum": [
+                      "hue",
+                      "exact"
+                    ]
+                  },
+                  "name": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "hex"
+                ]
+              }
+            ]
+          }
+        },
+        "primary": {
+          "description": "'vivid' (default): primary keeps the brand's hue, darkened just enough for white text at 4.5:1. 'hold': primary is the brand colour as is; the text on it adapts.",
+          "type": "string",
+          "enum": [
+            "vivid",
+            "hold"
+          ]
+        },
+        "seed": {
+          "description": "Seed for the colours that are rolled. Pass the returned seed with the same pool to ask for the same roll again.",
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 4294967295
+        },
+        "references": {
+          "description": "Roll missing colours from these references' palettes only (slugs from search_screens or recommend). Takes precedence over `project`.",
+          "maxItems": 50,
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "project": {
+          "description": "Roll missing colours from the palettes of the references carrying this owner tag, e.g. 'harbor'. Without `references` and `project`, all approved references form the pool.",
+          "type": "string"
+        }
+      }
+    },
+    "annotations": {
+      "readOnlyHint": true,
+      "destructiveHint": false,
+      "idempotentHint": true,
+      "openWorldHint": false
+    },
+    "execution": {
+      "taskSupport": "forbidden"
+    }
+  },
+  "get_brand_kit": {
+    "description": "One of the owner's approved Brand Kits, by `slug` or as the approved kit of a `project`, always complete and as saved, nothing recomputed: 11 shadcn roles (hex, oklch(), derivation, WCAG 2 contrast to their counterpart), the scales (`anchorStep` holding the source colour, 11 steps 50-950 as hex), the stored contrast warnings, the source colours with their origin (a reference by slug and title for get_screen; `deleted: true` when the owner deleted it), the owner's `notes` and brand-specific Markdown `designBriefing` verbatim and `css`, the kit's CSS export (:root, a .dark block with dark roles read from the stored scales under the same names, and Tailwind v4 @theme inline). Use the roles in code; scale names are not stable.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "slug": {
+          "description": "Kit slug from list_brand_kits. Takes precedence over `project`.",
+          "type": "string"
+        },
+        "project": {
+          "description": "The owner tag of a project, e.g. 'harbor': returns the kit approved for it.",
+          "type": "string"
+        }
+      }
+    },
+    "annotations": {
+      "readOnlyHint": true,
+      "destructiveHint": false,
+      "idempotentHint": true,
+      "openWorldHint": false
+    },
+    "execution": {
+      "taskSupport": "forbidden"
+    }
+  },
+  "get_collection": {
+    "description": "Fetch one of the owner's collections by slug: description, project tag and its references in the owner's order.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "slug": {
+          "description": "Collection slug, e.g. 'editorial-layouts'",
+          "type": "string"
+        },
+        "detail": {
+          "description": "'standard' (default): northstar, palette, fonts, axes, macro and tags per row, plus the fold-by-fold autopsy on the top 3. 'full': the autopsy on every row (~300 tokens each; only if you will read them all). 'concise': northstar, palette, fonts. Text profile defaults to concise.",
+          "type": "string",
+          "enum": [
+            "concise",
+            "standard",
+            "full"
+          ]
+        },
+        "maxTokens": {
+          "description": "Approximate token ceiling for this response. Trims lower-ranked results and thumbnails; the top result and all URLs survive.",
+          "type": "integer",
+          "minimum": 300,
+          "maximum": 200000
+        }
+      },
+      "required": [
+        "slug"
+      ]
+    },
+    "annotations": {
+      "readOnlyHint": true,
+      "destructiveHint": false,
+      "idempotentHint": true,
+      "openWorldHint": false
+    },
+    "execution": {
+      "taskSupport": "forbidden"
+    }
+  },
+  "get_design_system": {
+    "description": "The DESIGN.md for one reference: fonts, palette, CSS variables, type ramp and scales as stored, each value with its provenance; missing sections were not measured. Only with `live: true` it also reads the source page now, through the URL guard, and appends what that shows.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "slug": {
+          "description": "Screen slug, e.g. 'linear-app'. Use search_screens or find_similar first to discover slugs.",
+          "type": "string"
+        },
+        "live": {
+          "description": "Default false: stored values only, no network. true: also read the reference's source page now (through the URL guard; pattern-matched, not stored) and append it.",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "slug"
+      ]
+    },
+    "annotations": {
+      "readOnlyHint": true,
+      "destructiveHint": false,
+      "idempotentHint": true,
+      "openWorldHint": true
+    },
+    "execution": {
+      "taskSupport": "forbidden"
+    }
+  },
+  "get_filters": {
+    "description": "Every value the filters accept: styles, industries, macrostructures, modes, vibes, colors, page types, component types. Zero input. Call it when unsure - an out-of-vocabulary value errors.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {}
+    },
+    "annotations": {
+      "readOnlyHint": true,
+      "destructiveHint": false,
+      "idempotentHint": true,
+      "openWorldHint": false
+    },
+    "execution": {
+      "taskSupport": "forbidden"
+    }
+  },
+  "get_reference_jsx": {
+    "description": "The full JSX source of one of the owner's code templates, including the header stamp naming its macrostructure / theme / states. None are maintained yet; the call says so.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "type": {
+          "description": "Component category",
+          "type": "string",
+          "enum": [
+            "hero",
+            "pricing",
+            "features",
+            "cta",
+            "nav",
+            "footer",
+            "testimonial",
+            "logo-cloud",
+            "faq",
+            "stat"
+          ]
+        },
+        "id": {
+          "description": "Reference id within that type (e.g. 'marquee', 'three-card').",
+          "type": "string"
+        }
+      },
+      "required": [
+        "type",
+        "id"
+      ]
+    },
+    "annotations": {
+      "readOnlyHint": true,
+      "destructiveHint": false,
+      "idempotentHint": true,
+      "openWorldHint": false
+    },
+    "execution": {
+      "taskSupport": "forbidden"
+    }
+  },
+  "get_screen": {
+    "description": "Fetch the full record for one screen by slug - every viewport variant, palette, fonts, tech stack, designer credit, and `provenance`: where each design value comes from.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "slug": {
+          "description": "Screen slug, e.g. 'atelier-mira'",
+          "type": "string"
+        }
+      },
+      "required": [
+        "slug"
+      ]
+    },
+    "annotations": {
+      "readOnlyHint": true,
+      "destructiveHint": false,
+      "idempotentHint": true,
+      "openWorldHint": false
+    },
+    "execution": {
+      "taskSupport": "forbidden"
+    }
+  },
+  "get_site_pages": {
+    "description": "A website's pages in the library as an ordered flow (landing → pricing → features → ...), grouped by host, with titles, northstars and thumbnails - how a real product sequences its pages. No arguments returns the directory of websites with more than one page. Accepts any page's slug.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "siteSlug": {
+          "description": "Site slug (e.g. 'linear-app') or any screen slug from that site. Omit to list flow-capable sites instead.",
+          "type": "string"
+        },
+        "limit": {
+          "description": "Directory mode only: max sites to list.",
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 50
+        },
+        "maxTokens": {
+          "description": "Approximate token ceiling for this response. Trims lower-ranked results and thumbnails; the top result and all URLs survive.",
+          "type": "integer",
+          "minimum": 300,
+          "maximum": 200000
+        }
+      }
+    },
+    "annotations": {
+      "readOnlyHint": true,
+      "destructiveHint": false,
+      "idempotentHint": true,
+      "openWorldHint": false
+    },
+    "execution": {
+      "taskSupport": "forbidden"
+    }
+  },
+  "list_brand_kits": {
+    "description": "Lists the owner's approved Brand Kits: per kit name, slug, project (an owner tag, or null), the brand colour and `primary`, the hex of the primary role. Drafts and archived kits are never listed. get_brand_kit(slug) for roles, scales, CSS, the owner's notes and the Markdown design briefing.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "project": {
+          "description": "Only the kit approved for this project (an owner tag such as 'harbor'); a project has at most one.",
+          "type": "string"
+        }
+      }
+    },
+    "annotations": {
+      "readOnlyHint": true,
+      "destructiveHint": false,
+      "idempotentHint": true,
+      "openWorldHint": false
+    },
+    "execution": {
+      "taskSupport": "forbidden"
+    }
+  },
+  "list_collections": {
+    "description": "List the owner's collections: references bundled around a theme or project, with description, project tag and count. Use this for thematic browsing, then get_collection or search_screens({collection}).",
+    "inputSchema": {
+      "type": "object",
+      "properties": {}
+    },
+    "annotations": {
+      "readOnlyHint": true,
+      "destructiveHint": false,
+      "idempotentHint": true,
+      "openWorldHint": false
+    },
+    "execution": {
+      "taskSupport": "forbidden"
+    }
+  },
+  "recommend": {
+    "description": "Start here for a brief. Returns the owner's own references that fit it, best first (favourites and matches in the owner's notes rank higher): per hit the owner's notes verbatim in `taste` (take, avoid, focus), the page structure, palette and fonts. `collection` and `project` are hard filters, like the others; with fewer than 3 hits a `gap` message says so instead of loosening them. No LLM call.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "brief": {
+          "description": "The user's design brief in plain English. E.g. 'calm meditation app', 'dark dev-tool that helps teams ship faster'.",
+          "type": "string",
+          "minLength": 2
+        },
+        "collection": {
+          "description": "Hard filter: only references in this collection (slug from list_collections).",
+          "type": "string"
+        },
+        "project": {
+          "description": "Hard filter: only references carrying this owner tag, e.g. a project such as 'sample-project'.",
+          "type": "string"
+        },
+        "macrostructure": {
+          "description": "Optional hard filter: only references with this macrostructure.",
+          "type": "string",
+          "enum": [
+            "bento-grid",
+            "long-document",
+            "marquee-hero",
+            "stat-led",
+            "conversational-faq",
+            "manifesto",
+            "photographic",
+            "specimen",
+            "catalogue",
+            "letter",
+            "index-first",
+            "narrative-workflow",
+            "split-studio",
+            "feature-stack",
+            "type-specimen",
+            "portfolio-grid",
+            "map-diagram",
+            "ecosystem-index",
+            "component-playground"
+          ]
+        },
+        "pageType": {
+          "description": "Optional: 'landing', 'pricing', 'features', etc.",
+          "type": "string",
+          "enum": [
+            "landing",
+            "pricing",
+            "features",
+            "auth",
+            "about",
+            "blog",
+            "changelog",
+            "docs",
+            "other"
+          ]
+        },
+        "mode": {
+          "description": "Optional: 'light' or 'dark'.",
+          "type": "string",
+          "enum": [
+            "light",
+            "dark"
+          ]
+        },
+        "vibe": {
+          "description": "Optional vibe filter.",
+          "type": "string",
+          "enum": [
+            "calm",
+            "loud",
+            "playful",
+            "serious",
+            "luxe",
+            "raw",
+            "soft",
+            "technical",
+            "warm",
+            "cold"
+          ]
+        },
+        "color": {
+          "description": "Optional colour word.",
+          "type": "string",
+          "enum": [
+            "warm",
+            "cool",
+            "monochrome",
+            "neon",
+            "earthy",
+            "pastel",
+            "saturated",
+            "muted",
+            "high-contrast"
+          ]
+        },
+        "device": {
+          "description": "'mobile' restricts to sites with a 375px capture pair or a mobile app screen and inlines the mobile thumbnail. Default: desktop.",
+          "type": "string",
+          "enum": [
+            "desktop",
+            "mobile"
+          ]
+        },
+        "limit": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 12
+        },
+        "detail": {
+          "description": "'standard' (default): northstar, palette, fonts, axes, macro and tags per row, plus the fold-by-fold autopsy on the top 3. 'full': the autopsy on every row (~300 tokens each; only if you will read them all). 'concise': northstar, palette, fonts. Text profile defaults to concise.",
+          "type": "string",
+          "enum": [
+            "concise",
+            "standard",
+            "full"
+          ]
+        },
+        "maxTokens": {
+          "description": "Approximate token ceiling for this response. Trims lower-ranked results and thumbnails; the top result and all URLs survive.",
+          "type": "integer",
+          "minimum": 300,
+          "maximum": 200000
+        }
+      },
+      "required": [
+        "brief"
+      ]
+    },
+    "annotations": {
+      "readOnlyHint": true,
+      "destructiveHint": false,
+      "idempotentHint": true,
+      "openWorldHint": false
+    },
+    "execution": {
+      "taskSupport": "forbidden"
+    }
+  },
+  "search_screens": {
+    "description": "Search the archive of real website screenshots. Returns screens with palette, fonts, components and image URLs.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "query": {
+          "description": "Natural-language description of what you're looking for. e.g. 'minimalist editorial agency portfolio'",
+          "type": "string"
+        },
+        "style": {
+          "description": "Filter to one visual style (e.g. 'minimalism', 'editorial')",
+          "type": "string",
+          "enum": [
+            "minimalism",
+            "editorial",
+            "brutalism",
+            "glassmorphism",
+            "swiss",
+            "maximalism",
+            "playful",
+            "dark-mode",
+            "monochrome",
+            "vintage",
+            "futurist"
+          ]
+        },
+        "industry": {
+          "description": "Filter to one industry (e.g. 'saas', 'fintech', 'portfolio')",
+          "type": "string",
+          "enum": [
+            "agency",
+            "ai",
+            "architecture",
+            "automotive",
+            "consumer-tech",
+            "creator",
+            "crypto",
+            "culture",
+            "developer-tools",
+            "ecommerce",
+            "education",
+            "fashion",
+            "fintech",
+            "food-beverage",
+            "furniture",
+            "gaming",
+            "health",
+            "media",
+            "music",
+            "non-profit",
+            "portfolio",
+            "saas",
+            "travel",
+            "type-foundry"
+          ]
+        },
+        "macrostructure": {
+          "description": "Filter to a macrostructure (e.g. 'bento-grid')",
+          "type": "string",
+          "enum": [
+            "bento-grid",
+            "long-document",
+            "marquee-hero",
+            "stat-led",
+            "conversational-faq",
+            "manifesto",
+            "photographic",
+            "specimen",
+            "catalogue",
+            "letter",
+            "index-first",
+            "narrative-workflow",
+            "split-studio",
+            "feature-stack",
+            "type-specimen",
+            "portfolio-grid",
+            "map-diagram",
+            "ecosystem-index",
+            "component-playground"
+          ]
+        },
+        "mode": {
+          "description": "light or dark",
+          "type": "string",
+          "enum": [
+            "light",
+            "dark"
+          ]
+        },
+        "vibe": {
+          "description": "Mood / vibe - 'calm', 'loud', 'luxe', 'technical', 'soft', etc.",
+          "type": "string",
+          "enum": [
+            "calm",
+            "loud",
+            "playful",
+            "serious",
+            "luxe",
+            "raw",
+            "soft",
+            "technical",
+            "warm",
+            "cold"
+          ]
+        },
+        "color": {
+          "description": "Color word - 'warm', 'cool', 'monochrome', 'neon', 'earthy'",
+          "type": "string",
+          "enum": [
+            "warm",
+            "cool",
+            "monochrome",
+            "neon",
+            "earthy",
+            "pastel",
+            "saturated",
+            "muted",
+            "high-contrast"
+          ]
+        },
+        "pageType": {
+          "description": "Filter to a page kind: 'landing' (default homepages), 'pricing', 'features', 'auth', 'about', 'blog', 'changelog', 'docs', 'other'",
+          "type": "string",
+          "enum": [
+            "landing",
+            "pricing",
+            "features",
+            "auth",
+            "about",
+            "blog",
+            "changelog",
+            "docs",
+            "other"
+          ]
+        },
+        "paperBand": {
+          "description": "Surface lightness, measured from the capture: 'dark' (<30% L), 'mid' (30-85%), 'light' (>85%). More reliable than `mode`, which is tagged and disagrees with the measurement on ~15% of rows.",
+          "type": "string",
+          "enum": [
+            "dark",
+            "mid",
+            "light"
+          ]
+        },
+        "displayClass": {
+          "description": "Construction of the display face: 'grotesk-sans', 'geometric-sans', 'roman-serif', 'mono', 'display-condensed-bold', etc.",
+          "type": "string",
+          "enum": [
+            "grotesk-sans",
+            "geometric-sans",
+            "roman-serif",
+            "italic-serif",
+            "slab-serif",
+            "mono",
+            "display-condensed-bold",
+            "display-heavy",
+            "system-native",
+            "handwritten"
+          ]
+        },
+        "accentHue": {
+          "description": "Accent temperature: 'warm' (10-60°), 'cool' (200-300°), 'neutral' (unsaturated), 'chromatic-other' (greens, magentas, everything else).",
+          "type": "string",
+          "enum": [
+            "warm",
+            "cool",
+            "neutral",
+            "chromatic-other"
+          ]
+        },
+        "collection": {
+          "description": "Hard filter: only references in this collection (slug from list_collections).",
+          "type": "string"
+        },
+        "project": {
+          "description": "Hard filter: only references carrying this owner tag, e.g. a project such as 'sample-project'.",
+          "type": "string"
+        },
+        "device": {
+          "description": "'mobile' restricts to sites with a 375px capture pair or a mobile app screen and inlines the mobile thumbnail. Default: desktop.",
+          "type": "string",
+          "enum": [
+            "desktop",
+            "mobile"
+          ]
+        },
+        "limit": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 20
+        },
+        "detail": {
+          "description": "'standard' (default): northstar, palette, fonts, axes, macro and tags per row, plus the fold-by-fold autopsy on the top 3. 'full': the autopsy on every row (~300 tokens each; only if you will read them all). 'concise': northstar, palette, fonts. Text profile defaults to concise.",
+          "type": "string",
+          "enum": [
+            "concise",
+            "standard",
+            "full"
+          ]
+        },
+        "maxTokens": {
+          "description": "Approximate token ceiling for this response. Trims lower-ranked results and thumbnails; the top result and all URLs survive.",
+          "type": "integer",
+          "minimum": 300,
+          "maximum": 200000
+        }
+      }
+    },
+    "annotations": {
+      "readOnlyHint": true,
+      "destructiveHint": false,
+      "idempotentHint": true,
+      "openWorldHint": false
+    },
+    "execution": {
+      "taskSupport": "forbidden"
+    }
+  }
+}

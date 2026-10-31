@@ -1,0 +1,19 @@
+{
+  "name": "@m3-inspo/worker",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "start": "node --env-file-if-exists=../../.env src/main.ts",
+    "typecheck": "tsc -p tsconfig.json",
+    "playwright:install": "playwright install chromium"
+  },
+  "dependencies": {
+    "@m3-inspo/shared": "workspace:*",
+    "@m3-inspo/taxonomy": "workspace:*",
+    "playwright": "1.63.0",
+    "sharp": "^0.35.4",
+    "zod": "^4.6.5"
+  },
+  "license": "MIT"
+}

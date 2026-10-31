@@ -1,0 +1,16 @@
+# Build context rules for apps/worker/Dockerfile only (BuildKit reads <Dockerfile>.dockerignore).
+# A root .dockerignore would also apply to the web app's Railpack build and hide apps/web.
+# Only what the worker image copies is needed; keep secrets and bulk out of the build context.
+**/node_modules
+**/.output
+**/.vite*
+**/.tanstack
+**/*.test.ts
+.git
+.env*
+.claude
+.private
+.storage
+docs
+apps/web
+captures

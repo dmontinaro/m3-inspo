@@ -1,0 +1,27 @@
+
+@import "tailwindcss";
+/* Mona Sans, self-hosted via Fontsource: no request to a third-party font CDN.
+   It is the only typeface: mono text (tokens) uses it too. */
+@import "@fontsource-variable/mona-sans";
+
+@theme {
+  --font-sans: "Mona Sans Variable", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "Mona Sans Variable", ui-sans-serif, system-ui, sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#app {
+  min-height: 100%;
+}
+
+body {
+  margin: 0;
+  /* The app frame's color, also below it when an open menu makes the page taller. */
+  background: var(--color-stone-50);
+}
+
