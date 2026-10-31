@@ -75,15 +75,15 @@ describe("uploading with source and tags", () => {
     });
   });
 
-  it("turns away a source that is no web address and tags with other characters, with German reasons", async () => {
+  it("turns away invalid sources and tags with English reasons by default", async () => {
     await expect(uploadScreenshot(app, browser, "Ungültige Quelle", { sourceUrl: "javascript:alert(1)" })).rejects.toThrow(
-      "Bitte gib eine vollständige Adresse ein, die mit https:// oder http:// beginnt.",
+      "Enter a complete address starting with https:// or http://.",
     );
     await expect(uploadScreenshot(app, browser, "Ungültiger Tag", { tags: ["<b>"] })).rejects.toThrow(
-      "Tags dürfen nur Buchstaben, Ziffern, Leerzeichen, - und _ enthalten.",
+      "Tags may contain letters, numbers, spaces, hyphens and underscores only.",
     );
     await expect(uploadScreenshot(app, browser, "Zu viele Tags", { tags: [...Array(21).keys()].map(String) })).rejects.toThrow(
-      "Höchstens 20 Tags.",
+      "Use at most 20 tags.",
     );
   });
 });
@@ -99,12 +99,12 @@ describe("editing tags", () => {
     expect((await getReferenceBySlug(slug)).tags).toEqual([]);
   });
 
-  it("answers a German message for invalid tags", async () => {
+  it("answers an English message for invalid tags by default", async () => {
     const slug = await uploadScreenshot(app, browser, "Pension Talblick");
 
     expect(await saveTags(slug, "Pension Talblick", ["x".repeat(41)])).toEqual({
       ok: false,
-      errors: { tags: ["Ein Tag ist zu lang (höchstens 40 Zeichen)."] },
+      errors: { tags: ["Use at most 40 characters per tag."] },
     });
   });
 });

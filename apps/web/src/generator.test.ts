@@ -89,9 +89,9 @@ describe("/generator", () => {
     const response = await browser.get(`/generator?brand=zz9&neutral=8a7a72@gone-ref&pool=collection:weg-${run}&seed=5`);
     expect(response.status).toBe(200);
     const html = await response.text();
-    expect(html).toContain("Marke „zz9“ nicht lesbar");
-    expect(html).toContain("Referenz „gone-ref“ unbekannt");
-    expect(html).toContain(`Pool „collection:weg-${run}“ unbekannt`);
+    expect(html).toContain("Could not read Brand &quot;zz9&quot;. Rolled again.");
+    expect(html).toContain("Reference gone-ref is unknown. Colour kept.");
+    expect(html).toContain(`Pool collection:weg-${run} is unknown.`);
   });
 
   it("gives a link without a seed one, so the start roll is the same on server and client", async () => {
