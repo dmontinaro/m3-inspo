@@ -15,3 +15,7 @@ captures
 
 # Local private material and preparation artifacts; never distribute.
 .private/
+
+# Compiled translations and local inlang cache
+apps/web/src/paraglide/
+apps/web/project.inlang/cache/

@@ -1,3 +1,4 @@
+import { paraglideVitePlugin } from "@inlang/paraglide-js";
 import { defineConfig } from "vite";
 import { tanstackStart } from "@tanstack/react-start/plugin/vite";
 import viteReact from "@vitejs/plugin-react";
@@ -13,6 +14,7 @@ export default defineConfig(({ mode }) => ({
   plugins: [
     mode !== "test" && nitro({ plugins: ["./src/server/job-runner.plugin.ts"] }),
     tailwindcss(),
+    paraglideVitePlugin({ project: "./project.inlang" }),
     tanstackStart(),
     viteReact(),
   ],
