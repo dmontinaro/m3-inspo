@@ -94,6 +94,7 @@ export function SaveDialog({ draft, project, projects, onSaved, onCancel }: Prop
     >
       <form ref={languageForm.form} noValidate onSubmit={submit} className="flex flex-col gap-5 p-5 sm:p-6">
         <LanguageControl />
+        <fieldset disabled={pending} className="contents">
         <div className="flex items-center gap-3">
           <SwatchStack draft={draft} />
           <div>
@@ -162,7 +163,8 @@ export function SaveDialog({ draft, project, projects, onSaved, onCancel }: Prop
             {pending ? m.action_saving() : m.kit_create()}
           </button>
         </div>
-      </form>
+      </fieldset>
+        </form>
     </dialog>
   );
 }

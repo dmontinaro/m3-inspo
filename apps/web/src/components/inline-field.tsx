@@ -75,6 +75,7 @@ export function InlineField({ slug, name, editLabel, value, emptyText = m.field_
     const errorId = error ? `${id}-error` : undefined;
     return (
       <form ref={languageForm.form} noValidate onSubmit={submit} onKeyDown={handleKeys} className="min-w-0">
+      <fieldset disabled={pending} className="contents">
         <input type="hidden" name="slug" value={slug} />
         {control({ id, errorId })}
         {error && (
@@ -98,6 +99,7 @@ export function InlineField({ slug, name, editLabel, value, emptyText = m.field_
           >
             {m.action_cancel()}</button>
         </div>
+      </fieldset>
       </form>
     );
   }

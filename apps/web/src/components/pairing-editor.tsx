@@ -93,7 +93,8 @@ export function PairingEditor({
         <PairingPosterHead name={name.trim() || generatedName || m.pairing_name_placeholder()} text={note.trim() || sampleTexts.body} roles={roles} />
       </section>
 
-      <form onSubmit={submit} className="mt-8">
+      <form noValidate onSubmit={submit} className="mt-8">
+      <fieldset disabled={pending} className="contents">
         <h2 className="text-xl font-semibold tracking-tight">{pairing ? m.pairing_edit() : m.pairing_new()}</h2>
 
         <div className="mt-4 grid gap-4 md:grid-cols-[minmax(0,1fr)_minmax(0,2fr)]">
@@ -187,6 +188,7 @@ export function PairingEditor({
             {pairing ? m.action_save() : m.pairing_keep()}
           </button>
         </div>
+      </fieldset>
       </form>
     </main>
   );

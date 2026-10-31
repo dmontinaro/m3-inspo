@@ -80,6 +80,7 @@ export function QuickAddSheet({ file, title, onTitleChange, onSave, onCancel }: 
 
         <div className="flex flex-col gap-5 p-5 sm:p-6">
         <LanguageControl />
+        <fieldset disabled={pending} className="contents">
           <h2 id="quick-add-heading" className="text-base font-semibold tracking-tight">
             {m.reference_new()}</h2>
 
@@ -170,6 +171,7 @@ export function QuickAddSheet({ file, title, onTitleChange, onSave, onCancel }: 
               {m.action_discard()}</button>
             <span className="ml-auto text-xs text-neutral-400 max-sm:hidden">{m.shortcut_save()}</span>
           </div>
+        </fieldset>
         </div>
       </form>
     </dialog>

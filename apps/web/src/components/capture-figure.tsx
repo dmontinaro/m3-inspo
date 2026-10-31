@@ -448,6 +448,7 @@ function RegionForm({
       noValidate
       className={region ? "space-y-4" : "mt-4 space-y-4 rounded-lg bg-white p-4 ring-1 ring-neutral-200"}
     >
+      <fieldset disabled={pending} className="contents">
       <p className="text-sm font-semibold text-neutral-900">{heading}</p>
       <fieldset>
         <legend className="text-sm font-medium text-neutral-800">{m.region_component_type()}</legend>
@@ -499,6 +500,7 @@ function RegionForm({
           {m.action_cancel()}</button>
         <span className="ml-auto text-xs text-neutral-400 max-sm:hidden">{m.shortcut_save()}</span>
       </div>
+    </fieldset>
     </form>
   );
 }

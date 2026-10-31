@@ -58,8 +58,7 @@ export function ReferenceColors({ references, colors, source, onTake }: Props) {
               >
                 {reference.thumbUrl && <img src={reference.thumbUrl} alt="" loading="lazy" className="size-full object-cover object-top" />}
                 <span className="absolute right-0.5 bottom-0.5 grid size-5 place-items-center rounded bg-white/90 text-neutral-800 shadow-sm transition-colors group-hover:bg-neutral-900 group-hover:text-white">
-                  <LanguageControl />
-          <Pipette aria-hidden className="size-3" strokeWidth={2} />
+                  <Pipette aria-hidden className="size-3" strokeWidth={2} />
                 </span>
               </button>
               <div className="min-w-0 flex-1">

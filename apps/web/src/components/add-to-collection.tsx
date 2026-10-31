@@ -113,6 +113,7 @@ export function AddToCollection({
           <div className="mx-2.5 my-1.5 border-t border-neutral-100" />
           {creating ? (
             <form ref={languageForm.form} noValidate onSubmit={create} className="flex gap-1.5 p-1">
+      <fieldset disabled={pending} className="contents">
               <label className="sr-only" htmlFor="new-collection-name">
                 {m.collection_new_name()}</label>
               <input
@@ -130,7 +131,8 @@ export function AddToCollection({
                 className="shrink-0 rounded-md bg-neutral-900 px-3 py-1.5 text-sm font-medium text-white hover:bg-neutral-700 disabled:opacity-60"
               >
                 {m.action_create()}</button>
-            </form>
+            </fieldset>
+      </form>
           ) : (
             <button
               type="button"

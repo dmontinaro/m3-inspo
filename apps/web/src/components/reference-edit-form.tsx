@@ -72,6 +72,7 @@ export function ReferenceEditForm({ reference, onSaved, onCancel }: ReferenceEdi
 
   return (
     <form ref={languageForm.form} noValidate onSubmit={submit} onKeyDown={handleKeys} className="space-y-5">
+      <fieldset disabled={pending} className="contents">
       <input type="hidden" name="slug" value={reference.slug} />
 
       <Field id="edit-title" label={m.field_title()} error={errors.title}>
@@ -197,7 +198,8 @@ export function ReferenceEditForm({ reference, onSaved, onCancel }: ReferenceEdi
           {m.action_cancel()}</button>
         <span className="ml-auto text-xs text-neutral-400 max-sm:hidden">{m.shortcut_save()}</span>
       </div>
-    </form>
+    </fieldset>
+      </form>
   );
 }
 

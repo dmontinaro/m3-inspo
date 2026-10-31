@@ -104,6 +104,7 @@ function CreateTokenForm({ onCreated }: { onCreated: (token: NewToken) => Promis
 
   return (
     <form ref={languageForm.form} noValidate onSubmit={submit} className="mt-6 rounded-lg border border-neutral-200 bg-white p-4 sm:p-5">
+      <fieldset disabled={pending} className="contents">
       <div className="grid gap-4 sm:grid-cols-[minmax(0,1fr)_10rem_auto] sm:items-end">
         <div>
           <label htmlFor="name" className="text-sm font-medium text-neutral-900">
@@ -141,7 +142,8 @@ function CreateTokenForm({ onCreated }: { onCreated: (token: NewToken) => Promis
           {error}
         </p>
       )}
-    </form>
+    </fieldset>
+      </form>
   );
 }
 

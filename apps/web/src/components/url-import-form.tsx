@@ -57,6 +57,7 @@ export function UrlImportForm() {
 
   return (
     <form ref={languageForm.form} noValidate onSubmit={submit} className="mt-4 grid gap-4 rounded-lg border border-neutral-200 bg-white p-4 sm:grid-cols-2 sm:p-5">
+      <fieldset disabled={pending} className="contents">
       <div className="sm:col-span-2">
         <label htmlFor="import-url" className="text-sm font-medium">
           {m.field_address()}</label>
@@ -168,6 +169,7 @@ export function UrlImportForm() {
           <p className="text-sm text-neutral-500">{m.import_creates_draft()}</p>
         )}
       </div>
-    </form>
+    </fieldset>
+      </form>
   );
 }

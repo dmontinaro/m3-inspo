@@ -61,6 +61,7 @@ export function CollectionForm({
 
   return (
     <form ref={languageForm.form} noValidate onSubmit={submit} className="rounded-xl border border-neutral-200 bg-white p-4 sm:p-5">
+      <fieldset disabled={pending} className="contents">
       <div className="grid gap-4 sm:grid-cols-[minmax(0,1fr)_14rem]">
         <div>
           <label htmlFor={`${id}-name`} className="text-sm font-medium text-neutral-900">
@@ -132,6 +133,7 @@ export function CollectionForm({
           {collection ? m.action_save() : m.collection_create()}
         </button>
       </div>
-    </form>
+    </fieldset>
+      </form>
   );
 }
