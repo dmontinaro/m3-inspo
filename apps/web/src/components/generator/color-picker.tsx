@@ -1,3 +1,6 @@
+import { formatNumber } from "#/lib/format";
+import { useLanguageGuard } from "#/components/language-control";
+import * as m from "#/paraglide/messages.js";
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { RotateCcw } from "lucide-react";
 import { formatOklch, hexToOklch, normalizeHex, oklchToHex } from "@m3-inspo/shared";
@@ -26,14 +29,14 @@ const newGesture = () => ++lastGesture;
 const locks: Lock[] = ["open", "hue", "exact"];
 
 const nameProblems = {
-  invalid: "Nur Kleinbuchstaben, Wörter mit „-“ verbunden",
-  reserved: "Dieser Name ist reserviert",
-  taken: "Diesen Namen trägt schon eine andere Farbe",
+  get invalid() { return m.color_name_format(); },
+  get reserved() { return m.color_name_reserved(); },
+  get taken() { return m.color_name_duplicate(); },
 };
 
 const modes = [
-  { value: "adjust", label: "Anpassen" },
-  { value: "reference", label: "Aus Referenz" },
+  { value: "adjust", get label() { return m.color_adjust(); } },
+  { value: "reference", get label() { return m.color_from_reference(); } },
 ] as const;
 
 /**
@@ -71,6 +74,7 @@ export function ColorPicker({ draft, sourceKey, opener, pool, apply, onClose }: 
   const [lch, setLch] = useState<OkLch>(() => hexToOklch(source.hex)!);
   const [shownHex, setShownHex] = useState(source.hex);
   const [hexDraft, setHexDraft] = useState(source.hex.slice(1));
+  useLanguageGuard({ dirty: normalizeHex(hexDraft.trim()) !== source.hex });
   if (source.hex !== shownHex) {
     // Changed from outside the sliders ("Wie vorher", the hex field): follow it.
     setShownHex(source.hex);
@@ -121,7 +125,7 @@ export function ColorPicker({ draft, sourceKey, opener, pool, apply, onClose }: 
     <div
       ref={container}
       role="dialog"
-      aria-label={`${sourceLabel(draft.sources, sourceKey)} anpassen`}
+      aria-label={m.color_adjust_source({ name: sourceLabel(draft.sources, sourceKey) })}
       tabIndex={-1}
       style={{ left: Math.max(GAP, left), top, width: Math.min(WIDTH, window.innerWidth - 2 * GAP) }}
       className="fixed z-40 max-h-[calc(100dvh-16px)] space-y-4 overflow-y-auto overscroll-contain rounded-xl border border-neutral-200 bg-white p-4 text-sm text-neutral-900 shadow-xl shadow-black/15 outline-none"
@@ -137,7 +141,7 @@ export function ColorPicker({ draft, sourceKey, opener, pool, apply, onClose }: 
           <input
             value={hexDraft}
             onChange={(event) => typeHex(event.target.value)}
-            aria-label="Hex-Wert"
+            aria-label={m.color_hex()}
             spellCheck={false}
             maxLength={7}
             className="w-16 py-1 pl-0.5 text-sm uppercase tabular-nums outline-none"
@@ -145,7 +149,7 @@ export function ColorPicker({ draft, sourceKey, opener, pool, apply, onClose }: 
         </label>
       </div>
 
-      <div className="grid grid-cols-2 rounded-lg bg-neutral-100 p-0.5" role="group" aria-label="Farbe wählen">
+      <div className="grid grid-cols-2 rounded-lg bg-neutral-100 p-0.5" role="group" aria-label={m.color_choose()}>
         {modes.map(({ value, label }) => (
           <button
             key={value}
@@ -172,7 +176,7 @@ export function ColorPicker({ draft, sourceKey, opener, pool, apply, onClose }: 
         <>
           <div className="space-y-3" onPointerDown={startGesture} onKeyDown={startGesture}>
             <Slider
-              label="Farbton"
+              label={m.color_hue()}
               value={lch.h}
               max={360}
               step={1}
@@ -181,16 +185,16 @@ export function ColorPicker({ draft, sourceKey, opener, pool, apply, onClose }: 
               onChange={(h) => slide({ ...lch, h })}
             />
             <Slider
-              label="Sättigung"
+              label={m.color_saturation()}
               value={lch.C}
               max={MAX_SLIDER_CHROMA}
               step={0.001}
-              display={lch.C.toFixed(3).replace(".", ",")}
+              display={formatNumber(lch.C, { minimumFractionDigits: 3, maximumFractionDigits: 3 })}
               track={track((t) => ({ ...lch, C: t * MAX_SLIDER_CHROMA }))}
               onChange={(C) => slide({ ...lch, C })}
             />
             <Slider
-              label="Helligkeit"
+              label={m.color_lightness()}
               value={lch.L}
               max={1}
               step={0.005}
@@ -211,7 +215,7 @@ export function ColorPicker({ draft, sourceKey, opener, pool, apply, onClose }: 
       )}
 
       <div className="flex flex-wrap items-center justify-between gap-2 border-t border-neutral-100 pt-3">
-        <div className="flex rounded-lg bg-neutral-100 p-0.5" role="group" aria-label="Sperre">
+        <div className="flex rounded-lg bg-neutral-100 p-0.5" role="group" aria-label={m.color_lock()}>
           {locks.map((lock) => (
             <button
               key={lock}
@@ -235,11 +239,10 @@ export function ColorPicker({ draft, sourceKey, opener, pool, apply, onClose }: 
           className="ml-auto flex items-center gap-1 rounded-md px-2 py-1 text-xs whitespace-nowrap text-neutral-600 hover:bg-neutral-100 hover:text-neutral-900 disabled:pointer-events-none disabled:opacity-40"
         >
           <RotateCcw aria-hidden className="size-3" />
-          Wie vorher
-        </button>
+          {m.action_restore_previous()}</button>
       </div>
       {mode === "adjust" && (
-        <p className="text-xs leading-snug text-neutral-500">Eine angepasste Farbe wird exakt gesperrt, damit Würfeln sie behält.</p>
+        <p className="text-xs leading-snug text-neutral-500">{m.color_adjust_lock()}</p>
       )}
     </div>
   );
@@ -294,6 +297,7 @@ function ExtraName({ name, others, onRename }: { name: string; others: string[];
     }
   }
 
+  useLanguageGuard({ dirty: value.trim() !== name });
   function change(next: string) {
     setValue(next);
     const check = checkExtraName(next.trim(), others);
@@ -303,7 +307,7 @@ function ExtraName({ name, others, onRename }: { name: string; others: string[];
 
   return (
     <label className="block space-y-1.5">
-      <span className="text-xs text-neutral-500">Name der Skala</span>
+      <span className="text-xs text-neutral-500">{m.color_scale_name()}</span>
       <input
         value={value}
         onChange={(event) => change(event.target.value)}

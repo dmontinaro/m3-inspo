@@ -1,3 +1,5 @@
+import { useFormLanguageGuard } from "#/components/language-control";
+import * as m from "#/paraglide/messages.js";
 import { useEffect, useRef, useState } from "react";
 import type { FormEvent, KeyboardEvent, ReactNode } from "react";
 import type { ReferenceDevice } from "@m3-inspo/db/library-schema";
@@ -35,6 +37,7 @@ const noteClassName = `${fieldClassName} field-sizing-content min-h-24 leading-r
  * messages per field, shown under the field. Escape cancels, Ctrl/⌘+Enter saves.
  */
 export function ReferenceEditForm({ reference, onSaved, onCancel }: ReferenceEditFormProps) {
+  const languageForm = useFormLanguageGuard();
   const title = useRef<HTMLInputElement>(null);
   const [errors, setErrors] = useState<ReferenceEditErrors>({});
   const [failed, setFailed] = useState(false);
@@ -68,10 +71,10 @@ export function ReferenceEditForm({ reference, onSaved, onCancel }: ReferenceEdi
   }
 
   return (
-    <form onSubmit={submit} onKeyDown={handleKeys} noValidate className="space-y-5">
+    <form ref={languageForm.form} noValidate onSubmit={submit} onKeyDown={handleKeys} className="space-y-5">
       <input type="hidden" name="slug" value={reference.slug} />
 
-      <Field id="edit-title" label="Titel" error={errors.title}>
+      <Field id="edit-title" label={m.field_title()} error={errors.title}>
         <input
           ref={title}
           id="edit-title"
@@ -84,7 +87,7 @@ export function ReferenceEditForm({ reference, onSaved, onCancel }: ReferenceEdi
         />
       </Field>
 
-      <Field id="edit-focus" label="Fokus" error={errors.focus}>
+      <Field id="edit-focus" label={m.reference_focus()} error={errors.focus}>
         <select
           id="edit-focus"
           name="focus"
@@ -92,7 +95,7 @@ export function ReferenceEditForm({ reference, onSaved, onCancel }: ReferenceEdi
           className={fieldClassName}
           {...describedBy("edit-focus", errors.focus)}
         >
-          <option value="">Nicht festgelegt</option>
+          <option value="">{m.field_not_set()}</option>
           {focusAreas.map((area) => (
             <option key={area} value={area}>
               {focusLabels[area]}
@@ -101,7 +104,7 @@ export function ReferenceEditForm({ reference, onSaved, onCancel }: ReferenceEdi
         </select>
       </Field>
 
-      <Field id="edit-device" label="Format" error={errors.device}>
+      <Field id="edit-device" label={m.field_format()} error={errors.device}>
         <select
           id="edit-device"
           name="device"
@@ -117,35 +120,35 @@ export function ReferenceEditForm({ reference, onSaved, onCancel }: ReferenceEdi
         </select>
       </Field>
 
-      <Field id="edit-take" label="Übernehmen" error={errors.takeNote} dotClassName="bg-emerald-500">
+      <Field id="edit-take" label={m.reference_take()} error={errors.takeNote} dotClassName="bg-emerald-500">
         <textarea
           id="edit-take"
           name="takeNote"
           maxLength={maxNoteLength}
           defaultValue={reference.takeNote ?? ""}
-          placeholder="Was gefällt dir hier?"
+          placeholder={m.reference_take_placeholder()}
           className={noteClassName}
           {...describedBy("edit-take", errors.takeNote)}
         />
       </Field>
 
-      <Field id="edit-avoid" label="Vermeiden" error={errors.avoidNote} dotClassName="bg-rose-500">
+      <Field id="edit-avoid" label={m.reference_avoid()} error={errors.avoidNote} dotClassName="bg-rose-500">
         <textarea
           id="edit-avoid"
           name="avoidNote"
           maxLength={maxNoteLength}
           defaultValue={reference.avoidNote ?? ""}
-          placeholder="Was soll nicht übernommen werden?"
+          placeholder={m.reference_avoid_placeholder()}
           className={noteClassName}
           {...describedBy("edit-avoid", errors.avoidNote)}
         />
       </Field>
 
-      <Field id="edit-tags" label="Tags" error={errors.tags}>
+      <Field id="edit-tags" label={m.field_tags()} error={errors.tags}>
         <TagInput id="edit-tags" defaultTags={reference.tags} errorId={errors.tags ? "edit-tags-error" : undefined} />
       </Field>
 
-      <Field id="edit-source" label="Quelle" error={errors.sourceUrl}>
+      <Field id="edit-source" label={m.field_source()} error={errors.sourceUrl}>
         <input
           id="edit-source"
           name="sourceUrl"
@@ -159,13 +162,13 @@ export function ReferenceEditForm({ reference, onSaved, onCancel }: ReferenceEdi
         />
       </Field>
 
-      <Field id="edit-attribution" label="Urheberhinweis" error={errors.attribution}>
+      <Field id="edit-attribution" label={m.reference_attribution_label()} error={errors.attribution}>
         <input
           id="edit-attribution"
           name="attribution"
           maxLength={maxAttributionLength}
           defaultValue={reference.attribution ?? ""}
-          placeholder="z. B. Studio oder Agentur"
+          placeholder={m.attribution_placeholder()}
           className={fieldClassName}
           {...describedBy("edit-attribution", errors.attribution)}
         />
@@ -173,8 +176,7 @@ export function ReferenceEditForm({ reference, onSaved, onCancel }: ReferenceEdi
 
       {failed && (
         <p role="alert" className="rounded-md bg-rose-50 px-3 py-2 text-sm text-rose-800">
-          Die Änderungen konnten nicht gespeichert werden. Bitte versuche es noch einmal.
-        </p>
+          {m.reference_save_failed()}</p>
       )}
 
       <div className="flex items-center gap-3 pt-1">
@@ -184,7 +186,7 @@ export function ReferenceEditForm({ reference, onSaved, onCancel }: ReferenceEdi
           aria-keyshortcuts="Control+Enter Meta+Enter"
           className="rounded-md bg-neutral-900 px-4 py-2.5 text-sm font-medium text-white hover:bg-neutral-700 disabled:opacity-60"
         >
-          {pending ? "Wird gespeichert …" : "Speichern"}
+          {pending ? m.action_saving() : m.action_save()}
         </button>
         <button
           type="button"
@@ -192,9 +194,8 @@ export function ReferenceEditForm({ reference, onSaved, onCancel }: ReferenceEdi
           onClick={onCancel}
           className="rounded-md px-3 py-2.5 text-sm text-neutral-600 hover:text-neutral-900 disabled:opacity-60"
         >
-          Abbrechen
-        </button>
-        <span className="ml-auto text-xs text-neutral-400 max-sm:hidden">Strg / ⌘ + Enter</span>
+          {m.action_cancel()}</button>
+        <span className="ml-auto text-xs text-neutral-400 max-sm:hidden">{m.shortcut_save()}</span>
       </div>
     </form>
   );

@@ -1,3 +1,4 @@
+import * as m from "#/paraglide/messages.js";
 /**
  * A kit's lifecycle (#48): on its page the status switch under the title,
  * "Duplizieren" and "Endgültig löschen" at the end; in the list a delete
@@ -16,7 +17,7 @@ import { ProjectChip, statusDots } from "./parts";
 
 type Kit = Pick<Awaited<ReturnType<typeof getBrandKit>>, "slug" | "name" | "project" | "status" | "approvedInProject">;
 
-const failedMessage = "Das hat nicht geklappt. Bitte versuche es noch einmal.";
+
 
 /** Runs one change of the kit, then `done` with its answer; `failed` says the last one did not go through. */
 function useKitChange() {
@@ -39,7 +40,7 @@ function useKitChange() {
 }
 
 function deleteQuestion(name: string) {
-  return `„${name}“ endgültig löschen? Das Kit verschwindet mit seinen Hinweisen, die Referenzen bleiben. Das lässt sich nicht rückgängig machen.`;
+  return m.kit_delete_confirm({ name });
 }
 
 /**
@@ -63,8 +64,8 @@ export function KitDeleteButton({ kit }: { kit: Pick<Kit, "slug" | "name"> }) {
     <>
       <button
         type="button"
-        aria-label={`„${kit.name}“ löschen`}
-        title="Löschen"
+        aria-label={m.kit_delete_name({ name: kit.name })}
+        title={m.action_delete()}
         disabled={pending}
         onClick={remove}
         className="absolute top-2.5 right-2.5 rounded-md bg-white/90 p-1.5 text-neutral-500 opacity-0 shadow-sm ring-1 ring-black/5 group-hover/card:opacity-100 hover:bg-white hover:text-rose-700 focus-visible:opacity-100 disabled:opacity-60 [@media(hover:none)]:opacity-100"
@@ -73,7 +74,7 @@ export function KitDeleteButton({ kit }: { kit: Pick<Kit, "slug" | "name"> }) {
       </button>
       {failed && (
         <p role="alert" className="mt-1 text-xs text-rose-700">
-          {failedMessage}
+          {m.action_failed()}
         </p>
       )}
     </>
@@ -81,9 +82,9 @@ export function KitDeleteButton({ kit }: { kit: Pick<Kit, "slug" | "name"> }) {
 }
 
 function statusHint({ status, project }: Kit) {
-  if (status === "draft") return "Nur für dich sichtbar. Agenten sehen Entwürfe nicht.";
-  if (status === "archived") return "Für Agenten unsichtbar. Nicht gelöscht; „Entwurf“ holt es zurück.";
-  return project ? `Gilt für das Projekt ${project}. Agenten sehen es über MCP.` : "Agenten sehen es über MCP.";
+  if (status === "draft") return m.kit_draft_help();
+  if (status === "archived") return m.kit_archived_help();
+  return project ? m.kit_project_approved({ project }) : m.kit_approved_help();
 }
 
 /**
@@ -133,7 +134,7 @@ export function KitStatusControl({ kit }: { kit: Kit }) {
   return (
     <div className="relative mt-2">
       <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
-        <div role="group" aria-label="Status" className="flex rounded-lg bg-neutral-200/70 p-0.5 text-sm">
+        <div role="group" aria-label={m.field_status()} className="flex rounded-lg bg-neutral-200/70 p-0.5 text-sm">
           {brandKitStatuses.map((option) => (
             <button
               key={option}
@@ -154,14 +155,14 @@ export function KitStatusControl({ kit }: { kit: Kit }) {
       <p className="mt-1.5 text-xs text-neutral-500">{statusHint(kit)}</p>
       {failed && (
         <p role="alert" className="mt-2 text-xs text-rose-700">
-          {failedMessage}
+          {m.action_failed()}
         </p>
       )}
 
       {confirming && other && (
         <div
           role="dialog"
-          aria-label="Freigabe ersetzen"
+          aria-label={m.kit_replace_approval()}
           aria-describedby="kit-approve-question"
           onKeyDown={(event) => {
             if (event.key === "Escape" && !pending) cancel();
@@ -169,7 +170,7 @@ export function KitStatusControl({ kit }: { kit: Kit }) {
           className="absolute top-full left-0 z-20 mt-2 w-[min(36rem,calc(100vw-2.5rem))] rounded-lg bg-white p-4 text-sm shadow-lg shadow-black/10 ring-1 ring-neutral-200"
         >
           <p id="kit-approve-question" className="text-neutral-800">
-            Für {kit.project} ist schon „{other.name}“ freigegeben. Gibst du dieses Kit frei, wird „{other.name}“ wieder Entwurf.
+            {m.kit_replace_approval_help({ approved: other.name, project: kit.project ?? "" })}
           </p>
           <div className="mt-3 flex justify-end gap-2">
             <button
@@ -178,8 +179,7 @@ export function KitStatusControl({ kit }: { kit: Kit }) {
               onClick={cancel}
               className="rounded-md px-3 py-1.5 font-medium text-neutral-700 hover:bg-neutral-100 disabled:opacity-60"
             >
-              Abbrechen
-            </button>
+              {m.action_cancel()}</button>
             <button
               ref={confirmButton}
               type="button"
@@ -187,7 +187,7 @@ export function KitStatusControl({ kit }: { kit: Kit }) {
               onClick={() => save("approved")}
               className="rounded-md bg-neutral-900 px-3 py-1.5 font-medium text-white hover:bg-neutral-700 disabled:opacity-60"
             >
-              {pending ? "Gibt frei …" : "Dieses freigeben"}
+              {pending ? m.kit_approving() : m.kit_approve_this()}
             </button>
           </div>
         </div>
@@ -230,20 +230,18 @@ export function KitManageActions({ kit }: { kit: Kit }) {
           className="flex items-center gap-1.5 rounded-md border border-neutral-300 bg-white px-3.5 py-2 text-sm font-medium text-neutral-900 hover:bg-neutral-100 disabled:opacity-60"
         >
           <Copy aria-hidden className="size-4" strokeWidth={1.75} />
-          Duplizieren
-        </button>
+          {m.kit_duplicate()}</button>
         <button
           type="button"
           disabled={pending}
           onClick={remove}
           className="ml-auto rounded-md px-2.5 py-1.5 text-sm text-rose-700 hover:bg-rose-50 disabled:opacity-60"
         >
-          Endgültig löschen
-        </button>
+          {m.action_delete_permanently()}</button>
       </div>
       {failed && (
         <p role="alert" className="mt-4 rounded-md bg-rose-50 px-3 py-2 text-sm text-rose-800">
-          {failedMessage}
+          {m.action_failed()}
         </p>
       )}
     </div>

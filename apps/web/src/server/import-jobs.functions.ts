@@ -1,3 +1,5 @@
+import * as m from "#/paraglide/messages.js";
+import { webValidator } from "#/lib/validation";
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { listJobs, queueUrlImport, retryJob } from "./import-jobs.server";
@@ -12,7 +14,7 @@ import { listJobs, queueUrlImport, retryJob } from "./import-jobs.server";
  */
 export const createUrlImport = createServerFn({ method: "POST" })
   .validator((data: FormData) => {
-    if (!(data instanceof FormData)) throw new Error("Expected form data.");
+    if (!(data instanceof FormData)) throw new Error(m.validation_invalid_input());
     return data;
   })
   .handler(({ data }) => {
@@ -34,5 +36,5 @@ export const listImportJobs = createServerFn({ method: "GET" }).handler(() => li
 
 /** "Erneut versuchen": puts a failed job back into the queue. False if it is not failed (any more). */
 export const retryImportJob = createServerFn({ method: "POST" })
-  .validator(z.object({ id: z.uuid() }))
+  .validator(webValidator(z.object({ id: z.uuid() })))
   .handler(({ data }) => retryJob(data.id));

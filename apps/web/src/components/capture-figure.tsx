@@ -1,4 +1,7 @@
-import { useEffect, useRef, useState } from "react";
+import { formatNumber } from "#/lib/format";
+import { useFormLanguageGuard, useLanguageGuard } from "#/components/language-control";
+import * as m from "#/paraglide/messages.js";
+import { useCallback, useEffect, useRef, useState } from "react";
 import type { FormEvent, KeyboardEvent, PointerEvent, ReactNode } from "react";
 import { useRouter } from "@tanstack/react-router";
 import { Pencil, SquareDashedMousePointer, Trash2 } from "lucide-react";
@@ -17,13 +20,13 @@ type Rect = { x: number; y: number; width: number; height: number };
 
 /** What each capture shows, in the owner's words. Only captures that exist are listed. */
 const captureLabels: Partial<Record<string, string>> = {
-  "desktop/hero": "Desktop · Erster Blick",
-  "desktop/full": "Desktop · Ganze Seite",
-  "mobile/hero": "Mobil · Erster Blick",
-  "mobile/full": "Mobil · Ganze Seite",
+  get "desktop/hero"() { return m.capture_desktop_viewport(); },
+  get "desktop/full"() { return m.capture_desktop_full(); },
+  get "mobile/hero"() { return m.capture_mobile_viewport(); },
+  get "mobile/full"() { return m.capture_mobile_full(); },
 };
 
-const failedMessage = "Das hat nicht geklappt. Bitte versuche es noch einmal.";
+
 
 /**
  * One capture with what it shows and the regions marked on it: outlined on
@@ -51,6 +54,7 @@ export function CaptureFigure({
   const label = captureLabels[`${capture.viewport}/${capture.kind}`];
   const [marking, setMarking] = useState(false);
   const [draft, setDraft] = useState<Rect | null>(null);
+  useLanguageGuard({ dirty: draft !== null });
   const [drawing, setDrawing] = useState(false);
   const [editing, setEditing] = useState<string | null>(null);
   const [highlighted, setHighlighted] = useState<string | null>(null);
@@ -59,7 +63,7 @@ export function CaptureFigure({
   useEffect(() => {
     if (!marking) return;
     function onEscape(event: globalThis.KeyboardEvent) {
-      if (event.key !== "Escape") return;
+      if (event.key !== "Escape" || document.querySelector("dialog[data-language-warning][open]")) return;
       if (draft) setDraft(null);
       else setMarking(false);
     }
@@ -113,7 +117,7 @@ export function CaptureFigure({
   const image = (
     <img
       src={capture.preview.url}
-      alt={`${label ?? "Aufnahme"}: ${title}`}
+      alt={m.capture_description({ capture: label ?? m.capture_label(), title })}
       width={capture.preview.width}
       height={capture.preview.height}
       draggable={false}
@@ -162,12 +166,11 @@ export function CaptureFigure({
       <figcaption className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-2 text-xs text-neutral-500">
         <span className="min-w-0 flex-1">
           {label && <span className="font-medium text-neutral-700">{`${label} · `}</span>}
-          {`${capture.width} × ${capture.height} px · `}
+          {m.capture_dimensions({ width: formatNumber(capture.width), height: formatNumber(capture.height) }) + " · "}
           <a href={capture.originalUrl} target="_blank" rel="noreferrer" className="underline underline-offset-2 hover:text-neutral-900">
-            Original öffnen
-          </a>
+            {m.capture_open_original()}</a>
         </span>
-        {marking && !draft && <span className="text-neutral-600 max-md:hidden">Ziehe ein Rechteck über den Bereich.</span>}
+        {marking && !draft && <span className="text-neutral-600 max-md:hidden">{m.region_draw_help()}</span>}
         <button
           type="button"
           aria-pressed={marking}
@@ -179,13 +182,13 @@ export function CaptureFigure({
           className="flex items-center gap-1.5 rounded-full px-2.5 py-1 text-sm text-neutral-600 ring-1 ring-neutral-300 ring-inset hover:bg-neutral-100 hover:text-neutral-900 aria-pressed:bg-neutral-900 aria-pressed:text-white aria-pressed:ring-neutral-900 max-md:hidden"
         >
           <SquareDashedMousePointer aria-hidden className="size-3.5" strokeWidth={1.75} />
-          {marking ? "Fertig" : "Bereich markieren"}
+          {marking ? m.job_ready() : m.region_mark()}
         </button>
       </figcaption>
 
       {draft && !drawing && (
         <RegionForm
-          heading="Neuer Bereich"
+          heading={m.region_new()}
           autoScroll
           onCancel={() => setDraft(null)}
           onSave={async (fields) => {
@@ -199,14 +202,14 @@ export function CaptureFigure({
       )}
 
       {capture.regions.length > 0 && (
-        <section aria-label={`Bereiche auf ${label ?? "der Aufnahme"}`} className="mt-4">
-          <h3 className="text-xs font-medium tracking-wide text-neutral-400 uppercase">{`Bereiche · ${capture.regions.length}`}</h3>
+        <section aria-label={m.regions_on_capture({ capture: label ?? m.capture_this() })} className="mt-4">
+          <h3 className="text-xs font-medium tracking-wide text-neutral-400 uppercase">{m.regions_heading({ count: formatNumber(capture.regions.length) })}</h3>
           <ul className="mt-2 divide-y divide-neutral-200 border-y border-neutral-200">
             {capture.regions.map((region) =>
               editing === region.id ? (
                 <li key={region.id} className="py-3">
                   <RegionForm
-                    heading="Bereich bearbeiten"
+                    heading={m.region_edit()}
                     region={region}
                     onCancel={() => setEditing(null)}
                     onSave={async (fields) => {
@@ -272,7 +275,7 @@ function RegionBox({
       tabIndex={onSelect ? undefined : -1}
       disabled={!onSelect}
       onClick={onSelect}
-      title={onSelect ? `${label ?? "Bereich"} bearbeiten` : undefined}
+      title={onSelect ? m.edit_named({ name: label ?? m.region_label() }) : undefined}
       style={style}
       className={`group absolute rounded-sm border-2 text-left transition-colors ${onSelect ? "pointer-events-auto cursor-pointer" : "pointer-events-none"} ${
         active ? "border-sky-600 bg-sky-500/20" : "border-sky-500/90 bg-sky-500/5 hover:bg-sky-500/15"
@@ -302,7 +305,7 @@ function RegionRow({
   const typeLabel = componentTypeLabels[region.componentType];
 
   async function remove() {
-    if (!window.confirm(`Bereich „${typeLabel}“ löschen? Der Zuschnitt wird entfernt.`)) return;
+    if (!window.confirm(m.region_delete_confirm({ name: typeLabel }))) return;
     setPending(true);
     setFailed(false);
     try {
@@ -331,19 +334,19 @@ function RegionRow({
         {region.note ? (
           <p className="mt-0.5 line-clamp-2 text-sm leading-relaxed whitespace-pre-line text-neutral-600">{region.note}</p>
         ) : (
-          <p className="mt-0.5 text-sm text-neutral-400">Keine Notiz</p>
+          <p className="mt-0.5 text-sm text-neutral-400">{m.note_none()}</p>
         )}
         {failed && (
           <p role="alert" className="mt-1 text-sm text-rose-700">
-            {failedMessage}
+            {m.action_failed()}
           </p>
         )}
       </div>
       <div className="flex shrink-0 gap-0.5">
-        <IconButton label="Bearbeiten" onClick={onEdit} disabled={pending}>
+        <IconButton label={m.action_edit()} onClick={onEdit} disabled={pending}>
           <Pencil aria-hidden className="size-4" strokeWidth={1.75} />
         </IconButton>
-        <IconButton label="Löschen" onClick={remove} disabled={pending} danger>
+        <IconButton label={m.action_delete()} onClick={remove} disabled={pending} danger>
           <Trash2 aria-hidden className="size-4" strokeWidth={1.75} />
         </IconButton>
       </div>
@@ -399,6 +402,7 @@ function RegionForm({
   onCancel: () => void;
 }) {
   const form = useRef<HTMLFormElement>(null);
+  const languageForm = useFormLanguageGuard();
   const [componentType, setComponentType] = useState<ComponentType | null>(region?.componentType ?? null);
   const [pending, setPending] = useState(false);
   const [problem, setProblem] = useState<string | null>(null);
@@ -416,7 +420,7 @@ function RegionForm({
       const note = String(new FormData(event.currentTarget).get("note") ?? "");
       setProblem(await onSave({ componentType, note }));
     } catch {
-      setProblem(failedMessage);
+      setProblem(m.action_failed());
     }
     setPending(false);
   }
@@ -433,11 +437,12 @@ function RegionForm({
     }
   }
 
+  const attachForm = useCallback((node: HTMLFormElement | null) => { form.current = node; languageForm.form(node); }, [languageForm.form]);
   const noteId = `region-note-${region?.id ?? "new"}`;
 
   return (
     <form
-      ref={form}
+      ref={attachForm}
       onSubmit={submit}
       onKeyDown={handleKeys}
       noValidate
@@ -445,7 +450,7 @@ function RegionForm({
     >
       <p className="text-sm font-semibold text-neutral-900">{heading}</p>
       <fieldset>
-        <legend className="text-sm font-medium text-neutral-800">Komponententyp</legend>
+        <legend className="text-sm font-medium text-neutral-800">{m.region_component_type()}</legend>
         <div className="mt-2 flex flex-wrap gap-1.5">
           {COMPONENT_TYPES.map((type) => (
             <button
@@ -462,14 +467,13 @@ function RegionForm({
       </fieldset>
       <div>
         <label htmlFor={noteId} className="text-sm font-medium text-neutral-800">
-          Notiz
-        </label>
+          {m.field_note()}</label>
         <textarea
           id={noteId}
           name="note"
           maxLength={maxNoteLength}
           defaultValue={region?.note ?? ""}
-          placeholder="Was ist an diesem Bereich gut?"
+          placeholder={m.region_note_placeholder()}
           className={`${fieldClassName} field-sizing-content min-h-20 leading-relaxed`}
         />
       </div>
@@ -484,7 +488,7 @@ function RegionForm({
           disabled={pending || !componentType}
           className="rounded-md bg-neutral-900 px-4 py-2 text-sm font-medium text-white hover:bg-neutral-700 disabled:opacity-60"
         >
-          {pending ? "Speichert …" : "Speichern"}
+          {pending ? m.action_saving() : m.action_save()}
         </button>
         <button
           type="button"
@@ -492,9 +496,8 @@ function RegionForm({
           onClick={onCancel}
           className="rounded-md px-3 py-2 text-sm text-neutral-600 hover:text-neutral-900 disabled:opacity-60"
         >
-          Abbrechen
-        </button>
-        <span className="ml-auto text-xs text-neutral-400 max-sm:hidden">Strg / ⌘ + Enter</span>
+          {m.action_cancel()}</button>
+        <span className="ml-auto text-xs text-neutral-400 max-sm:hidden">{m.shortcut_save()}</span>
       </div>
     </form>
   );

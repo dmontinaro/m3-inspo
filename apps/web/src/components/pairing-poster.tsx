@@ -1,3 +1,4 @@
+import * as m from "#/paraglide/messages.js";
 import type { ReactNode } from "react";
 import { ArrowUpRight } from "lucide-react";
 import { fontRoleLabels, fontRoles, sampleTexts } from "#/lib/fonts";
@@ -60,7 +61,7 @@ export function PairingPosterHead({
   return (
     <header>
       <p className="flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-neutral-500">
-        {families.length === 0 && "Noch keine Schrift gewählt"}
+        {families.length === 0 && m.font_not_selected()}
         {families.map((font, index) => (
           <span key={font.family} className="inline-flex items-center gap-1.5">
             {index > 0 && <span aria-hidden>+</span>}

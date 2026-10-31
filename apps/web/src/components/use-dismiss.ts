@@ -18,10 +18,12 @@ export function useDismiss(open: boolean, setOpen: Dispatch<SetStateAction<boole
   useEffect(() => {
     if (!open) return;
     function closeOnOutside(event: PointerEvent) {
+      if (event.target instanceof Element && event.target.closest("[data-language-control], [data-language-warning]")) return;
       if (event.target instanceof Node && !container.current?.contains(event.target)) setOpen(false);
     }
     // An Escape something inside already handled (a dialog over the popover) is not for the popover.
     function closeOnEscape(event: KeyboardEvent) {
+      if (document.querySelector("dialog[data-language-warning][open]")) return;
       if (event.key === "Escape" && !event.defaultPrevented) setOpen(false);
     }
     document.addEventListener("pointerdown", closeOnOutside);

@@ -1,3 +1,4 @@
+import * as m from "#/paraglide/messages.js";
 /**
  * Curation vocabulary shared by the detail view, the gallery filters and the
  * server: statuses, focus areas, formats and field limits. Stored values are English
@@ -9,9 +10,9 @@ import type { CurationStatus, ReferenceDevice } from "@m3-inspo/db/library-schem
 export const curationStatuses = ["draft", "approved", "archived"] as const satisfies readonly CurationStatus[];
 
 export const statusLabels: Record<CurationStatus, string> = {
-  draft: "Entwurf",
-  approved: "Freigegeben",
-  archived: "Archiviert",
+  get draft() { return m.status_draft(); },
+  get approved() { return m.status_approved(); },
+  get archived() { return m.status_archived(); },
 };
 
 /** What a reference is about: the whole page or one area of it. Stored in `references.focus`. */
@@ -19,20 +20,20 @@ export const focusAreas = ["page", "hero", "navigation", "form", "pricing", "foo
 export type FocusArea = (typeof focusAreas)[number];
 
 export const focusLabels: Record<FocusArea, string> = {
-  page: "Ganze Seite",
-  hero: "Hero",
-  navigation: "Navigation",
-  form: "Formular",
-  pricing: "Preise",
-  footer: "Footer",
+  get page() { return m.focus_page(); },
+  get hero() { return m.component_hero(); },
+  get navigation() { return m.component_nav(); },
+  get form() { return m.focus_form(); },
+  get pricing() { return m.component_pricing(); },
+  get footer() { return m.component_footer(); },
 };
 
 /** A reference's format ("Format"): made for a desktop screen or a phone. Stored in `references.device`. */
 export const devices = ["desktop", "mobile"] as const satisfies readonly ReferenceDevice[];
 
 export const deviceLabels: Record<ReferenceDevice, string> = {
-  desktop: "Desktop",
-  mobile: "Mobile",
+  get desktop() { return m.device_desktop(); },
+  get mobile() { return m.device_mobile(); },
 };
 
 /**

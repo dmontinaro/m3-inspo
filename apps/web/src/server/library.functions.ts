@@ -1,3 +1,5 @@
+import * as m from "#/paraglide/messages.js";
+import { webValidator } from "#/lib/validation";
 import { notFound } from "@tanstack/react-router";
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
@@ -18,7 +20,7 @@ import {
 
 /** Rejects anything but a multipart form, before the handler reads it. */
 function formData(data: FormData) {
-  if (!(data instanceof FormData)) throw new Error("Expected form data.");
+  if (!(data instanceof FormData)) throw new Error(m.validation_invalid_input());
   return data;
 }
 
@@ -43,7 +45,7 @@ export const uploadImage = createServerFn({ method: "POST" })
 /** The gallery with its filters; without any, every reference that is not archived. */
 export const listGallery = createServerFn({ method: "GET" })
   .validator(
-    z
+    webValidator(z
       .object({
         status: z.enum(curationStatuses).optional(),
         favorites: z.boolean().optional(),
@@ -52,7 +54,7 @@ export const listGallery = createServerFn({ method: "GET" })
         query: z.string().max(200).optional(),
         collection: z.string().max(200).optional(),
       })
-      .optional(),
+      .optional()),
   )
   .handler(({ data }) => listReferences(data));
 
@@ -60,7 +62,7 @@ export const listGallery = createServerFn({ method: "GET" })
 export const listTags = createServerFn({ method: "GET" }).handler(() => listTagSuggestions());
 
 export const getReference = createServerFn({ method: "GET" })
-  .validator(z.object({ slug: z.string() }))
+  .validator(webValidator(z.object({ slug: z.string() })))
   .handler(async ({ data }) => {
     const reference = await findReference(data.slug);
     if (!reference) throw notFound();
@@ -84,20 +86,20 @@ export const updateReference = createServerFn({ method: "POST" })
   });
 
 export const setReferenceStatus = createServerFn({ method: "POST" })
-  .validator(z.object({ slug: z.string(), status: z.enum(curationStatuses) }))
+  .validator(webValidator(z.object({ slug: z.string(), status: z.enum(curationStatuses) })))
   .handler(async ({ data }) => {
     if (!(await setStatus(data.slug, data.status))) throw notFound();
   });
 
 /** Deletes the reference with all its images for good; the UI asks for confirmation first. */
 export const deleteReference = createServerFn({ method: "POST" })
-  .validator(z.object({ slug: z.string() }))
+  .validator(webValidator(z.object({ slug: z.string() })))
   .handler(async ({ data }) => {
     if (!(await removeReference(data.slug))) throw notFound();
   });
 
 export const setReferenceFavorite = createServerFn({ method: "POST" })
-  .validator(z.object({ slug: z.string(), isFavorite: z.boolean() }))
+  .validator(webValidator(z.object({ slug: z.string(), isFavorite: z.boolean() })))
   .handler(async ({ data }) => {
     if (!(await setFavorite(data.slug, data.isFavorite))) throw notFound();
   });
@@ -107,7 +109,7 @@ export const setReferenceFavorite = createServerFn({ method: "POST" })
  * running. Answers "disabled" without ANTHROPIC_API_KEY.
  */
 export const reanalyzeReference = createServerFn({ method: "POST" })
-  .validator(z.object({ slug: z.string() }))
+  .validator(webValidator(z.object({ slug: z.string() })))
   .handler(async ({ data }) => {
     const result = await requestAnalysis(data.slug);
     if (!result) throw notFound();

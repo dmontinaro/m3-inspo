@@ -1,3 +1,4 @@
+import * as m from "#/paraglide/messages.js";
 /**
  * Font vocabulary of the type pairing pages: the shared categories, sources
  * and roles (@m3-inspo/shared/fonts) with the labels the owner sees, the sample
@@ -11,20 +12,20 @@ export { fontCategories, fontRoles, fontSources, pairingNameOf } from "@m3-inspo
 export type { FontCategory, FontRole, FontRoles, FontSource, RoleFont } from "@m3-inspo/shared/fonts";
 
 export const fontCategoryLabels: Record<FontCategory, string> = {
-  serif: "Serif",
-  sans: "Sans",
-  mono: "Mono",
-  display: "Display",
-  handwriting: "Handschrift",
+  get serif() { return m.font_category_serif(); },
+  get sans() { return m.font_category_sans(); },
+  get mono() { return m.font_category_mono(); },
+  get display() { return m.font_category_display(); },
+  get handwriting() { return m.font_category_handwriting(); },
 };
 
 export const fontSourceLabels: Record<FontSource, string> = {
-  fontsource: "Fontsource",
-  adobe: "Adobe Fonts",
-  local: "Lokal",
+  get fontsource() { return m.font_source_fontsource(); },
+  get adobe() { return m.font_source_adobe(); },
+  get local() { return m.font_source_local(); },
 };
 
-export const fontRoleLabels: Record<FontRole, string> = { heading: "Überschrift", body: "Fließtext", mono: "Mono" };
+export const fontRoleLabels: Record<FontRole, string> = { get heading() { return m.font_role_heading(); }, get body() { return m.font_role_body(); }, get mono() { return m.font_category_mono(); } };
 
 /** The weight closest to regular, for running text and glyphs. */
 export const regularWeight = (font: RoleFont) =>
@@ -37,8 +38,8 @@ export const maxPairingNameLength = 100;
 export const maxPairingNoteLength = 2000;
 
 export const sampleTexts = {
-  heading: "Dienstplan steht. Alle wissen Bescheid.",
-  body: "Ein guter Aufenthalt beginnt mit klaren Informationen. Zimmer, Angebote und Buchung bleiben auf jedem Bildschirm gut lesbar.",
+  get heading() { return m.font_sample_heading(); },
+  get body() { return m.font_sample_body(); },
   mono: "shift.start = 06:30 · team: front-office",
   glyphs: "ABCDEFGHIJKLMNOPQRSTUVWXYZ abcdefghijklmnopqrstuvwxyz ÄÖÜäöüß 0123456789 &?!€",
 };
@@ -65,3 +66,14 @@ export const adobeCssName = (font: RoleFont) =>
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/^-+|-+$/g, "");
+
+/** Compare only submitted font data, using the same whitespace, URL and weight normalization as validation. */
+export function fontRolesKey(roles: Partial<Record<FontRole, RoleFont>>) {
+  return JSON.stringify((["heading", "body", "mono"] as const).map((role) => {
+    const font = roles[role];
+    if (!font) return null;
+    const address = font.pageUrl?.trim();
+    const pageUrl = address && !/^[a-z][a-z0-9+.-]*:/i.test(address) ? `https://${address}` : address;
+    return [font.source, font.family.trim(), font.category, [...new Set(font.weights)].sort((a, b) => a - b), font.source === "fontsource" ? font.fontsourceId?.trim() : pageUrl || null];
+  }));
+}

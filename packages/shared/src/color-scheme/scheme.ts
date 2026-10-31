@@ -132,21 +132,28 @@ function signalRed(primary: string) {
   return { ...best!, distinct: false };
 }
 
+export type SchemeDiagnostic =
+  | { kind: "contrast"; role: RoleName; against: RoleName | "white"; ratio: number; min: number }
+  | { kind: "danger_distance"; role: "destructive"; distance: number; min: number };
+export type RoleOrigin = { kind: "scale"; name: string; step: Step } | { kind: "white" } | { kind: "darkened_brand" };
+
 const formatRatio = (ratio: number) => ratio.toFixed(2).replace(".", ",");
 
 /** Each role with its contrast against its counterpart; every pair that misses its minimum is a warning. */
-function rateRoles(values: Record<RoleName, Role>): { roles: Record<RoleName, Role>; warnings: SchemeWarning[] } {
+function rateRoles(values: Record<RoleName, Role>, diagnostics: SchemeDiagnostic[] = []): { roles: Record<RoleName, Role>; warnings: SchemeWarning[] } {
   const warnings: SchemeWarning[] = [];
   const roles = Object.fromEntries(
     ROLE_NAMES.map((name) => {
       const pair = CONTRAST_PAIRS[name];
       if (!pair) return [name, values[name]];
       const ratio = contrastRatio(values[name].hex, pair.against === "white" ? WHITE : values[pair.against].hex);
-      if (ratio < pair.min)
+      if (ratio < pair.min) {
+        diagnostics.push({ kind: "contrast", role: name, against: pair.against, ratio, min: pair.min });
         warnings.push({
           role: name,
           message: `${name} auf ${pair.against}: ${formatRatio(ratio)} : 1, nötig ${formatRatio(pair.min)} : 1`,
         });
+      }
       return [name, { ...values[name], contrast: { against: pair.against, ratio: Math.floor(ratio * 100) / 100, min: pair.min } }];
     }),
   ) as Record<RoleName, Role>;
@@ -154,19 +161,27 @@ function rateRoles(values: Record<RoleName, Role>): { roles: Record<RoleName, Ro
 }
 
 /** Scales, roles and warnings for these sources. Every pair that misses its minimum is a warning, never an error. */
-export function buildColorScheme(sources: ColorSources, primary: PrimaryStrategy): ColorSchemeSnapshot {
+export function calculateColorScheme(sources: ColorSources, primary: PrimaryStrategy) {
+  const diagnostics: SchemeDiagnostic[] = [];
+  const origins = new Map<Role, RoleOrigin>();
   const brand: Scale = { name: "brand", ...buildScale(sources.brand.hex) };
   const neutral: Scale = { name: "neutral", ...buildScale(sources.neutral.hex) };
   const extras: Scale[] = sources.extras.map((extra) => ({ name: extra.name, ...buildScale(extra.hex) }));
-  const at = (scale: Scale, step: Step): Role => ({ hex: scale.steps[step], derivation: `${scale.name}-${step}` });
+  const at = (scale: Scale, step: Step): Role => {
+    const value = { hex: scale.steps[step], derivation: `${scale.name}-${step}` };
+    origins.set(value, { kind: "scale", name: scale.name, step });
+    return value;
+  };
 
   const background = at(neutral, 50);
   const muted = at(neutral, 100);
   const brandRole = at(brand, brand.anchorStep);
   const vivid = primary === "vivid" ? vividPrimary(sources.brand.hex) : null;
   const primaryRole = vivid ? { hex: vivid, derivation: "Marke, abgedunkelt" } : brandRole;
+  if (vivid) origins.set(primaryRole, { kind: "darkened_brand" });
   const darkest = at(neutral, 950);
   const white = { hex: WHITE, derivation: "Weiß" };
+  origins.set(white, { kind: "white" });
   const onPrimary =
     contrastRatio(primaryRole.hex, WHITE) >= 4.5 || contrastRatio(primaryRole.hex, WHITE) >= contrastRatio(primaryRole.hex, darkest.hex)
       ? white
@@ -188,14 +203,22 @@ export function buildColorScheme(sources: ColorSources, primary: PrimaryStrategy
     destructive: at(danger.scale, danger.step),
   };
 
-  const { roles, warnings } = rateRoles(values);
-  if (!danger.distinct)
+  const { roles, warnings } = rateRoles(values, diagnostics);
+  if (!danger.distinct) {
+    diagnostics.push({ kind: "danger_distance", role: "destructive", distance: danger.distance, min: MIN_DANGER_DISTANCE });
     warnings.push({
       role: "destructive",
       message: `destructive ist kaum von primary zu unterscheiden: ΔE_OK ${danger.distance.toFixed(2).replace(".", ",")}, nötig ${formatRatio(MIN_DANGER_DISTANCE)}`,
     });
 
-  return { scales: [brand, neutral, ...extras, danger.scale], roles, warnings };
+  }
+  const roleOrigins = Object.fromEntries(ROLE_NAMES.map((role) => [role, origins.get(values[role])]));
+  return { snapshot: { scales: [brand, neutral, ...extras, danger.scale], roles, warnings }, diagnostics, roleOrigins };
+}
+
+/** Existing persisted/MCP snapshots retain exactly their original fields and diagnostics. */
+export function buildColorScheme(sources: ColorSources, primary: PrimaryStrategy): ColorSchemeSnapshot {
+  return calculateColorScheme(sources, primary).snapshot;
 }
 
 /**
@@ -206,11 +229,17 @@ export function buildColorScheme(sources: ColorSources, primary: PrimaryStrategy
  * the first brand step that does; `destructive` stays the light one, it
  * carries white text.
  */
-export function buildDarkRoles(snapshot: ColorSchemeSnapshot): Pick<ColorSchemeSnapshot, "roles" | "warnings"> {
+export function calculateDarkRoles(snapshot: ColorSchemeSnapshot, lightOrigins: Partial<Record<RoleName, RoleOrigin>> = {}) {
+  const diagnostics: SchemeDiagnostic[] = [];
+  const origins = new Map<Role, RoleOrigin>();
   const scale = (name: string) => snapshot.scales.find((s) => s.name === name)!;
   const brand = scale("brand");
   const neutral = scale("neutral");
-  const at = (s: Scale, step: Step): Role => ({ hex: s.steps[step], derivation: `${s.name}-${step}` });
+  const at = (scale: Scale, step: Step): Role => {
+    const value = { hex: scale.steps[step], derivation: `${scale.name}-${step}` };
+    origins.set(value, { kind: "scale", name: scale.name, step });
+    return value;
+  };
 
   const background = at(neutral, 950);
   const muted = at(neutral, 800);
@@ -220,12 +249,15 @@ export function buildDarkRoles(snapshot: ColorSchemeSnapshot): Pick<ColorSchemeS
     contrastRatio(light.hex, background.hex) >= 3
       ? { hex: light.hex, derivation: light.derivation }
       : at(brand, firstStep(brand, brand.anchorStep, [background.hex], 3, true));
+  if (!origins.has(primary) && lightOrigins.primary) origins.set(primary, lightOrigins.primary);
   const onPrimary =
     contrastRatio(primary.hex, WHITE) >= 4.5 || contrastRatio(primary.hex, WHITE) >= contrastRatio(primary.hex, background.hex)
       ? { hex: WHITE, derivation: "Weiß" }
       : background;
 
-  return rateRoles({
+  if (onPrimary !== background) origins.set(onPrimary, { kind: "white" });
+  if (lightOrigins.destructive) origins.set(snapshot.roles.destructive, lightOrigins.destructive);
+  const values: Record<RoleName, Role> = {
     background,
     foreground: lightest,
     card: at(neutral, 900),
@@ -237,7 +269,16 @@ export function buildDarkRoles(snapshot: ColorSchemeSnapshot): Pick<ColorSchemeS
     "primary-foreground": onPrimary,
     ring: primary,
     destructive: snapshot.roles.destructive,
-  });
+  };
+  const rated = rateRoles(values, diagnostics);
+  const roleOrigins = Object.fromEntries(ROLE_NAMES.map((role) => [role, origins.get(values[role])]));
+  return { ...rated, diagnostics, roleOrigins };
+}
+
+/** Stable dark snapshot API for existing callers. Metadata is returned only by calculateDarkRoles. */
+export function buildDarkRoles(snapshot: ColorSchemeSnapshot): Pick<ColorSchemeSnapshot, "roles" | "warnings"> {
+  const { roles, warnings } = calculateDarkRoles(snapshot, {});
+  return { roles, warnings };
 }
 
 /** Names an extra colour's scale may not take: the fixed scales and every role, also the shadcn ones the export adds. */

@@ -1,3 +1,4 @@
+import * as m from "#/paraglide/messages.js";
 import { Link, createFileRoute, useRouter } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { ChevronDown, Pencil } from "lucide-react";
@@ -13,7 +14,7 @@ import { getBrandKits } from "#/server/brand-kits.functions";
 import { getTypePairing } from "#/server/type-pairings.functions";
 import type { FontPreview } from "#/server/font-previews.server";
 
-export const Route = createFileRoute("/_library/schriften/$slug/")({
+export const Route = createFileRoute("/_library/type-pairings/$slug/")({
   loader: ({ params }) => getTypePairing({ data: { slug: params.slug } }),
   head: ({ loaderData }) => ({ meta: [{ title: loaderData ? `${loaderData.name} · m3 inspo` : "m3 inspo" }] }),
   component: PairingDetail,
@@ -30,6 +31,10 @@ const refreshMs = 3_000;
 // and every weight. While a font preview is being captured, the page refreshes itself.
 function PairingDetail() {
   const pairing = Route.useLoaderData();
+  return <PairingDetailView pairing={pairing} />;
+}
+
+export function PairingDetailView({ pairing }: { pairing: Pairing }) {
   const router = useRouter();
   const capturing = Object.values(pairing.previews).some((preview) => preview?.status === "capturing");
 
@@ -42,18 +47,16 @@ function PairingDetail() {
   return (
     <main className="mx-auto max-w-screen-2xl px-5 pt-2 pb-24 sm:px-8">
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <Link to="/schriften" className="inline-flex items-center gap-1.5 text-sm text-neutral-500 hover:text-neutral-900">
-          <span aria-hidden>←</span> Schriften
-        </Link>
+        <Link to="/type-pairings" className="inline-flex items-center gap-1.5 text-sm text-neutral-500 hover:text-neutral-900">
+          <span aria-hidden>←</span> {m.type_pairings_title()}</Link>
         <div className="flex items-center gap-2">
           <Link
-            to="/schriften/$slug/bearbeiten"
+            to="/type-pairings/$slug/edit"
             params={{ slug: pairing.slug }}
             className="flex items-center gap-1.5 rounded-md border border-neutral-300 bg-white px-3.5 py-2 text-sm font-medium text-neutral-900 hover:bg-neutral-100"
           >
             <Pencil aria-hidden className="size-4" />
-            Bearbeiten
-          </Link>
+            {m.action_edit()}</Link>
           <TakeOverMenu pairingSlug={pairing.slug} />
         </div>
       </div>
@@ -99,18 +102,17 @@ function TakeOverMenu({ pairingSlug }: { pairingSlug: string }) {
         aria-expanded={open}
         className="flex items-center gap-1.5 rounded-md bg-neutral-900 px-3.5 py-2 text-sm font-medium text-white hover:bg-neutral-700"
       >
-        In Brand Kit übernehmen
-        <ChevronDown aria-hidden className="size-4" />
+        {m.pairing_take_into_kit()}<ChevronDown aria-hidden className="size-4" />
       </button>
       {open && (
         <div className="absolute right-0 z-20 mt-2 w-72 max-w-[calc(100vw-2.5rem)] rounded-xl border border-neutral-200 bg-white p-1.5 shadow-lg shadow-black/10">
-          <p className="px-2.5 pt-1.5 pb-2 text-xs font-medium tracking-wide text-neutral-400 uppercase">Brand Kits</p>
+          <p className="px-2.5 pt-1.5 pb-2 text-xs font-medium tracking-wide text-neutral-400 uppercase">{m.brand_kits_title()}</p>
           {failed ? (
-            <p className="px-2.5 pb-2 text-sm text-rose-700">Das hat nicht geklappt. Bitte versuche es noch einmal.</p>
+            <p className="px-2.5 pb-2 text-sm text-rose-700">{m.action_failed()}</p>
           ) : !offered ? (
-            <p className="px-2.5 pb-2 text-sm text-neutral-500">Lädt …</p>
+            <p className="px-2.5 pb-2 text-sm text-neutral-500">{m.loading()}</p>
           ) : offered.length === 0 ? (
-            <p className="px-2.5 pb-2 text-sm text-neutral-500">Noch keine Brand Kits. Du legst sie im Generator an.</p>
+            <p className="px-2.5 pb-2 text-sm text-neutral-500">{m.pairing_kits_none()}</p>
           ) : (
             <ul className="max-h-72 overflow-y-auto">
               {offered.map((kit) => (
@@ -140,27 +142,25 @@ function TakeOverMenu({ pairingSlug }: { pairingSlug: string }) {
 }
 
 function Origin({ origin }: { origin: Pairing["origin"] }) {
-  if (origin.kind === "manual") return "Von Hand angelegt";
+  if (origin.kind === "manual") return m.pairing_origin_manual();
   if (origin.kind === "brand_kit") {
-    if (!origin.brandKit) return "Aus der Typografie eines Brand Kits, das inzwischen gelöscht ist";
+    if (!origin.brandKit) return m.pairing_kit_origin_deleted();
     return (
       <>
-        Aus der Typografie des Brand Kits „
+        {m.kit_origin()}
         <Link to="/brand-kits/$slug" params={{ slug: origin.brandKit.slug }} className="underline underline-offset-2 hover:text-neutral-900">
           {origin.brandKit.name}
         </Link>
-        “
       </>
     );
   }
-  if (!origin.reference) return "Aus einer Referenz, die inzwischen gelöscht ist";
+  if (!origin.reference) return m.pairing_reference_origin_deleted();
   return (
     <>
-      Aus der Referenz „
-      <Link to="/referenzen/$slug" params={{ slug: origin.reference.slug }} className="underline underline-offset-2 hover:text-neutral-900">
+      {m.reference_origin()}
+      <Link to="/references/$slug" params={{ slug: origin.reference.slug }} className="underline underline-offset-2 hover:text-neutral-900">
         {origin.reference.title}
       </Link>
-      “
     </>
   );
 }

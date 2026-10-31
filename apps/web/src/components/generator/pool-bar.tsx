@@ -1,3 +1,5 @@
+import { formatNumber } from "#/lib/format";
+import * as m from "#/paraglide/messages.js";
 import { useState } from "react";
 import { Check, ChevronDown } from "lucide-react";
 import type { Pool } from "@m3-inspo/shared/color-scheme";
@@ -7,19 +9,19 @@ import { useDismiss } from "../use-dismiss";
 /** How many thumbnails the strip shows; the count next to it names them all. */
 const MAX_THUMBNAILS = 24;
 
-const count = (n: number, one: string, many: string) => `${n} ${n === 1 ? one : many}`;
+
 
 function poolLabel(pool: Pool, data: PoolData): string {
   switch (pool.kind) {
     case "all":
-      return "Alle Referenzen";
+      return m.pool_all();
     case "project":
-      return `Projekt ${pool.tag}`;
+      return m.pool_project({ tag: pool.tag });
     case "collection":
       return data.collections.find((collection) => collection.slug === pool.slug)?.name ?? pool.slug;
     case "references":
       // The references the library knows; unknown slugs are reported, not counted.
-      return data.references.length === 1 ? data.references[0].title : count(data.references.length, "Referenz", "Referenzen");
+      return data.references.length === 1 ? data.references[0].title : m.reference_count({ count: data.references.length, formattedCount: formatNumber(data.references.length) });
   }
 }
 
@@ -63,7 +65,7 @@ export function PoolBar({ pool, data, onChange }: { pool: Pool; data: PoolData; 
           aria-expanded={open}
           className="flex max-w-full items-center gap-1.5 rounded-md border border-neutral-300 bg-white px-3 py-1.5 text-sm hover:bg-neutral-100"
         >
-          <span className="text-neutral-500">Würfeln aus</span>
+          <span className="text-neutral-500">{m.pool_roll_from()}</span>
           <span className="truncate font-medium text-neutral-900">{poolLabel(pool, data)}</span>
           <ChevronDown aria-hidden className="size-4 shrink-0 text-neutral-500" strokeWidth={2} />
         </button>
@@ -72,20 +74,20 @@ export function PoolBar({ pool, data, onChange }: { pool: Pool; data: PoolData; 
             role="menu"
             className="absolute left-0 z-30 mt-2 max-h-96 w-72 overflow-y-auto rounded-xl border border-neutral-200 bg-white p-1.5 shadow-lg shadow-black/10"
           >
-            {option({ kind: "all" }, "Alle Referenzen")}
-            {data.projects.length > 0 && <p className="px-2.5 pt-3 pb-1 text-xs text-neutral-500">Projekte</p>}
+            {option({ kind: "all" }, m.pool_all())}
+            {data.projects.length > 0 && <p className="px-2.5 pt-3 pb-1 text-xs text-neutral-500">{m.projects_title()}</p>}
             {data.projects.map((tag) => option({ kind: "project", tag }, tag))}
-            {data.collections.length > 0 && <p className="px-2.5 pt-3 pb-1 text-xs text-neutral-500">Sammlungen</p>}
+            {data.collections.length > 0 && <p className="px-2.5 pt-3 pb-1 text-xs text-neutral-500">{m.collections_title()}</p>}
             {data.collections.map(({ slug, name }) => option({ kind: "collection", slug }, name))}
           </div>
         )}
       </div>
 
       {data.colors.length === 0 ? (
-        <p className="text-sm text-neutral-500">Keine gemessenen Farben im Pool: Gewürfelt wird frei, ohne Referenz.</p>
+        <p className="text-sm text-neutral-500">{m.pool_no_colors()}</p>
       ) : (
         <div className="flex min-w-0 items-center gap-3">
-          <ul className="flex min-w-0 gap-1.5 overflow-x-auto [scrollbar-width:none]" aria-label="Referenzen im Pool">
+          <ul className="flex min-w-0 gap-1.5 overflow-x-auto [scrollbar-width:none]" aria-label={m.pool_references()}>
             {shown.map((reference) => (
               <li key={reference.id} className="shrink-0" title={reference.title}>
                 {reference.thumbUrl ? (
@@ -102,7 +104,7 @@ export function PoolBar({ pool, data, onChange }: { pool: Pool; data: PoolData; 
             ))}
           </ul>
           <p className="shrink-0 text-xs text-neutral-500 tabular-nums">
-            {count(data.references.length, "Referenz", "Referenzen")} · {count(data.colors.length, "Farbe", "Farben")}
+            {m.reference_count({ count: data.references.length, formattedCount: formatNumber(data.references.length) })} · {m.color_count({ count: data.colors.length, formattedCount: formatNumber(data.colors.length) })}
           </p>
         </div>
       )}

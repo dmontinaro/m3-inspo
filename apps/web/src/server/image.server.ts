@@ -1,3 +1,4 @@
+import type { ImageRejection } from "#/lib/image-limits";
 /**
  * Checks an uploaded image and turns it into the files we store. Only PNG,
  * JPEG and WebP get through, recognised by their magic bytes, not by name
@@ -9,7 +10,7 @@
 import { createHash } from "node:crypto";
 import sharp from "sharp";
 import type { Sharp } from "sharp";
-import { maxPixels, maxUploadBytes, rejectionReasons } from "#/lib/upload-limits";
+import { maxPixels, maxUploadBytes } from "#/lib/image-limits";
 
 type ImageFormat = "png" | "jpeg" | "webp";
 
@@ -27,7 +28,7 @@ export type PreparedImage = {
   thumb: EncodedImage;
 };
 
-type ImageCheck = { ok: true; image: PreparedImage } | { ok: false; reason: string };
+type ImageCheck = { ok: true; image: PreparedImage } | { ok: false; reason: ImageRejection };
 
 export const imageFormats: Record<ImageFormat, { contentType: string; extension: string }> = {
   png: { contentType: "image/png", extension: "png" },
@@ -45,17 +46,17 @@ const encodeOriginal: Record<ImageFormat, (image: Sharp) => Sharp> = {
 
 /** Validates the upload and returns the re-encoded original, preview and thumbnail, or a reason to show the owner. */
 export async function prepareImage(bytes: Uint8Array): Promise<ImageCheck> {
-  if (bytes.byteLength === 0) return { ok: false, reason: rejectionReasons.empty };
-  if (bytes.byteLength > maxUploadBytes) return { ok: false, reason: rejectionReasons.tooLarge };
+  if (bytes.byteLength === 0) return { ok: false, reason: "empty" };
+  if (bytes.byteLength > maxUploadBytes) return { ok: false, reason: "tooLarge" };
 
   const format = sniffFormat(bytes);
-  if (format === "svg") return { ok: false, reason: rejectionReasons.svg };
-  if (!format) return { ok: false, reason: rejectionReasons.unsupported };
+  if (format === "svg") return { ok: false, reason: "svg" };
+  if (!format) return { ok: false, reason: "unsupported" };
 
   try {
     const metadata = await sharp(bytes).metadata();
-    if (metadata.format !== format) return { ok: false, reason: rejectionReasons.corrupt };
-    if (metadata.width * metadata.height > maxPixels) return { ok: false, reason: rejectionReasons.tooManyPixels };
+    if (metadata.format !== format) return { ok: false, reason: "corrupt" };
+    if (metadata.width * metadata.height > maxPixels) return { ok: false, reason: "tooManyPixels" };
 
     // Only the first frame of an animated WebP is kept. autoOrient applies the
     // EXIF rotation before the metadata is dropped.
@@ -73,7 +74,7 @@ export async function prepareImage(bytes: Uint8Array): Promise<ImageCheck> {
     return { ok: true, image: { format, contentHash, original, preview, thumb } };
   } catch {
     // sharp throws on truncated or otherwise undecodable data.
-    return { ok: false, reason: rejectionReasons.corrupt };
+    return { ok: false, reason: "corrupt" };
   }
 }
 

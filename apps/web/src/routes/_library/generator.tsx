@@ -1,3 +1,4 @@
+import * as m from "#/paraglide/messages.js";
 import { Link, createFileRoute, redirect, useNavigate } from "@tanstack/react-router";
 import { useRef, useState } from "react";
 import { Bookmark } from "lucide-react";
@@ -15,7 +16,7 @@ import { getGeneratorPool } from "#/server/generator.functions";
  * lives in memory. "Speichern" turns it into a Brand Kit.
  */
 export const Route = createFileRoute("/_library/generator")({
-  head: () => ({ meta: [{ title: "Generator · m3 inspo" }] }),
+  head: () => ({ meta: [{ title: m.generator_page_title() }] }),
   // The shared parser reads and checks the params (parseGeneratorSearch); the router only hands them over.
   validateSearch: (search: Record<string, unknown>) => search,
   // A link without a seed gets one, so the colours it leaves open roll the same on server and client.
@@ -51,9 +52,8 @@ function GeneratorPage() {
       <div className="flex flex-wrap items-end justify-between gap-x-6 gap-y-3">
         <div>
           <Link to="/brand-kits" className="text-sm text-neutral-500 hover:text-neutral-900">
-            Brand Kits
-          </Link>
-          <h1 className="text-2xl font-semibold tracking-tight">Neues Color Scheme</h1>
+            {m.brand_kits_title()}</Link>
+          <h1 className="text-2xl font-semibold tracking-tight">{m.scheme_new()}</h1>
         </div>
         <GeneratorActions page={page}>
           <button
@@ -63,8 +63,7 @@ function GeneratorPage() {
             className="flex items-center gap-2 rounded-md border border-neutral-300 bg-white px-3.5 py-2 text-sm font-medium text-neutral-900 hover:bg-neutral-100"
           >
             <Bookmark aria-hidden className="size-4" strokeWidth={2} />
-            Speichern
-          </button>
+            {m.action_save()}</button>
         </GeneratorActions>
       </div>
 

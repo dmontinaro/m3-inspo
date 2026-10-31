@@ -1,3 +1,6 @@
+import { formatNumber } from "#/lib/format";
+import { useLanguageGuard } from "#/components/language-control";
+import * as m from "#/paraglide/messages.js";
 import { Link, createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
 import type { ReactNode } from "react";
@@ -76,16 +79,15 @@ function Gallery() {
 
   return (
     <main className="mx-auto max-w-screen-2xl px-5 pt-4 pb-16 sm:px-8">
-      <h1 className="sr-only">Galerie</h1>
+      <h1 className="sr-only">{m.gallery_title()}</h1>
       <GalleryToolbar />
 
       {references.length === 0 ? (
         <div className="py-20 text-center">
-          <p className="font-medium text-neutral-900">Keine Referenzen gefunden</p>
-          <p className="mt-1 text-[15px] text-neutral-500">Versuche ein anderes Wort oder einen anderen Filter.</p>
+          <p className="font-medium text-neutral-900">{m.gallery_no_results()}</p>
+          <p className="mt-1 text-[15px] text-neutral-500">{m.gallery_no_results_help()}</p>
           <Link to="/" className="mt-4 inline-block text-sm text-neutral-600 underline underline-offset-4 hover:text-neutral-900">
-            Filter zurücksetzen
-          </Link>
+            {m.gallery_reset_filters()}</Link>
         </div>
       ) : (
         <ul className="mt-6 grid grid-cols-1 gap-x-6 gap-y-8 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4">
@@ -110,7 +112,7 @@ function Gallery() {
 function ReferenceTile({ reference, eager }: { reference: GalleryReference; eager: boolean }) {
   return (
     <>
-      <Link to="/referenzen/$slug" params={{ slug: reference.slug }} className="group block">
+      <Link to="/references/$slug" params={{ slug: reference.slug }} className="group block">
         <div className="relative overflow-hidden rounded-lg bg-neutral-200 ring-1 ring-black/5 transition-shadow group-hover:shadow-lg group-hover:shadow-black/10">
           {reference.device === "mobile" ? (
             <PhoneScreen url={reference.previewUrl} eager={eager} />
@@ -129,7 +131,7 @@ function ReferenceTile({ reference, eager }: { reference: GalleryReference; eage
         <p className="mt-2.5 truncate text-sm font-medium text-neutral-800 group-hover:text-neutral-950">{reference.title}</p>
       </Link>
       {reference.tags.length > 0 && (
-        <ul aria-label="Tags" className="mt-1.5 flex flex-wrap items-center gap-1">
+        <ul aria-label={m.field_tags()} className="mt-1.5 flex flex-wrap items-center gap-1">
           {reference.tags.slice(0, tileTagLimit).map((tag) => (
             <li key={tag}>
               <Link
@@ -142,7 +144,7 @@ function ReferenceTile({ reference, eager }: { reference: GalleryReference; eage
             </li>
           ))}
           {reference.tags.length > tileTagLimit && (
-            <li className="px-1 text-xs text-neutral-400">{`+${reference.tags.length - tileTagLimit}`}</li>
+            <li className="px-1 text-xs text-neutral-400">{m.more_tag_count({ count: formatNumber(reference.tags.length - tileTagLimit) })}</li>
           )}
         </ul>
       )}
@@ -189,7 +191,7 @@ const stackLayers = [
 function CollectionStack({ collection, eager }: { collection: ListedCollection; eager: boolean }) {
   const cover = collection.thumbUrls[0];
   return (
-    <Link to="/sammlungen/$slug" params={{ slug: collection.slug }} className="group block">
+    <Link to="/collections/$slug" params={{ slug: collection.slug }} className="group block">
       <div className="relative">
         {stackLayers.map(({ thumb, className }) => {
           const url = collection.thumbUrls[thumb];
@@ -224,17 +226,17 @@ function CollectionStack({ collection, eager }: { collection: ListedCollection; 
       </div>
       <p className="mt-2.5 truncate text-sm font-medium text-neutral-800 group-hover:text-neutral-950">{collection.name}</p>
       <p className="mt-1 text-xs text-neutral-500">
-        Sammlung · {collection.count === 1 ? "1 Referenz" : `${collection.count} Referenzen`}
+        {m.reference_count({ count: collection.count, formattedCount: formatNumber(collection.count) })}
       </p>
     </Link>
   );
 }
 
 const statusFilters: { status: CurationStatus | undefined; label: string }[] = [
-  { status: undefined, label: "Alle" },
-  { status: "draft", label: "Entwürfe" },
-  { status: "approved", label: "Freigegeben" },
-  { status: "archived", label: "Archiv" },
+  { status: undefined, get label() { return m.filter_all(); } },
+  { status: "draft", get label() { return m.status_drafts(); } },
+  { status: "approved", get label() { return m.status_approved(); } },
+  { status: "archived", get label() { return m.status_archive(); } },
 ];
 
 /**
@@ -261,6 +263,15 @@ function GalleryToolbar() {
 
   useEffect(() => () => clearTimeout(timer.current), []);
 
+  useLanguageGuard({ flush: () => {
+    clearTimeout(timer.current);
+    if ((query.trim() || undefined) === search.q) return;
+    const url = new URL(window.location.href);
+    if (query.trim()) url.searchParams.set("q", query.trim());
+    else url.searchParams.delete("q");
+    window.history.replaceState(window.history.state, "", url.pathname + url.search + url.hash);
+  } });
+
   function changeQuery(value: string) {
     setQuery(value);
     clearTimeout(timer.current);
@@ -274,7 +285,7 @@ function GalleryToolbar() {
     // Phones: search and favorites share the first row, the status switch spans the second.
     <div className="flex flex-wrap items-center gap-2 md:gap-3">
       <label className="relative block min-w-0 flex-1 md:w-80 md:flex-none">
-        <span className="sr-only">Suchen</span>
+        <span className="sr-only">{m.gallery_search()}</span>
         <svg
           aria-hidden
           viewBox="0 0 24 24"
@@ -287,14 +298,14 @@ function GalleryToolbar() {
           type="search"
           value={query}
           onChange={(event) => changeQuery(event.target.value)}
-          placeholder="Titel, Notizen und Tags durchsuchen"
+          placeholder={m.gallery_search_placeholder()}
           className="block w-full rounded-md border border-neutral-300 bg-white py-2 pr-3 pl-9 text-[15px] text-neutral-900 placeholder:text-neutral-400 focus:border-neutral-900 focus:ring-1 focus:ring-neutral-900 focus:outline-none"
         />
       </label>
 
       <div
         role="group"
-        aria-label="Status"
+        aria-label={m.field_status()}
         className="order-last grid w-full grid-cols-4 rounded-lg bg-neutral-200/70 p-1 md:order-none md:flex md:w-auto"
       >
         {statusFilters.map(({ status, label }) => (
@@ -317,17 +328,16 @@ function GalleryToolbar() {
         className="flex shrink-0 items-center gap-1.5 rounded-lg px-3 py-2.5 text-sm whitespace-nowrap text-neutral-600 ring-1 ring-neutral-300 ring-inset hover:text-neutral-900 aria-[current=true]:bg-amber-50 aria-[current=true]:font-medium aria-[current=true]:text-amber-900 aria-[current=true]:ring-amber-300"
       >
         <FavoriteStar filled={search.favorites === true} className="size-4 text-amber-500" />
-        Favoriten
-      </Link>
+        {m.favorites_title()}</Link>
 
       {search.device && (
         <Link
           from={Route.fullPath}
           search={(previous) => ({ ...previous, device: undefined })}
-          title="Format-Filter entfernen"
+          title={m.filter_remove_device()}
           className={chipClassName}
         >
-          <ChipContent kind="Format" value={deviceLabels[search.device]} />
+          <ChipContent kind={m.field_format()} value={deviceLabels[search.device]} />
         </Link>
       )}
 
@@ -335,10 +345,10 @@ function GalleryToolbar() {
         <Link
           from={Route.fullPath}
           search={(previous) => ({ ...previous, collection: undefined })}
-          title="Sammlungs-Filter entfernen"
+          title={m.filter_remove_collection()}
           className={chipClassName}
         >
-          <ChipContent kind="Sammlung" value={collectionName ?? search.collection} />
+          <ChipContent kind={m.collection_label()} value={collectionName ?? search.collection} />
         </Link>
       )}
 
@@ -346,10 +356,10 @@ function GalleryToolbar() {
         <Link
           from={Route.fullPath}
           search={(previous) => ({ ...previous, tag: undefined })}
-          title="Tag-Filter entfernen"
+          title={m.filter_remove_tag()}
           className={chipClassName}
         >
-          <ChipContent kind="Tag" value={search.tag} />
+          <ChipContent kind={m.tag_label()} value={search.tag} />
         </Link>
       )}
 
@@ -370,7 +380,7 @@ function ChipContent({ kind, value }: { kind: string; value: string }) {
       <svg aria-hidden viewBox="0 0 16 16" className="size-3.5 shrink-0 fill-none stroke-current stroke-2 text-neutral-400">
         <path d="m4.5 4.5 7 7m0-7-7 7" strokeLinecap="round" />
       </svg>
-      <span className="sr-only">entfernen</span>
+      <span className="sr-only">{m.action_remove()}</span>
     </>
   );
 }
@@ -399,8 +409,8 @@ function FilterMenu() {
         type="button"
         onClick={() => setOpen((value) => !value)}
         aria-expanded={open}
-        aria-label="Filtern"
-        title="Nach Format, Sammlung oder Tag filtern"
+        aria-label={m.filter_action()}
+        title={m.gallery_filter_help()}
         className={`relative flex size-10.5 items-center justify-center rounded-lg hover:bg-neutral-200/60 hover:text-neutral-900 ${
           active ? "text-neutral-900" : "text-neutral-500"
         }`}
@@ -412,7 +422,7 @@ function FilterMenu() {
 
       {open && (
         <div className="absolute right-0 z-20 mt-2 max-h-[min(32rem,70vh)] w-64 overflow-y-auto rounded-xl border border-neutral-200 bg-white p-1.5 shadow-lg shadow-black/10">
-          <MenuSection title="Format" empty={false}>
+          <MenuSection title={m.field_format()} empty={false}>
             <li>
               <Link
                 from={Route.fullPath}
@@ -420,8 +430,7 @@ function FilterMenu() {
                 onClick={close}
                 className={menuItemClassName}
               >
-                Alle Formate
-                {!search.device && <Check aria-hidden className="size-4 text-neutral-900" />}
+                {m.filter_all_devices()}{!search.device && <Check aria-hidden className="size-4 text-neutral-900" />}
               </Link>
             </li>
             {devices.map((device) => (
@@ -442,7 +451,7 @@ function FilterMenu() {
 
           <div className="mx-2.5 my-1.5 border-t border-neutral-100" />
 
-          <MenuSection title="Sammlungen" empty={collections.length === 0 && "Noch keine Sammlungen."}>
+          <MenuSection title={m.collections_title()} empty={collections.length === 0 && m.collections_none()}>
             <li>
               <Link
                 from={Route.fullPath}
@@ -450,8 +459,7 @@ function FilterMenu() {
                 onClick={close}
                 className={menuItemClassName}
               >
-                Alle Sammlungen
-                {!search.collection && <Check aria-hidden className="size-4 text-neutral-900" />}
+                {m.filter_all_collections()}{!search.collection && <Check aria-hidden className="size-4 text-neutral-900" />}
               </Link>
             </li>
             {collections.map((collection) => (
@@ -476,7 +484,7 @@ function FilterMenu() {
 
           <div className="mx-2.5 my-1.5 border-t border-neutral-100" />
 
-          <MenuSection title="Tags" empty={tags.length === 0 && "Noch keine Tags vergeben."}>
+          <MenuSection title={m.field_tags()} empty={tags.length === 0 && m.tags_none()}>
             <li>
               <Link
                 from={Route.fullPath}
@@ -484,8 +492,7 @@ function FilterMenu() {
                 onClick={close}
                 className={menuItemClassName}
               >
-                Alle Tags
-                {!search.tag && <Check aria-hidden className="size-4 text-neutral-900" />}
+                {m.filter_all_tags()}{!search.tag && <Check aria-hidden className="size-4 text-neutral-900" />}
               </Link>
             </li>
             {tags.map((tag) => (
@@ -535,7 +542,7 @@ function TileMarks({ status, isFavorite }: { status: CurationStatus; isFavorite:
       {isFavorite && (
         <span className="absolute top-2 right-2 rounded-full bg-white/90 p-1 text-amber-500 shadow-sm ring-1 ring-black/5">
           <FavoriteStar filled className="size-4" />
-          <span className="sr-only">Favorit</span>
+          <span className="sr-only">{m.favorite_label()}</span>
         </span>
       )}
     </>
@@ -545,17 +552,14 @@ function TileMarks({ status, isFavorite }: { status: CurationStatus; isFavorite:
 function EmptyLibrary() {
   return (
     <main className="mx-auto flex max-w-md flex-col items-center px-5 py-24 text-center">
-      <h1 className="text-xl font-semibold">Noch keine Referenzen</h1>
+      <h1 className="text-xl font-semibold">{m.gallery_empty()}</h1>
       <p className="mt-2 text-neutral-600">
-        Lade einen Screenshot hoch, der dir gefällt, oder füge ihn mit Strg+V bzw. ⌘V direkt hier ein. Dann notiere,
-        was davon übernommen werden soll.
-      </p>
+        {m.gallery_empty_help()}</p>
       <Link
-        to="/hochladen"
+        to="/add"
         className="mt-6 rounded-md bg-neutral-900 px-4 py-2.5 text-sm font-medium text-white hover:bg-neutral-700"
       >
-        Erstes Bild hochladen
-      </Link>
+        {m.gallery_first_upload()}</Link>
     </main>
   );
 }

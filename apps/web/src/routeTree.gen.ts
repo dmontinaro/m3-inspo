@@ -10,34 +10,35 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as LibraryRouteImport } from './routes/_library'
-import { Route as AnmeldenRouteImport } from './routes/anmelden'
+import { Route as SignInRouteImport } from './routes/sign-in'
 import { Route as LibraryIndexRouteImport } from './routes/_library/index'
-import { Route as LibraryEinstellungenRouteImport } from './routes/_library/einstellungen'
+import { Route as LibraryAddRouteImport } from './routes/_library/add'
 import { Route as LibraryGeneratorRouteImport } from './routes/_library/generator'
-import { Route as LibraryHochladenRouteImport } from './routes/_library/hochladen'
-import { Route as LibraryImporteRouteImport } from './routes/_library/importe'
-import { Route as LibraryWerkzeugeRouteImport } from './routes/_library/werkzeuge'
+import { Route as LibraryImportsRouteImport } from './routes/_library/imports'
+import { Route as LibrarySettingsRouteImport } from './routes/_library/settings'
+import { Route as LibraryToolsRouteImport } from './routes/_library/tools'
 import { Route as ApiMcpRouteImport } from './routes/api/mcp'
 import { Route as LibraryBrandKitsIndexRouteImport } from './routes/_library/brand-kits.index'
 import { Route as LibraryBrandKitsSlugRouteImport } from './routes/_library/brand-kits.$slug'
-import { Route as LibraryReferenzenSlugRouteImport } from './routes/_library/referenzen.$slug'
-import { Route as LibrarySammlungenIndexRouteImport } from './routes/_library/sammlungen.index'
-import { Route as LibrarySammlungenSlugRouteImport } from './routes/_library/sammlungen.$slug'
-import { Route as LibrarySchriftenIndexRouteImport } from './routes/_library/schriften.index'
-import { Route as LibrarySchriftenNeuRouteImport } from './routes/_library/schriften.neu'
+import { Route as LibraryCollectionsIndexRouteImport } from './routes/_library/collections.index'
+import { Route as LibraryCollectionsSlugRouteImport } from './routes/_library/collections.$slug'
+import { Route as LibraryReferencesSlugRouteImport } from './routes/_library/references.$slug'
+import { Route as LibraryTypePairingsIndexRouteImport } from './routes/_library/type-pairings.index'
+import { Route as LibraryTypePairingsNewRouteImport } from './routes/_library/type-pairings.new'
 import { Route as ApiAssetsSplatRouteImport } from './routes/api/assets/$'
 import { Route as ApiAuthSplatRouteImport } from './routes/api/auth/$'
 import { Route as ApiWorkerSplatRouteImport } from './routes/api/worker/$'
-import { Route as LibrarySchriftenSlugIndexRouteImport } from './routes/_library/schriften.$slug.index'
-import { Route as LibrarySchriftenSlugBearbeitenRouteImport } from './routes/_library/schriften.$slug.bearbeiten'
+import { Route as LibraryTypePairingsSlugIndexRouteImport } from './routes/_library/type-pairings.$slug.index'
+import { Route as LibraryTypePairingsSlugEditRouteImport } from './routes/_library/type-pairings.$slug.edit'
+import { Route as LibraryTypePairingsNewViewRouteImport } from './routes/_library/type-pairings.new.view'
 
 const LibraryRoute = LibraryRouteImport.update({
   id: '/_library',
   getParentRoute: () => rootRouteImport,
 } as any)
-const AnmeldenRoute = AnmeldenRouteImport.update({
-  id: '/anmelden',
-  path: '/anmelden',
+const SignInRoute = SignInRouteImport.update({
+  id: '/sign-in',
+  path: '/sign-in',
   getParentRoute: () => rootRouteImport,
 } as any)
 const LibraryIndexRoute = LibraryIndexRouteImport.update({
@@ -45,9 +46,9 @@ const LibraryIndexRoute = LibraryIndexRouteImport.update({
   path: '/',
   getParentRoute: () => LibraryRoute,
 } as any)
-const LibraryEinstellungenRoute = LibraryEinstellungenRouteImport.update({
-  id: '/einstellungen',
-  path: '/einstellungen',
+const LibraryAddRoute = LibraryAddRouteImport.update({
+  id: '/add',
+  path: '/add',
   getParentRoute: () => LibraryRoute,
 } as any)
 const LibraryGeneratorRoute = LibraryGeneratorRouteImport.update({
@@ -55,19 +56,19 @@ const LibraryGeneratorRoute = LibraryGeneratorRouteImport.update({
   path: '/generator',
   getParentRoute: () => LibraryRoute,
 } as any)
-const LibraryHochladenRoute = LibraryHochladenRouteImport.update({
-  id: '/hochladen',
-  path: '/hochladen',
+const LibraryImportsRoute = LibraryImportsRouteImport.update({
+  id: '/imports',
+  path: '/imports',
   getParentRoute: () => LibraryRoute,
 } as any)
-const LibraryImporteRoute = LibraryImporteRouteImport.update({
-  id: '/importe',
-  path: '/importe',
+const LibrarySettingsRoute = LibrarySettingsRouteImport.update({
+  id: '/settings',
+  path: '/settings',
   getParentRoute: () => LibraryRoute,
 } as any)
-const LibraryWerkzeugeRoute = LibraryWerkzeugeRouteImport.update({
-  id: '/werkzeuge',
-  path: '/werkzeuge',
+const LibraryToolsRoute = LibraryToolsRouteImport.update({
+  id: '/tools',
+  path: '/tools',
   getParentRoute: () => LibraryRoute,
 } as any)
 const ApiMcpRoute = ApiMcpRouteImport.update({
@@ -85,29 +86,30 @@ const LibraryBrandKitsSlugRoute = LibraryBrandKitsSlugRouteImport.update({
   path: '/brand-kits/$slug',
   getParentRoute: () => LibraryRoute,
 } as any)
-const LibraryReferenzenSlugRoute = LibraryReferenzenSlugRouteImport.update({
-  id: '/referenzen/$slug',
-  path: '/referenzen/$slug',
+const LibraryCollectionsIndexRoute = LibraryCollectionsIndexRouteImport.update({
+  id: '/collections/',
+  path: '/collections/',
   getParentRoute: () => LibraryRoute,
 } as any)
-const LibrarySammlungenIndexRoute = LibrarySammlungenIndexRouteImport.update({
-  id: '/sammlungen/',
-  path: '/sammlungen/',
+const LibraryCollectionsSlugRoute = LibraryCollectionsSlugRouteImport.update({
+  id: '/collections/$slug',
+  path: '/collections/$slug',
   getParentRoute: () => LibraryRoute,
 } as any)
-const LibrarySammlungenSlugRoute = LibrarySammlungenSlugRouteImport.update({
-  id: '/sammlungen/$slug',
-  path: '/sammlungen/$slug',
+const LibraryReferencesSlugRoute = LibraryReferencesSlugRouteImport.update({
+  id: '/references/$slug',
+  path: '/references/$slug',
   getParentRoute: () => LibraryRoute,
 } as any)
-const LibrarySchriftenIndexRoute = LibrarySchriftenIndexRouteImport.update({
-  id: '/schriften/',
-  path: '/schriften/',
-  getParentRoute: () => LibraryRoute,
-} as any)
-const LibrarySchriftenNeuRoute = LibrarySchriftenNeuRouteImport.update({
-  id: '/schriften/neu',
-  path: '/schriften/neu',
+const LibraryTypePairingsIndexRoute =
+  LibraryTypePairingsIndexRouteImport.update({
+    id: '/type-pairings/',
+    path: '/type-pairings/',
+    getParentRoute: () => LibraryRoute,
+  } as any)
+const LibraryTypePairingsNewRoute = LibraryTypePairingsNewRouteImport.update({
+  id: '/type-pairings/new',
+  path: '/type-pairings/new',
   getParentRoute: () => LibraryRoute,
 } as any)
 const ApiAssetsSplatRoute = ApiAssetsSplatRouteImport.update({
@@ -125,160 +127,172 @@ const ApiWorkerSplatRoute = ApiWorkerSplatRouteImport.update({
   path: '/api/worker/$',
   getParentRoute: () => rootRouteImport,
 } as any)
-const LibrarySchriftenSlugIndexRoute =
-  LibrarySchriftenSlugIndexRouteImport.update({
-    id: '/schriften/$slug/',
-    path: '/schriften/$slug/',
+const LibraryTypePairingsSlugIndexRoute =
+  LibraryTypePairingsSlugIndexRouteImport.update({
+    id: '/type-pairings/$slug/',
+    path: '/type-pairings/$slug/',
     getParentRoute: () => LibraryRoute,
   } as any)
-const LibrarySchriftenSlugBearbeitenRoute =
-  LibrarySchriftenSlugBearbeitenRouteImport.update({
-    id: '/schriften/$slug/bearbeiten',
-    path: '/schriften/$slug/bearbeiten',
+const LibraryTypePairingsSlugEditRoute =
+  LibraryTypePairingsSlugEditRouteImport.update({
+    id: '/type-pairings/$slug/edit',
+    path: '/type-pairings/$slug/edit',
     getParentRoute: () => LibraryRoute,
+  } as any)
+const LibraryTypePairingsNewViewRoute =
+  LibraryTypePairingsNewViewRouteImport.update({
+    id: '/view',
+    path: '/view',
+    getParentRoute: () => LibraryTypePairingsNewRoute,
   } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof LibraryIndexRoute
-  '/anmelden': typeof AnmeldenRoute
-  '/einstellungen': typeof LibraryEinstellungenRoute
+  '/sign-in': typeof SignInRoute
+  '/add': typeof LibraryAddRoute
   '/generator': typeof LibraryGeneratorRoute
-  '/hochladen': typeof LibraryHochladenRoute
-  '/importe': typeof LibraryImporteRoute
-  '/werkzeuge': typeof LibraryWerkzeugeRoute
+  '/imports': typeof LibraryImportsRoute
+  '/settings': typeof LibrarySettingsRoute
+  '/tools': typeof LibraryToolsRoute
   '/api/mcp': typeof ApiMcpRoute
   '/brand-kits/$slug': typeof LibraryBrandKitsSlugRoute
-  '/referenzen/$slug': typeof LibraryReferenzenSlugRoute
-  '/sammlungen/$slug': typeof LibrarySammlungenSlugRoute
-  '/schriften/neu': typeof LibrarySchriftenNeuRoute
+  '/collections/$slug': typeof LibraryCollectionsSlugRoute
+  '/references/$slug': typeof LibraryReferencesSlugRoute
+  '/type-pairings/new': typeof LibraryTypePairingsNewRouteWithChildren
   '/api/assets/$': typeof ApiAssetsSplatRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/api/worker/$': typeof ApiWorkerSplatRoute
   '/brand-kits/': typeof LibraryBrandKitsIndexRoute
-  '/sammlungen/': typeof LibrarySammlungenIndexRoute
-  '/schriften/': typeof LibrarySchriftenIndexRoute
-  '/schriften/$slug/bearbeiten': typeof LibrarySchriftenSlugBearbeitenRoute
-  '/schriften/$slug/': typeof LibrarySchriftenSlugIndexRoute
+  '/collections/': typeof LibraryCollectionsIndexRoute
+  '/type-pairings/': typeof LibraryTypePairingsIndexRoute
+  '/type-pairings/$slug/edit': typeof LibraryTypePairingsSlugEditRoute
+  '/type-pairings/new/view': typeof LibraryTypePairingsNewViewRoute
+  '/type-pairings/$slug/': typeof LibraryTypePairingsSlugIndexRoute
 }
 export interface FileRoutesByTo {
-  '/anmelden': typeof AnmeldenRoute
-  '/einstellungen': typeof LibraryEinstellungenRoute
+  '/sign-in': typeof SignInRoute
+  '/add': typeof LibraryAddRoute
   '/generator': typeof LibraryGeneratorRoute
-  '/hochladen': typeof LibraryHochladenRoute
-  '/importe': typeof LibraryImporteRoute
-  '/werkzeuge': typeof LibraryWerkzeugeRoute
+  '/imports': typeof LibraryImportsRoute
+  '/settings': typeof LibrarySettingsRoute
+  '/tools': typeof LibraryToolsRoute
   '/api/mcp': typeof ApiMcpRoute
   '/': typeof LibraryIndexRoute
   '/brand-kits/$slug': typeof LibraryBrandKitsSlugRoute
-  '/referenzen/$slug': typeof LibraryReferenzenSlugRoute
-  '/sammlungen/$slug': typeof LibrarySammlungenSlugRoute
-  '/schriften/neu': typeof LibrarySchriftenNeuRoute
+  '/collections/$slug': typeof LibraryCollectionsSlugRoute
+  '/references/$slug': typeof LibraryReferencesSlugRoute
+  '/type-pairings/new': typeof LibraryTypePairingsNewRouteWithChildren
   '/api/assets/$': typeof ApiAssetsSplatRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/api/worker/$': typeof ApiWorkerSplatRoute
   '/brand-kits': typeof LibraryBrandKitsIndexRoute
-  '/sammlungen': typeof LibrarySammlungenIndexRoute
-  '/schriften': typeof LibrarySchriftenIndexRoute
-  '/schriften/$slug/bearbeiten': typeof LibrarySchriftenSlugBearbeitenRoute
-  '/schriften/$slug': typeof LibrarySchriftenSlugIndexRoute
+  '/collections': typeof LibraryCollectionsIndexRoute
+  '/type-pairings': typeof LibraryTypePairingsIndexRoute
+  '/type-pairings/$slug/edit': typeof LibraryTypePairingsSlugEditRoute
+  '/type-pairings/new/view': typeof LibraryTypePairingsNewViewRoute
+  '/type-pairings/$slug': typeof LibraryTypePairingsSlugIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/_library': typeof LibraryRouteWithChildren
-  '/anmelden': typeof AnmeldenRoute
-  '/_library/einstellungen': typeof LibraryEinstellungenRoute
+  '/sign-in': typeof SignInRoute
+  '/_library/add': typeof LibraryAddRoute
   '/_library/generator': typeof LibraryGeneratorRoute
-  '/_library/hochladen': typeof LibraryHochladenRoute
-  '/_library/importe': typeof LibraryImporteRoute
-  '/_library/werkzeuge': typeof LibraryWerkzeugeRoute
+  '/_library/imports': typeof LibraryImportsRoute
+  '/_library/settings': typeof LibrarySettingsRoute
+  '/_library/tools': typeof LibraryToolsRoute
   '/api/mcp': typeof ApiMcpRoute
   '/_library/': typeof LibraryIndexRoute
   '/_library/brand-kits/$slug': typeof LibraryBrandKitsSlugRoute
-  '/_library/referenzen/$slug': typeof LibraryReferenzenSlugRoute
-  '/_library/sammlungen/$slug': typeof LibrarySammlungenSlugRoute
-  '/_library/schriften/neu': typeof LibrarySchriftenNeuRoute
+  '/_library/collections/$slug': typeof LibraryCollectionsSlugRoute
+  '/_library/references/$slug': typeof LibraryReferencesSlugRoute
+  '/_library/type-pairings/new': typeof LibraryTypePairingsNewRouteWithChildren
   '/api/assets/$': typeof ApiAssetsSplatRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/api/worker/$': typeof ApiWorkerSplatRoute
   '/_library/brand-kits/': typeof LibraryBrandKitsIndexRoute
-  '/_library/sammlungen/': typeof LibrarySammlungenIndexRoute
-  '/_library/schriften/': typeof LibrarySchriftenIndexRoute
-  '/_library/schriften/$slug/bearbeiten': typeof LibrarySchriftenSlugBearbeitenRoute
-  '/_library/schriften/$slug/': typeof LibrarySchriftenSlugIndexRoute
+  '/_library/collections/': typeof LibraryCollectionsIndexRoute
+  '/_library/type-pairings/': typeof LibraryTypePairingsIndexRoute
+  '/_library/type-pairings/$slug/edit': typeof LibraryTypePairingsSlugEditRoute
+  '/_library/type-pairings/new/view': typeof LibraryTypePairingsNewViewRoute
+  '/_library/type-pairings/$slug/': typeof LibraryTypePairingsSlugIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
-    | '/anmelden'
-    | '/einstellungen'
+    | '/sign-in'
+    | '/add'
     | '/generator'
-    | '/hochladen'
-    | '/importe'
-    | '/werkzeuge'
+    | '/imports'
+    | '/settings'
+    | '/tools'
     | '/api/mcp'
     | '/brand-kits/$slug'
-    | '/referenzen/$slug'
-    | '/sammlungen/$slug'
-    | '/schriften/neu'
+    | '/collections/$slug'
+    | '/references/$slug'
+    | '/type-pairings/new'
     | '/api/assets/$'
     | '/api/auth/$'
     | '/api/worker/$'
     | '/brand-kits/'
-    | '/sammlungen/'
-    | '/schriften/'
-    | '/schriften/$slug/bearbeiten'
-    | '/schriften/$slug/'
+    | '/collections/'
+    | '/type-pairings/'
+    | '/type-pairings/$slug/edit'
+    | '/type-pairings/new/view'
+    | '/type-pairings/$slug/'
   fileRoutesByTo: FileRoutesByTo
   to:
-    | '/anmelden'
-    | '/einstellungen'
+    | '/sign-in'
+    | '/add'
     | '/generator'
-    | '/hochladen'
-    | '/importe'
-    | '/werkzeuge'
+    | '/imports'
+    | '/settings'
+    | '/tools'
     | '/api/mcp'
     | '/'
     | '/brand-kits/$slug'
-    | '/referenzen/$slug'
-    | '/sammlungen/$slug'
-    | '/schriften/neu'
+    | '/collections/$slug'
+    | '/references/$slug'
+    | '/type-pairings/new'
     | '/api/assets/$'
     | '/api/auth/$'
     | '/api/worker/$'
     | '/brand-kits'
-    | '/sammlungen'
-    | '/schriften'
-    | '/schriften/$slug/bearbeiten'
-    | '/schriften/$slug'
+    | '/collections'
+    | '/type-pairings'
+    | '/type-pairings/$slug/edit'
+    | '/type-pairings/new/view'
+    | '/type-pairings/$slug'
   id:
     | '__root__'
     | '/_library'
-    | '/anmelden'
-    | '/_library/einstellungen'
+    | '/sign-in'
+    | '/_library/add'
     | '/_library/generator'
-    | '/_library/hochladen'
-    | '/_library/importe'
-    | '/_library/werkzeuge'
+    | '/_library/imports'
+    | '/_library/settings'
+    | '/_library/tools'
     | '/api/mcp'
     | '/_library/'
     | '/_library/brand-kits/$slug'
-    | '/_library/referenzen/$slug'
-    | '/_library/sammlungen/$slug'
-    | '/_library/schriften/neu'
+    | '/_library/collections/$slug'
+    | '/_library/references/$slug'
+    | '/_library/type-pairings/new'
     | '/api/assets/$'
     | '/api/auth/$'
     | '/api/worker/$'
     | '/_library/brand-kits/'
-    | '/_library/sammlungen/'
-    | '/_library/schriften/'
-    | '/_library/schriften/$slug/bearbeiten'
-    | '/_library/schriften/$slug/'
+    | '/_library/collections/'
+    | '/_library/type-pairings/'
+    | '/_library/type-pairings/$slug/edit'
+    | '/_library/type-pairings/new/view'
+    | '/_library/type-pairings/$slug/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   LibraryRoute: typeof LibraryRouteWithChildren
-  AnmeldenRoute: typeof AnmeldenRoute
+  SignInRoute: typeof SignInRoute
   ApiMcpRoute: typeof ApiMcpRoute
   ApiAssetsSplatRoute: typeof ApiAssetsSplatRoute
   ApiAuthSplatRoute: typeof ApiAuthSplatRoute
@@ -294,11 +308,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LibraryRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/anmelden': {
-      id: '/anmelden'
-      path: '/anmelden'
-      fullPath: '/anmelden'
-      preLoaderRoute: typeof AnmeldenRouteImport
+    '/sign-in': {
+      id: '/sign-in'
+      path: '/sign-in'
+      fullPath: '/sign-in'
+      preLoaderRoute: typeof SignInRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_library/': {
@@ -308,11 +322,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LibraryIndexRouteImport
       parentRoute: typeof LibraryRoute
     }
-    '/_library/einstellungen': {
-      id: '/_library/einstellungen'
-      path: '/einstellungen'
-      fullPath: '/einstellungen'
-      preLoaderRoute: typeof LibraryEinstellungenRouteImport
+    '/_library/add': {
+      id: '/_library/add'
+      path: '/add'
+      fullPath: '/add'
+      preLoaderRoute: typeof LibraryAddRouteImport
       parentRoute: typeof LibraryRoute
     }
     '/_library/generator': {
@@ -322,25 +336,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LibraryGeneratorRouteImport
       parentRoute: typeof LibraryRoute
     }
-    '/_library/hochladen': {
-      id: '/_library/hochladen'
-      path: '/hochladen'
-      fullPath: '/hochladen'
-      preLoaderRoute: typeof LibraryHochladenRouteImport
+    '/_library/imports': {
+      id: '/_library/imports'
+      path: '/imports'
+      fullPath: '/imports'
+      preLoaderRoute: typeof LibraryImportsRouteImport
       parentRoute: typeof LibraryRoute
     }
-    '/_library/importe': {
-      id: '/_library/importe'
-      path: '/importe'
-      fullPath: '/importe'
-      preLoaderRoute: typeof LibraryImporteRouteImport
+    '/_library/settings': {
+      id: '/_library/settings'
+      path: '/settings'
+      fullPath: '/settings'
+      preLoaderRoute: typeof LibrarySettingsRouteImport
       parentRoute: typeof LibraryRoute
     }
-    '/_library/werkzeuge': {
-      id: '/_library/werkzeuge'
-      path: '/werkzeuge'
-      fullPath: '/werkzeuge'
-      preLoaderRoute: typeof LibraryWerkzeugeRouteImport
+    '/_library/tools': {
+      id: '/_library/tools'
+      path: '/tools'
+      fullPath: '/tools'
+      preLoaderRoute: typeof LibraryToolsRouteImport
       parentRoute: typeof LibraryRoute
     }
     '/api/mcp': {
@@ -364,39 +378,39 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LibraryBrandKitsSlugRouteImport
       parentRoute: typeof LibraryRoute
     }
-    '/_library/referenzen/$slug': {
-      id: '/_library/referenzen/$slug'
-      path: '/referenzen/$slug'
-      fullPath: '/referenzen/$slug'
-      preLoaderRoute: typeof LibraryReferenzenSlugRouteImport
+    '/_library/collections/': {
+      id: '/_library/collections/'
+      path: '/collections'
+      fullPath: '/collections/'
+      preLoaderRoute: typeof LibraryCollectionsIndexRouteImport
       parentRoute: typeof LibraryRoute
     }
-    '/_library/sammlungen/': {
-      id: '/_library/sammlungen/'
-      path: '/sammlungen'
-      fullPath: '/sammlungen/'
-      preLoaderRoute: typeof LibrarySammlungenIndexRouteImport
+    '/_library/collections/$slug': {
+      id: '/_library/collections/$slug'
+      path: '/collections/$slug'
+      fullPath: '/collections/$slug'
+      preLoaderRoute: typeof LibraryCollectionsSlugRouteImport
       parentRoute: typeof LibraryRoute
     }
-    '/_library/sammlungen/$slug': {
-      id: '/_library/sammlungen/$slug'
-      path: '/sammlungen/$slug'
-      fullPath: '/sammlungen/$slug'
-      preLoaderRoute: typeof LibrarySammlungenSlugRouteImport
+    '/_library/references/$slug': {
+      id: '/_library/references/$slug'
+      path: '/references/$slug'
+      fullPath: '/references/$slug'
+      preLoaderRoute: typeof LibraryReferencesSlugRouteImport
       parentRoute: typeof LibraryRoute
     }
-    '/_library/schriften/': {
-      id: '/_library/schriften/'
-      path: '/schriften'
-      fullPath: '/schriften/'
-      preLoaderRoute: typeof LibrarySchriftenIndexRouteImport
+    '/_library/type-pairings/': {
+      id: '/_library/type-pairings/'
+      path: '/type-pairings'
+      fullPath: '/type-pairings/'
+      preLoaderRoute: typeof LibraryTypePairingsIndexRouteImport
       parentRoute: typeof LibraryRoute
     }
-    '/_library/schriften/neu': {
-      id: '/_library/schriften/neu'
-      path: '/schriften/neu'
-      fullPath: '/schriften/neu'
-      preLoaderRoute: typeof LibrarySchriftenNeuRouteImport
+    '/_library/type-pairings/new': {
+      id: '/_library/type-pairings/new'
+      path: '/type-pairings/new'
+      fullPath: '/type-pairings/new'
+      preLoaderRoute: typeof LibraryTypePairingsNewRouteImport
       parentRoute: typeof LibraryRoute
     }
     '/api/assets/$': {
@@ -420,57 +434,78 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiWorkerSplatRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/_library/schriften/$slug/': {
-      id: '/_library/schriften/$slug/'
-      path: '/schriften/$slug'
-      fullPath: '/schriften/$slug/'
-      preLoaderRoute: typeof LibrarySchriftenSlugIndexRouteImport
+    '/_library/type-pairings/$slug/': {
+      id: '/_library/type-pairings/$slug/'
+      path: '/type-pairings/$slug'
+      fullPath: '/type-pairings/$slug/'
+      preLoaderRoute: typeof LibraryTypePairingsSlugIndexRouteImport
       parentRoute: typeof LibraryRoute
     }
-    '/_library/schriften/$slug/bearbeiten': {
-      id: '/_library/schriften/$slug/bearbeiten'
-      path: '/schriften/$slug/bearbeiten'
-      fullPath: '/schriften/$slug/bearbeiten'
-      preLoaderRoute: typeof LibrarySchriftenSlugBearbeitenRouteImport
+    '/_library/type-pairings/$slug/edit': {
+      id: '/_library/type-pairings/$slug/edit'
+      path: '/type-pairings/$slug/edit'
+      fullPath: '/type-pairings/$slug/edit'
+      preLoaderRoute: typeof LibraryTypePairingsSlugEditRouteImport
       parentRoute: typeof LibraryRoute
+    }
+    '/_library/type-pairings/new/view': {
+      id: '/_library/type-pairings/new/view'
+      path: '/view'
+      fullPath: '/type-pairings/new/view'
+      preLoaderRoute: typeof LibraryTypePairingsNewViewRouteImport
+      parentRoute: typeof LibraryTypePairingsNewRoute
     }
   }
 }
 
+interface LibraryTypePairingsNewRouteChildren {
+  LibraryTypePairingsNewViewRoute: typeof LibraryTypePairingsNewViewRoute
+}
+
+const LibraryTypePairingsNewRouteChildren: LibraryTypePairingsNewRouteChildren =
+  {
+    LibraryTypePairingsNewViewRoute: LibraryTypePairingsNewViewRoute,
+  }
+
+const LibraryTypePairingsNewRouteWithChildren =
+  LibraryTypePairingsNewRoute._addFileChildren(
+    LibraryTypePairingsNewRouteChildren,
+  )
+
 interface LibraryRouteChildren {
-  LibraryEinstellungenRoute: typeof LibraryEinstellungenRoute
+  LibraryAddRoute: typeof LibraryAddRoute
   LibraryGeneratorRoute: typeof LibraryGeneratorRoute
-  LibraryHochladenRoute: typeof LibraryHochladenRoute
-  LibraryImporteRoute: typeof LibraryImporteRoute
-  LibraryWerkzeugeRoute: typeof LibraryWerkzeugeRoute
+  LibraryImportsRoute: typeof LibraryImportsRoute
+  LibrarySettingsRoute: typeof LibrarySettingsRoute
+  LibraryToolsRoute: typeof LibraryToolsRoute
   LibraryIndexRoute: typeof LibraryIndexRoute
   LibraryBrandKitsSlugRoute: typeof LibraryBrandKitsSlugRoute
-  LibraryReferenzenSlugRoute: typeof LibraryReferenzenSlugRoute
-  LibrarySammlungenSlugRoute: typeof LibrarySammlungenSlugRoute
-  LibrarySchriftenNeuRoute: typeof LibrarySchriftenNeuRoute
+  LibraryCollectionsSlugRoute: typeof LibraryCollectionsSlugRoute
+  LibraryReferencesSlugRoute: typeof LibraryReferencesSlugRoute
+  LibraryTypePairingsNewRoute: typeof LibraryTypePairingsNewRouteWithChildren
   LibraryBrandKitsIndexRoute: typeof LibraryBrandKitsIndexRoute
-  LibrarySammlungenIndexRoute: typeof LibrarySammlungenIndexRoute
-  LibrarySchriftenIndexRoute: typeof LibrarySchriftenIndexRoute
-  LibrarySchriftenSlugBearbeitenRoute: typeof LibrarySchriftenSlugBearbeitenRoute
-  LibrarySchriftenSlugIndexRoute: typeof LibrarySchriftenSlugIndexRoute
+  LibraryCollectionsIndexRoute: typeof LibraryCollectionsIndexRoute
+  LibraryTypePairingsIndexRoute: typeof LibraryTypePairingsIndexRoute
+  LibraryTypePairingsSlugEditRoute: typeof LibraryTypePairingsSlugEditRoute
+  LibraryTypePairingsSlugIndexRoute: typeof LibraryTypePairingsSlugIndexRoute
 }
 
 const LibraryRouteChildren: LibraryRouteChildren = {
-  LibraryEinstellungenRoute: LibraryEinstellungenRoute,
+  LibraryAddRoute: LibraryAddRoute,
   LibraryGeneratorRoute: LibraryGeneratorRoute,
-  LibraryHochladenRoute: LibraryHochladenRoute,
-  LibraryImporteRoute: LibraryImporteRoute,
-  LibraryWerkzeugeRoute: LibraryWerkzeugeRoute,
+  LibraryImportsRoute: LibraryImportsRoute,
+  LibrarySettingsRoute: LibrarySettingsRoute,
+  LibraryToolsRoute: LibraryToolsRoute,
   LibraryIndexRoute: LibraryIndexRoute,
   LibraryBrandKitsSlugRoute: LibraryBrandKitsSlugRoute,
-  LibraryReferenzenSlugRoute: LibraryReferenzenSlugRoute,
-  LibrarySammlungenSlugRoute: LibrarySammlungenSlugRoute,
-  LibrarySchriftenNeuRoute: LibrarySchriftenNeuRoute,
+  LibraryCollectionsSlugRoute: LibraryCollectionsSlugRoute,
+  LibraryReferencesSlugRoute: LibraryReferencesSlugRoute,
+  LibraryTypePairingsNewRoute: LibraryTypePairingsNewRouteWithChildren,
   LibraryBrandKitsIndexRoute: LibraryBrandKitsIndexRoute,
-  LibrarySammlungenIndexRoute: LibrarySammlungenIndexRoute,
-  LibrarySchriftenIndexRoute: LibrarySchriftenIndexRoute,
-  LibrarySchriftenSlugBearbeitenRoute: LibrarySchriftenSlugBearbeitenRoute,
-  LibrarySchriftenSlugIndexRoute: LibrarySchriftenSlugIndexRoute,
+  LibraryCollectionsIndexRoute: LibraryCollectionsIndexRoute,
+  LibraryTypePairingsIndexRoute: LibraryTypePairingsIndexRoute,
+  LibraryTypePairingsSlugEditRoute: LibraryTypePairingsSlugEditRoute,
+  LibraryTypePairingsSlugIndexRoute: LibraryTypePairingsSlugIndexRoute,
 }
 
 const LibraryRouteWithChildren =
@@ -478,7 +513,7 @@ const LibraryRouteWithChildren =
 
 const rootRouteChildren: RootRouteChildren = {
   LibraryRoute: LibraryRouteWithChildren,
-  AnmeldenRoute: AnmeldenRoute,
+  SignInRoute: SignInRoute,
   ApiMcpRoute: ApiMcpRoute,
   ApiAssetsSplatRoute: ApiAssetsSplatRoute,
   ApiAuthSplatRoute: ApiAuthSplatRoute,

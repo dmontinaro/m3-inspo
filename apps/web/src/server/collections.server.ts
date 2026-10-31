@@ -1,3 +1,4 @@
+import { issueMessage, validationRule } from "#/lib/validation";
 /**
  * Collections: references the owner bundles around a theme, in an order of
  * their own, optionally tied to a project tag. Part of the library; server
@@ -19,12 +20,12 @@ const collectionFields = z.object({
   name: z
     .string()
     .trim()
-    .min(1, "Bitte gib einen Namen ein.")
-    .max(maxCollectionNameLength, `Der Name ist zu lang (höchstens ${maxCollectionNameLength} Zeichen).`),
+    .min(1)
+    .max(maxCollectionNameLength),
   description: z
     .string()
     .trim()
-    .max(maxCollectionDescriptionLength, `Die Beschreibung ist zu lang (höchstens ${maxCollectionDescriptionLength} Zeichen).`)
+    .max(maxCollectionDescriptionLength)
     .transform((value) => value || null),
   // One owner tag, stored like the tags of references.
   project: z
@@ -32,9 +33,9 @@ const collectionFields = z.object({
     .transform(normalizeTag)
     .refine(
       (tag) => tag.replace(disallowedTagCharacters, "") === tag,
-      "Das Projekt darf nur Buchstaben, Ziffern, Leerzeichen, - und _ enthalten.",
+      validationRule({ code: "project_characters" }),
     )
-    .refine((tag) => tag.length <= maxTagLength, `Das Projekt ist zu lang (höchstens ${maxTagLength} Zeichen).`)
+    .refine((tag) => tag.length <= maxTagLength, validationRule({ code: "tag_length", max: maxTagLength }))
     .transform((tag) => tag || null),
 });
 
@@ -49,7 +50,7 @@ export async function createCollection(
   input: Record<string, unknown>,
 ): Promise<{ ok: true; slug: string } | { ok: false; errors: CollectionErrors }> {
   const parsed = collectionFields.safeParse(input);
-  if (!parsed.success) return { ok: false, errors: z.flattenError(parsed.error).fieldErrors };
+  if (!parsed.success) return { ok: false, errors: z.flattenError(parsed.error, issueMessage).fieldErrors };
 
   const base = slugify(parsed.data.name) || "sammlung";
   const taken = await getDb().query.collections.findFirst({ columns: { id: true }, where: eq(collections.slug, base) });
@@ -64,7 +65,7 @@ export async function editCollection(
   input: Record<string, unknown>,
 ): Promise<{ ok: true } | { ok: false; errors: CollectionErrors } | null> {
   const parsed = collectionFields.safeParse(input);
-  if (!parsed.success) return { ok: false, errors: z.flattenError(parsed.error).fieldErrors };
+  if (!parsed.success) return { ok: false, errors: z.flattenError(parsed.error, issueMessage).fieldErrors };
 
   const updated = await getDb()
     .update(collections)

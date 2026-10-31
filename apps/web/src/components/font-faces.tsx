@@ -1,3 +1,4 @@
+import * as m from "#/paraglide/messages.js";
 import { useEffect, useSyncExternalStore } from "react";
 import { fallbackStacks } from "@m3-inspo/shared/fonts";
 import { adobeCssName, adobeKitStylesheetUrl, fontCategoryLabels, fontsourceFileUrl } from "#/lib/fonts";
@@ -135,10 +136,9 @@ export function StandInBadge({ font }: { font: RoleFont }) {
   if (!isStandIn(font)) return null;
   return (
     <span
-      title={`${font.family || "Diese Schrift"} ist nicht ladbar. Die Vorschau zeigt eine Systemschrift der Kategorie ${fontCategoryLabels[font.category]}.`}
+      title={m.font_substitute_help({ family: font.family || m.font_this(), category: fontCategoryLabels[font.category] })}
       className="inline-block rounded-full bg-amber-100 px-2 py-0.5 text-[11px] font-medium whitespace-nowrap text-amber-900"
     >
-      Ersatzschrift
-    </span>
+      {m.font_substitute()}</span>
   );
 }

@@ -9,10 +9,11 @@
     "dev": "node --env-file-if-exists=../../.env node_modules/vite/bin/vite.js dev --port 3000",
     "build": "vite build",
     "start": "node --env-file-if-exists=../../.env .output/server/index.mjs",
-    "typecheck": "pnpm i18n:compile && tsr generate && tsc -p tsconfig.json",
+    "typecheck": "pnpm i18n:check && tsr generate && tsc -p tsconfig.json",
     "lint": "eslint",
     "backfill-palettes": "tsx --env-file-if-exists=../../.env scripts/backfill-palettes.ts",
-    "i18n:compile": "paraglide-js compile --project ./project.inlang"
+    "i18n:compile": "paraglide-js compile --project ./project.inlang",
+    "i18n:check": "pnpm i18n:compile && vitest run --config i18n.vitest.config.ts src/i18n/catalogs.test.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.128.0",

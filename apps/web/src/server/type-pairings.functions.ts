@@ -1,3 +1,4 @@
+import { webValidator } from "#/lib/validation";
 import { notFound } from "@tanstack/react-router";
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
@@ -17,7 +18,7 @@ export const getTypePairings = createServerFn({ method: "GET" }).handler(() => l
 
 /** One pairing with its origin. */
 export const getTypePairing = createServerFn({ method: "GET" })
-  .validator(z.object({ slug: z.string() }))
+  .validator(webValidator(z.object({ slug: z.string() })))
   .handler(async ({ data }) => {
     const pairing = await findTypePairing(data.slug);
     if (!pairing) throw notFound();
@@ -43,12 +44,12 @@ export const updateTypePairing = createServerFn({ method: "POST" })
  * page offers it yet: the list's "Löschen" follows with #65.
  */
 export const deleteTypePairing = createServerFn({ method: "POST" })
-  .validator(z.object({ slug: z.string() }))
+  .validator(webValidator(z.object({ slug: z.string() })))
   .handler(async ({ data }) => {
     if (!(await removeTypePairing(data.slug))) throw notFound();
   });
 
 /** "Neu aufnehmen": captures a font's page again, unless a capture is already waiting or running. */
 export const recaptureFontPage = createServerFn({ method: "POST" })
-  .validator(z.object({ url: z.url({ protocol: /^https?$/ }) }))
+  .validator(webValidator(z.object({ url: z.url({ protocol: /^https?$/ }) })))
   .handler(({ data }) => recaptureFontPreview(data.url));

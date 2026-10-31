@@ -1,3 +1,5 @@
+import { formatNumber } from "#/lib/format";
+import * as m from "#/paraglide/messages.js";
 /**
  * The generator's state (spec #44, "Generator in der Web-App" and
  * "URL-Zustand"): a draft of source colours, `primary` strategy and seed,
@@ -215,22 +217,22 @@ export function searchFromDraft(draft: Draft, pool: Pool, references: readonly G
   };
 }
 
-const paramLabels: Record<string, string> = { brand: "Marke", neutral: "Neutral", extras: "Zusatzfarbe", primary: "primary", seed: "Seed", pool: "Pool" };
+const paramLabels: Record<string, string> = { get brand() { return m.source_brand(); }, get neutral() { return m.source_neutral(); }, get extras() { return m.source_extra(); }, get primary() { return "primary"; }, get seed() { return m.generator_seed(); }, get pool() { return m.generator_pool(); } };
 
 /** One line per skipped part, for the short message a broken link opens with. */
 export function describeSkipped({ param, value, reason }: SkippedNotice): string {
-  const part = `${paramLabels[param] ?? param} „${value}“`;
+  const part = m.generator_part_label({ label: paramLabels[param] ?? param, value });
   switch (reason) {
     case "unknown-reference":
-      return `Referenz „${value}“ unbekannt, Farbe behalten`;
+      return m.generator_unknown_reference({ slug: value });
     case "unknown-pool":
-      return `Pool „${value}“ unbekannt`;
+      return m.generator_unknown_pool({ value });
     case "too-many":
-      return `${part} übersprungen, höchstens ${MAX_EXTRAS} Zusatzfarben`;
+      return m.generator_extra_limit({ part, max: formatNumber(MAX_EXTRAS) });
     case "damaged":
-      return `${part} teilweise nicht lesbar`;
+      return m.generator_part_partial({ part });
     case "unreadable":
-      return param === "brand" || param === "neutral" || param === "extras" ? `${part} nicht lesbar, neu gewürfelt` : `${part} nicht lesbar`;
+      return param === "brand" || param === "neutral" || param === "extras" ? m.generator_part_rolled({ part }) : m.generator_part_invalid({ part });
   }
 }
 

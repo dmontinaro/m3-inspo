@@ -1,3 +1,5 @@
+import { useFormLanguageGuard, LanguageControl  } from "#/components/language-control";
+import * as m from "#/paraglide/messages.js";
 import { useEffect, useRef, useState } from "react";
 import type { FormEvent } from "react";
 import { maxBrandKitNameLength } from "#/lib/brand-kits";
@@ -25,6 +27,7 @@ type Props = {
  * Escape cancels. The caller puts the focus back on its button.
  */
 export function SaveDialog({ draft, project, projects, onSaved, onCancel }: Props) {
+  const languageForm = useFormLanguageGuard();
   const dialog = useRef<HTMLDialogElement>(null);
   const [pending, setPending] = useState(false);
   const [errors, setErrors] = useState<BrandKitErrors>({});
@@ -89,28 +92,27 @@ export function SaveDialog({ draft, project, projects, onSaved, onCancel }: Prop
       }}
       className="m-auto w-[min(28rem,calc(100%-2rem))] max-w-none rounded-xl bg-white text-neutral-900 shadow-2xl ring-1 ring-black/10 backdrop:bg-neutral-950/25 backdrop:backdrop-blur-[2px] max-sm:mb-0 max-sm:w-full max-sm:rounded-b-none"
     >
-      <form onSubmit={submit} className="flex flex-col gap-5 p-5 sm:p-6">
+      <form ref={languageForm.form} noValidate onSubmit={submit} className="flex flex-col gap-5 p-5 sm:p-6">
+        <LanguageControl />
         <div className="flex items-center gap-3">
           <SwatchStack draft={draft} />
           <div>
             <h2 id="save-kit-heading" className="text-base font-semibold tracking-tight">
-              Als Brand Kit speichern
-            </h2>
-            <p className="text-sm text-neutral-500">Als Entwurf. Hinweise ergänzt du danach auf der Seite des Kits.</p>
+              {m.kit_save_as()}</h2>
+            <p className="text-sm text-neutral-500">{m.kit_save_help()}</p>
           </div>
         </div>
 
         <div>
           <label htmlFor="save-kit-name" className="text-sm font-medium">
-            Name
-          </label>
+            {m.field_name()}</label>
           <input
             id="save-kit-name"
             name="name"
             required
             autoFocus
             maxLength={maxBrandKitNameLength}
-            placeholder="z. B. Harbor"
+            placeholder={m.kit_name_placeholder()}
             className={fieldClassName}
             {...nameError.props}
           />
@@ -119,7 +121,7 @@ export function SaveDialog({ draft, project, projects, onSaved, onCancel }: Prop
 
         <div>
           <label htmlFor="save-kit-project" className="text-sm font-medium">
-            Projekt <span className="font-normal text-neutral-400">(optional)</span>
+            {m.field_project()}<span className="ml-1 font-normal text-neutral-400">{m.field_optional()}</span>
           </label>
           <input
             id="save-kit-project"
@@ -127,7 +129,7 @@ export function SaveDialog({ draft, project, projects, onSaved, onCancel }: Prop
             list="save-kit-projects"
             maxLength={maxTagLength}
             defaultValue={project}
-            placeholder="z. B. harbor"
+            placeholder={m.project_placeholder()}
             className={fieldClassName}
             {...projectError.props}
           />
@@ -141,8 +143,7 @@ export function SaveDialog({ draft, project, projects, onSaved, onCancel }: Prop
 
         {failed && (
           <p role="alert" className="rounded-md bg-rose-50 px-3 py-2 text-sm text-rose-800">
-            Das hat nicht geklappt. Bitte versuche es noch einmal.
-          </p>
+            {m.action_failed()}</p>
         )}
 
         <div className="flex items-center justify-end gap-2">
@@ -152,14 +153,13 @@ export function SaveDialog({ draft, project, projects, onSaved, onCancel }: Prop
             disabled={pending}
             className="rounded-md px-3.5 py-2 text-sm text-neutral-600 hover:bg-neutral-100 hover:text-neutral-900"
           >
-            Abbrechen
-          </button>
+            {m.action_cancel()}</button>
           <button
             type="submit"
             disabled={pending}
             className="rounded-md bg-neutral-900 px-4 py-2 text-sm font-medium text-white hover:bg-neutral-700 disabled:opacity-60"
           >
-            {pending ? "Speichert …" : "Brand Kit anlegen"}
+            {pending ? m.action_saving() : m.kit_create()}
           </button>
         </div>
       </form>

@@ -5,7 +5,7 @@ import { roleEntries } from "#/components/pairing-poster";
 import { getCatalogFonts } from "#/server/font-catalog.functions";
 import { getTypePairing } from "#/server/type-pairings.functions";
 
-export const Route = createFileRoute("/_library/schriften/$slug/bearbeiten")({
+export const Route = createFileRoute("/_library/type-pairings/$slug/edit")({
   loader: async ({ params }) => {
     const pairing = await getTypePairing({ data: { slug: params.slug } });
     const ids = roleEntries(pairing.roles).flatMap(({ font }) => (font.fontsourceId ? [font.fontsourceId] : []));

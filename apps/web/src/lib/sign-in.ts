@@ -1,27 +1,25 @@
-/**
- * The sign-in page. Pages that need a session send you here with
- * `?next=<path+query>` (see `signInUrl`); failed sign-ins land here with
- * `?error=<code>`.
- */
-export const signInPath = "/anmelden";
+/* eslint-disable no-control-regex -- Reject control bytes in untrusted return URLs. */
+import { canonicalPagePath } from "./page-paths";
 
-/** Error code Better Auth reports when a GitHub account is not the owner's. */
+export const signInPath = "/sign-in";
 export const notOwnerError = "not_owner";
-
-/** The sign-in URL that leads back to `page` (path and query) afterwards. The start page needs no `next`. */
-export const signInUrl = (page: string) =>
-  page === "/" ? signInPath : `${signInPath}?${new URLSearchParams({ next: page })}`;
-
-// Resolving against a made-up origin shows whether `next` stays on our site.
 const ownOrigin = "http://inspo.invalid";
 
-/**
- * Where to go after signing in: `next` if it is a path on this site, else the
- * start page. Absolute URLs, `//host`, `/\host` and other schemes such as
- * `javascript:` never get through, so `next` cannot become an open redirect.
- */
-export function returnPath(next: string | undefined): string {
-  if (!next?.startsWith("/")) return "/";
-  const url = new URL(next, ownOrigin);
-  return url.origin === ownOrigin ? url.pathname + url.search + url.hash : "/";
+/** Only a single, unambiguous known internal page may be an OAuth return path. */
+export function returnPath(next: unknown): string {
+  if (typeof next !== "string" || !next.startsWith("/") || next.startsWith("//") || /[\\\u0000-\u0020\u007f]/.test(next)) return "/";
+  try {
+    // Validate before URL normalizes dot segments. Query/hash encoding must also be valid.
+    decodeURIComponent(next);
+    const pathname = next.split(/[?#]/, 1)[0] ?? "";
+    const page = canonicalPagePath(pathname);
+    const url = new URL(next, ownOrigin);
+    if (!page || page === signInPath || url.origin !== ownOrigin) return "/";
+    return page + url.search + url.hash;
+  } catch { return "/"; }
+}
+
+export function signInUrl(page: unknown): string {
+  const safe = returnPath(page);
+  return safe === "/" ? signInPath : `${signInPath}?${new URLSearchParams({ next: safe })}`;
 }

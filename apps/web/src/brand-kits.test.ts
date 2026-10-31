@@ -50,6 +50,7 @@ beforeAll(async () => {
   useFakeGithub([owner]);
   app = await startTestApp({ OWNER_GITHUB_ID: String(owner.id) });
   browser = app.browser();
+  browser.setCookie("PARAGLIDE_LOCALE", "de");
   await signInWithGithub(browser, owner);
   const slug = await uploadScreenshot(app, browser, `Harbor App ${run}`);
   hotel = { id: await idOf(references, slug), slug };
@@ -127,7 +128,7 @@ describe("saving", () => {
   });
 
   it("asks for a name", async () => {
-    expect(await save("   ", violet())).toEqual({ ok: false, errors: { name: ["Bitte gib einen Namen ein."] } });
+    expect(await save("   ", violet())).toEqual({ ok: false, errors: { name: ["Bitte fülle Name aus."] } });
   });
 
   it("drops the link to a reference that no longer exists; the colour stays", async () => {

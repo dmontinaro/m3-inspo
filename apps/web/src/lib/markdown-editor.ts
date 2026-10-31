@@ -1,3 +1,5 @@
+import * as m from "#/paraglide/messages.js";
+
 export type MarkdownFormat = "heading" | "bold" | "italic" | "bullet-list" | "numbered-list" | "quote" | "code" | "link";
 
 /** Formats the selection, or its containing lines, and returns the selection to restore in the editor. */
@@ -20,7 +22,7 @@ export function formatMarkdown(value: string, start: number, end: number, format
     return { text: value.slice(0, from) + replacement + value.slice(to), start: from, end: from + replacement.length };
   }
 
-  const selected = value.slice(start, end) || (format === "link" ? "Linktext" : "Text");
+  const selected = value.slice(start, end) || (format === "link" ? m.markdown_link_text() : m.text_label());
   if (format === "link") {
     const replacement = `[${selected}](https://)`;
     const urlStart = start + selected.length + 3;

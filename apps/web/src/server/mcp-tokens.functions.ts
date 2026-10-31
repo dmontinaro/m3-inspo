@@ -1,3 +1,4 @@
+import { parseWeb, webValidator } from "#/lib/validation";
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { maxTokenNameLength, tokenLifetimeDays } from "#/lib/mcp-tokens";
@@ -15,9 +16,9 @@ const newTokenForm = z.object({
 
 /** Takes the settings form; answers `{ token, credential }` with `token` in plaintext, shown to the owner once. */
 export const createMcpToken = createServerFn({ method: "POST" })
-  .validator((data: FormData) => newTokenForm.parse(Object.fromEntries(data)))
+  .validator((data: FormData) => parseWeb(newTokenForm, data instanceof FormData ? Object.fromEntries(data) : data))
   .handler(({ data }) => createToken(data));
 
 export const revokeMcpToken = createServerFn({ method: "POST" })
-  .validator(z.object({ id: z.uuid() }))
+  .validator(webValidator(z.object({ id: z.uuid() })))
   .handler(({ data }) => revokeToken(data.id));

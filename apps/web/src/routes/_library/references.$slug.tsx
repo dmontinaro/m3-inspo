@@ -1,3 +1,5 @@
+import { formatDate } from "#/lib/format";
+import * as m from "#/paraglide/messages.js";
 import { Link, createFileRoute, useRouter } from "@tanstack/react-router";
 import { useState } from "react";
 import { Palette } from "lucide-react";
@@ -28,7 +30,7 @@ import { maxNoteLength } from "#/lib/upload-limits";
 import { getCollections } from "#/server/collections.functions";
 import { deleteReference, getReference, setReferenceFavorite, setReferenceStatus } from "#/server/library.functions";
 
-export const Route = createFileRoute("/_library/referenzen/$slug")({
+export const Route = createFileRoute("/_library/references/$slug")({
   loader: async ({ params }) => {
     const [reference, collections] = await Promise.all([getReference({ data: { slug: params.slug } }), getCollections()]);
     return { reference, collections };
@@ -37,10 +39,9 @@ export const Route = createFileRoute("/_library/referenzen/$slug")({
   component: ReferenceDetail,
   notFoundComponent: () => (
     <main className="mx-auto max-w-md px-5 py-24 text-center">
-      <h1 className="text-xl font-semibold">Referenz nicht gefunden</h1>
+      <h1 className="text-xl font-semibold">{m.reference_not_found()}</h1>
       <Link to="/" className="mt-4 inline-block text-sm text-neutral-600 underline underline-offset-4">
-        Zur Galerie
-      </Link>
+        {m.gallery_back()}</Link>
     </main>
   ),
 });
@@ -49,13 +50,12 @@ type Reference = Awaited<ReturnType<typeof getReference>>;
 type CollectionOption = { slug: string; name: string };
 /** Where a design value comes from (docs/spec.md, Herkunft). */
 const sourceLabels: Record<TokenSource, string> = {
-  dom: "aus der Seite gelesen",
-  image: "aus den Bildpixeln gemessen",
-  vision: "von der KI geschätzt",
-  manual: "von dir eingetragen",
+  get dom() { return m.measurement_dom(); },
+  get image() { return m.measurement_image(); },
+  get vision() { return m.measurement_vision(); },
+  get manual() { return m.measurement_manual(); },
 };
 
-const dateFormat = new Intl.DateTimeFormat("de-DE", { dateStyle: "long", timeZone: "Europe/Berlin" });
 
 // One reference: the captures with their marked regions on the left, title, curation and
 // the owner's notes beside it, below them the most similar references.
@@ -70,15 +70,14 @@ function ReferenceDetail() {
   return (
     <main className="mx-auto max-w-screen-2xl px-5 pt-2 pb-16 sm:px-8">
       <Link to="/" className="inline-flex items-center gap-1.5 text-sm text-neutral-500 hover:text-neutral-900">
-        <span aria-hidden>←</span> Galerie
-      </Link>
+        <span aria-hidden>←</span> {m.gallery_title()}</Link>
 
       <div className="mt-4 grid gap-8 lg:grid-cols-[minmax(0,1fr)_24rem] lg:gap-12">
         <aside className="lg:order-2">
           <div className="lg:sticky lg:top-6">
             {editing ? (
               <>
-                <h1 className="sr-only">{`${reference.title} bearbeiten`}</h1>
+                <h1 className="sr-only">{m.edit_named({ name: reference.title })}</h1>
                 <ReferenceEditForm
                   reference={reference}
                   onCancel={() => setEditing(false)}
@@ -123,17 +122,14 @@ function LiveOnlyNotice({ sourceUrl }: { sourceUrl: string }) {
   return (
     <p className="flex flex-wrap items-baseline gap-x-3 gap-y-1 rounded-lg bg-neutral-100 px-4 py-3 text-sm text-neutral-700 ring-1 ring-black/5">
       <span>
-        <span className="font-medium text-neutral-900">3D-Seite.</span> Die Aufnahmen zeigen den WebGL-Teil nicht, nur den
-        Ladezustand.
-      </span>
+        <span className="font-medium text-neutral-900">{m.reference_webgl_title()}</span> {m.reference_webgl_help()}</span>
       <a
         href={sourceUrl}
         target="_blank"
         rel="noreferrer noopener"
         className="font-medium text-neutral-900 underline decoration-neutral-300 underline-offset-2 hover:decoration-neutral-900"
       >
-        Original ansehen ↗
-      </a>
+        {m.reference_view_source()}</a>
     </p>
   );
 }
@@ -147,13 +143,12 @@ function SimilarReferences({ references }: { references: Reference["similar"] })
   return (
     <section aria-labelledby="similar-references" className="mt-14 border-t border-neutral-200 pt-8">
       <h2 id="similar-references" className="text-sm font-semibold text-neutral-900">
-        Ähnliche Referenzen
-      </h2>
-      <p className="mt-1 text-xs text-neutral-500">Nach Titel, Notizen, Tags und Beschreibung</p>
+        {m.references_similar()}</h2>
+      <p className="mt-1 text-xs text-neutral-500">{m.references_similar_help()}</p>
       <ul className="mt-4 grid grid-cols-2 gap-x-4 gap-y-6 md:grid-cols-4 lg:gap-x-6">
         {references.map((similar) => (
           <li key={similar.slug}>
-            <Link to="/referenzen/$slug" params={{ slug: similar.slug }} className="group block">
+            <Link to="/references/$slug" params={{ slug: similar.slug }} className="group block">
               <div className="overflow-hidden rounded-lg bg-neutral-200 ring-1 ring-black/5 transition-shadow group-hover:shadow-lg group-hover:shadow-black/10">
                 <img
                   src={similar.thumbUrl}
@@ -182,14 +177,14 @@ function provenanceOf(values: { source: TokenSource; confidence?: number }[]) {
   const confidences = values.flatMap((value) => (value.confidence === undefined ? [] : [value.confidence]));
   if (confidences.length === 0) return sources;
   const average = confidences.reduce((sum, confidence) => sum + confidence, 0) / confidences.length;
-  return `${sources}, Sicherheit etwa ${Math.round(average * 100)} %`;
+  return m.source_confidence({ sources, confidence: formatNumber(Math.round(average * 100)) });
 }
 
 /** A font as shown: a family name as read, a style estimate ("roman-serif") in words. */
 const fontLabel = (font: { value: string; source: TokenSource }) =>
   font.source === "vision" ? font.value.replaceAll("-", " ") : font.value;
 
-const modeLabels = { light: "Hell", dark: "Dunkel" } as const;
+const modeLabels = { get light() { return m.mode_light(); }, get dark() { return m.mode_dark(); } } as const;
 
 /**
  * The design values of the current analysis, compact, each group with where it comes from.
@@ -200,10 +195,10 @@ function DesignValues({ analysis, slug, approved }: { analysis: NonNullable<Refe
   const { palette, fonts, tech, mode } = analysis;
   return (
     <section>
-      <h2 className="text-sm font-semibold text-neutral-900">Designwerte</h2>
+      <h2 className="text-sm font-semibold text-neutral-900">{m.reference_design_values()}</h2>
       {palette.length > 0 && (
         <div className="mt-2.5">
-          <ul className="flex flex-wrap gap-1.5" aria-label="Palette">
+          <ul className="flex flex-wrap gap-1.5" aria-label={m.palette_title()}>
             {palette.map(({ value }) => (
               <li key={value} className="flex flex-col items-center gap-1">
                 <span aria-hidden className="size-8 rounded-md ring-1 ring-black/10 ring-inset" style={{ backgroundColor: value }} />
@@ -211,7 +206,7 @@ function DesignValues({ analysis, slug, approved }: { analysis: NonNullable<Refe
               </li>
             ))}
           </ul>
-          <p className="mt-1.5 text-xs text-neutral-500">{`Palette ${provenanceOf(palette)}`}</p>
+          <p className="mt-1.5 text-xs text-neutral-500">{m.palette_provenance({ source: provenanceOf(palette) })}</p>
           {approved && (
             <Link
               to="/generator"
@@ -222,15 +217,14 @@ function DesignValues({ analysis, slug, approved }: { analysis: NonNullable<Refe
               className="mt-2.5 inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-sm text-neutral-600 ring-1 ring-neutral-300 ring-inset hover:bg-neutral-100 hover:text-neutral-900"
             >
               <Palette aria-hidden className="size-3.5" strokeWidth={1.75} />
-              Als Brand Kit übernehmen
-            </Link>
+              {m.reference_take_as_kit()}</Link>
           )}
         </div>
       )}
       <dl className="mt-3 grid grid-cols-[auto_minmax(0,1fr)] gap-x-6 gap-y-1.5 text-sm">
         {fonts.length > 0 && (
           <>
-            <dt className="text-neutral-500">Schriften</dt>
+            <dt className="text-neutral-500">{m.type_pairings_title()}</dt>
             <dd className="text-neutral-800">
               {fonts.map(fontLabel).join(", ")}
               <span className="block text-xs text-neutral-500">{provenanceOf(fonts)}</span>
@@ -239,13 +233,13 @@ function DesignValues({ analysis, slug, approved }: { analysis: NonNullable<Refe
         )}
         {mode && (
           <>
-            <dt className="text-neutral-500">Modus</dt>
+            <dt className="text-neutral-500">{m.reference_mode()}</dt>
             <dd className="text-neutral-800">{modeLabels[mode]}</dd>
           </>
         )}
         {tech.length > 0 && (
           <>
-            <dt className="text-neutral-500">Technik</dt>
+            <dt className="text-neutral-500">{m.reference_technology()}</dt>
             <dd className="text-neutral-800">{tech.join(", ")}</dd>
           </>
         )}
@@ -283,7 +277,7 @@ function ReferenceSidebar({
   }
 
   function remove() {
-    const question = `„${reference.title}“ endgültig löschen? Die Referenz und alle ihre Bilder werden entfernt. Das lässt sich nicht rückgängig machen.`;
+    const question = m.reference_delete_confirm({ title: reference.title });
     if (!window.confirm(question)) return;
     return change(
       () => deleteReference({ data: { slug: reference.slug } }),
@@ -302,8 +296,8 @@ function ReferenceSidebar({
           type="button"
           disabled={pending}
           aria-pressed={reference.isFavorite}
-          aria-label="Favorit"
-          title={reference.isFavorite ? "Favorit entfernen" : "Als Favorit markieren"}
+          aria-label={m.favorite_label()}
+          title={reference.isFavorite ? m.favorite_remove() : m.favorite_add()}
           onClick={() =>
             change(() => setReferenceFavorite({ data: { slug: reference.slug, isFavorite: !reference.isFavorite } }))
           }
@@ -312,7 +306,7 @@ function ReferenceSidebar({
           <FavoriteStar filled={reference.isFavorite} className="size-6" />
         </button>
       </div>
-      <p className="mt-1 text-sm text-neutral-500">{`Hinzugefügt am ${dateFormat.format(reference.createdAt)}`}</p>
+      <p className="mt-1 text-sm text-neutral-500">{m.reference_added_date({ date: formatDate(reference.createdAt) })}</p>
 
       <StatusSwitch
         status={reference.curationStatus}
@@ -324,18 +318,18 @@ function ReferenceSidebar({
         <Note
           slug={reference.slug}
           name="takeNote"
-          label="Übernehmen"
+          label={m.reference_take()}
           text={reference.takeNote}
-          placeholder="Was gefällt dir hier?"
+          placeholder={m.reference_take_placeholder()}
           dotClassName="bg-emerald-500"
           onSaved={reload}
         />
         <Note
           slug={reference.slug}
           name="avoidNote"
-          label="Vermeiden"
+          label={m.reference_avoid()}
           text={reference.avoidNote}
-          placeholder="Was soll nicht übernommen werden?"
+          placeholder={m.reference_avoid_placeholder()}
           dotClassName="bg-rose-500"
           onSaved={reload}
         />
@@ -346,12 +340,12 @@ function ReferenceSidebar({
       </div>
 
       <dl className="mt-8 grid grid-cols-[auto_minmax(0,1fr)] items-baseline gap-x-6 gap-y-2 text-sm">
-        <dt className="text-neutral-500">Fokus</dt>
+        <dt className="text-neutral-500">{m.reference_focus()}</dt>
         <dd className="text-neutral-800">
           <InlineField
             slug={reference.slug}
             name="focus"
-            editLabel="Fokus bearbeiten"
+            editLabel={m.reference_edit_focus()}
             value={focus ? focusLabels[focus] : null}
             onSaved={reload}
             control={({ id, errorId }) => (
@@ -360,11 +354,11 @@ function ReferenceSidebar({
                 name="focus"
                 autoFocus
                 defaultValue={reference.focus ?? ""}
-                aria-label="Fokus"
+                aria-label={m.reference_focus()}
                 aria-describedby={errorId}
                 className={inputClassName}
               >
-                <option value="">Nicht festgelegt</option>
+                <option value="">{m.field_not_set()}</option>
                 {focusAreas.map((area) => (
                   <option key={area} value={area}>
                     {focusLabels[area]}
@@ -374,12 +368,12 @@ function ReferenceSidebar({
             )}
           />
         </dd>
-        <dt className="text-neutral-500">Format</dt>
+        <dt className="text-neutral-500">{m.field_format()}</dt>
         <dd className="text-neutral-800">
           <InlineField
             slug={reference.slug}
             name="device"
-            editLabel="Format bearbeiten"
+            editLabel={m.reference_edit_format()}
             value={deviceLabels[reference.device]}
             onSaved={reload}
             control={({ id, errorId }) => (
@@ -388,7 +382,7 @@ function ReferenceSidebar({
                 name="device"
                 autoFocus
                 defaultValue={reference.device}
-                aria-label="Format"
+                aria-label={m.field_format()}
                 aria-describedby={errorId}
                 className={inputClassName}
               >
@@ -401,12 +395,12 @@ function ReferenceSidebar({
             )}
           />
         </dd>
-        <dt className="text-neutral-500">Tags</dt>
+        <dt className="text-neutral-500">{m.field_tags()}</dt>
         <dd>
           <InlineField
             slug={reference.slug}
             name="tags"
-            editLabel="Tags bearbeiten"
+            editLabel={m.reference_edit_tags()}
             value={
               reference.tags.length > 0 ? (
                 // Each tag opens the gallery filtered by it.
@@ -429,12 +423,12 @@ function ReferenceSidebar({
             control={({ id, errorId }) => <TagInput id={id} defaultTags={reference.tags} errorId={errorId} autoFocus />}
           />
         </dd>
-        <dt className="text-neutral-500">Quelle</dt>
+        <dt className="text-neutral-500">{m.field_source()}</dt>
         <dd className="text-neutral-800">
           <InlineField
             slug={reference.slug}
             name="sourceUrl"
-            editLabel="Quelle bearbeiten"
+            editLabel={m.reference_edit_source()}
             value={
               reference.sourceUrl ? (
                 <a
@@ -458,7 +452,7 @@ function ReferenceSidebar({
                 maxLength={maxSourceUrlLength}
                 defaultValue={reference.sourceUrl ?? ""}
                 placeholder="https://"
-                aria-label="Quelle"
+                aria-label={m.field_source()}
                 aria-invalid={errorId ? true : undefined}
                 aria-describedby={errorId}
                 className={inputClassName}
@@ -466,12 +460,12 @@ function ReferenceSidebar({
             )}
           />
         </dd>
-        <dt className="text-neutral-500">Urheber</dt>
+        <dt className="text-neutral-500">{m.reference_attribution()}</dt>
         <dd className="text-neutral-800">
           <InlineField
             slug={reference.slug}
             name="attribution"
-            editLabel="Urheber bearbeiten"
+            editLabel={m.reference_edit_attribution()}
             value={reference.attribution}
             onSaved={reload}
             control={({ id, errorId }) => (
@@ -481,8 +475,8 @@ function ReferenceSidebar({
                 autoFocus
                 maxLength={maxAttributionLength}
                 defaultValue={reference.attribution ?? ""}
-                placeholder="z. B. Studio oder Agentur"
-                aria-label="Urheber"
+                placeholder={m.attribution_placeholder()}
+                aria-label={m.reference_attribution()}
                 aria-invalid={errorId ? true : undefined}
                 aria-describedby={errorId}
                 className={inputClassName}
@@ -493,13 +487,13 @@ function ReferenceSidebar({
       </dl>
 
       <section className="mt-8">
-        <h2 className="text-sm font-semibold text-neutral-900">Sammlungen</h2>
+        <h2 className="text-sm font-semibold text-neutral-900">{m.collections_title()}</h2>
         {/* Each collection opens its page; the last entry adds the reference to more. */}
         <ul className="mt-2 flex flex-wrap items-center gap-1.5 text-sm">
           {reference.collections.map((collection) => (
             <li key={collection.slug}>
               <Link
-                to="/sammlungen/$slug"
+                to="/collections/$slug"
                 params={{ slug: collection.slug }}
                 className="block rounded-full bg-neutral-100 px-2.5 py-0.5 text-neutral-800 ring-1 ring-neutral-200 ring-inset hover:bg-neutral-200"
               >
@@ -524,8 +518,7 @@ function ReferenceSidebar({
           onClick={onEdit}
           className="rounded-md border border-neutral-300 bg-white px-4 py-2 text-sm font-medium text-neutral-900 hover:bg-neutral-100"
         >
-          Bearbeiten
-        </button>
+          {m.action_edit()}</button>
         {/* The generator with only this reference as its pool; without a palette it rolls freely.
             Only approved references enter a pool, so drafts and archived ones get no link. */}
         {reference.curationStatus === "approved" && (
@@ -535,8 +528,7 @@ function ReferenceSidebar({
             className="flex items-center gap-1.5 rounded-md border border-neutral-300 bg-white px-3.5 py-2 text-sm font-medium text-neutral-900 hover:bg-neutral-100"
           >
             <Palette aria-hidden className="size-4" strokeWidth={1.75} />
-            Color Scheme daraus
-          </Link>
+            {m.scheme_from_reference()}</Link>
         )}
         <button
           type="button"
@@ -544,22 +536,20 @@ function ReferenceSidebar({
           onClick={remove}
           className="ml-auto rounded-md px-2.5 py-1.5 text-sm text-rose-700 hover:bg-rose-50 disabled:opacity-60"
         >
-          Endgültig löschen
-        </button>
+          {m.action_delete_permanently()}</button>
       </div>
       {failed && (
         <p role="alert" className="mt-4 rounded-md bg-rose-50 px-3 py-2 text-sm text-rose-800">
-          Das hat nicht geklappt. Bitte versuche es noch einmal.
-        </p>
+          {m.action_failed()}</p>
       )}
     </>
   );
 }
 
 const statusHints: Record<CurationStatus, string> = {
-  draft: "Nur für dich sichtbar. Agenten sehen Entwürfe nicht.",
-  approved: "Agenten finden diese Referenz über MCP.",
-  archived: "Für Agenten unsichtbar und in der Galerie nur unter „Archiv“. Nicht gelöscht.",
+  get draft() { return m.kit_draft_help(); },
+  get approved() { return m.reference_approved_help(); },
+  get archived() { return m.reference_archived_help(); },
 };
 
 const statusDots: Record<CurationStatus, string> = {
@@ -580,7 +570,7 @@ function StatusSwitch({
 }) {
   return (
     <div className="mt-6">
-      <div role="group" aria-label="Status" className="grid grid-cols-3 rounded-lg bg-neutral-200/70 p-1">
+      <div role="group" aria-label={m.field_status()} className="grid grid-cols-3 rounded-lg bg-neutral-200/70 p-1">
         {curationStatuses.map((option) => (
           <button
             key={option}
@@ -628,9 +618,9 @@ function Note({
         <InlineField
           slug={slug}
           name={name}
-          editLabel={`${label} bearbeiten`}
+          editLabel={m.edit_named({ name: label })}
           value={text ? <p className="leading-relaxed whitespace-pre-line text-neutral-700">{text}</p> : null}
-          emptyText="Keine Notiz"
+          emptyText={m.note_none()}
           onSaved={onSaved}
           control={({ id, errorId }) => (
             <textarea

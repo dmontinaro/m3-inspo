@@ -1,6 +1,9 @@
+import { PageError, PageNotFound } from "#/components/page-feedback";
 import { HeadContent, Scripts, createRootRoute } from "@tanstack/react-router";
 import type { ReactNode } from "react";
 
+import { getLocale } from "#/paraglide/runtime.js";
+import { LanguageProvider } from "#/components/language-control";
 import appCss from "../styles.css?url";
 
 export const Route = createRootRoute({
@@ -19,17 +22,19 @@ export const Route = createRootRoute({
       { rel: "apple-touch-icon", href: "/apple-touch-icon.png" },
     ],
   }),
+  notFoundComponent: PageNotFound,
+  errorComponent: PageError,
   shellComponent: RootDocument,
 });
 
 function RootDocument({ children }: { children: ReactNode }) {
   return (
-    <html lang="de">
+    <html lang={getLocale()}>
       <head>
         <HeadContent />
       </head>
       <body>
-        {children}
+        <LanguageProvider>{children}</LanguageProvider>
         <Scripts />
       </body>
     </html>

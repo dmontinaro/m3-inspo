@@ -1,3 +1,5 @@
+import { issueMessage } from "#/lib/validation";
+import * as m from "#/paraglide/messages.js";
 /**
  * Type pairings: font combinations the owner keeps, one family with its
  * weights per font role (spec #62). Part of the library; server functions
@@ -28,11 +30,11 @@ import { slugify, withRandomSuffix } from "./slug";
  */
 const pairingFields = z
   .object({
-    name: z.string().trim().max(maxPairingNameLength, `Der Name ist zu lang (höchstens ${maxPairingNameLength} Zeichen).`),
+    name: z.string().trim().max(maxPairingNameLength),
     note: z
       .string()
       .trim()
-      .max(maxPairingNoteLength, `Die Notiz ist zu lang (höchstens ${maxPairingNoteLength} Zeichen).`)
+      .max(maxPairingNoteLength)
       .transform((note) => note || null),
     roles: pairingFontRoles,
   })
@@ -95,15 +97,15 @@ async function checkPairing(
   | { status: "valid"; fields: Omit<z.output<typeof pairingFields>, "roles"> & { roles: FontRoles }; adobeIds: string[] }
 > {
   const parsed = pairingFields.safeParse(input);
-  if (!parsed.success) return { status: "invalid", errors: z.flattenError(parsed.error).fieldErrors };
+  if (!parsed.success) return { status: "invalid", errors: z.flattenError(parsed.error, issueMessage).fieldErrors };
   for (const url of pageUrlsOf(parsed.data.roles)) {
     const blocked = await blockedReason(url);
-    if (blocked) return { status: "invalid", errors: { roles: [`Link zur Schrift: ${blocked}`] } };
+    if (blocked) return { status: "invalid", errors: { roles: [m.font_link_blocked({ reason: blocked })] } };
   }
 
   const adobe = await checkAdobeFamilies(parsed.data.roles);
   if (adobe.unknown.length > 0) {
-    const errors = adobe.unknown.map((family) => `Adobe Fonts kennt „${family}“ nicht. Schreib den Namen wie auf fonts.adobe.com.`);
+    const errors = adobe.unknown.map((family) => m.adobe_family_unknown({ family }));
     return { status: "invalid", errors: { roles: errors } };
   }
   const fields = { ...parsed.data, roles: adobe.roles };
@@ -138,8 +140,8 @@ export async function syncAdobePreviewKit() {
   return addToPreviewKit(ids);
 }
 
-/** "neu" is the new-pairing page, so no pairing may have it as its slug. */
-const reservedSlugs = new Set(["neu"]);
+/** Both historical and current creation routes reserve their literal segment. */
+const reservedSlugs = new Set(["neu", "new"]);
 
 /**
  * Creates a pairing by hand from the form (`name`, `note`, `roles`). The

@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { returnPath } from "./sign-in";
 
 describe("returnPath", () => {
-  it.each(["/generator?brand=e56236~exact&primary=vivid", "/referenzen/a-b", "/sammlungen?x=1#top"])(
+  it.each(["/generator?brand=e56236~exact&primary=vivid", "/references/a-b", "/collections?x=1#top"])(
     "keeps the internal path %s",
     (next) => {
       expect(returnPath(next)).toBe(next);

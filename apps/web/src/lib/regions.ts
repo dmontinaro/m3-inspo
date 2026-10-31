@@ -1,3 +1,4 @@
+import * as m from "#/paraglide/messages.js";
 /**
  * Regions ("Bereiche") shared by the detail view and the server: the owner's
  * names for the component types (@m3-inspo/taxonomy COMPONENT_TYPES) and the
@@ -8,16 +9,16 @@ import type { ComponentType } from "@m3-inspo/taxonomy";
 
 /** Component types in the owner's words, in the order the picker shows them. */
 export const componentTypeLabels: Record<ComponentType, string> = {
-  nav: "Navigation",
-  hero: "Hero",
-  features: "Features",
-  pricing: "Preise",
-  cta: "Call to Action",
-  testimonial: "Stimmen",
-  "logo-cloud": "Logos",
-  stat: "Kennzahlen",
-  faq: "FAQ",
-  footer: "Footer",
+  get nav() { return m.component_nav(); },
+  get hero() { return m.component_hero(); },
+  get features() { return m.component_features(); },
+  get pricing() { return m.component_pricing(); },
+  get cta() { return m.component_cta(); },
+  get testimonial() { return m.component_testimonial(); },
+  get "logo-cloud"() { return m.component_logos(); },
+  get stat() { return m.component_stats(); },
+  get faq() { return m.component_faq(); },
+  get footer() { return m.component_footer(); },
 };
 
 /** The shortest side a region may have; anything smaller is a slip of the mouse. */

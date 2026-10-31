@@ -1,3 +1,5 @@
+import { formatNumber } from "#/lib/format";
+import * as m from "#/paraglide/messages.js";
 import type { ReactNode } from "react";
 import {
   Blocks,
@@ -28,23 +30,23 @@ import { Link, createFileRoute } from "@tanstack/react-router";
 import { mcpToolGuide, toolGroups, toolStatuses } from "#/lib/mcp-tool-guide";
 import type { ToolGuide, ToolStatus } from "#/lib/mcp-tool-guide";
 
-export const Route = createFileRoute("/_library/werkzeuge")({
-  head: () => ({ meta: [{ title: "Werkzeuge · m3 inspo" }] }),
+export const Route = createFileRoute("/_library/tools")({
+  head: () => ({ meta: [{ title: m.tools_page_title() }] }),
   component: Tools,
 });
 
 type ToolName = keyof typeof mcpToolGuide;
 
-const tools = Object.entries(mcpToolGuide).map(([name, guide]) => ({ name: name as ToolName, ...guide }));
+const tools = Object.entries(mcpToolGuide).map(([name, guide]) => ({ name, guide }));
 
 const statusBadges: Record<ToolStatus, { label: string; className: string; Icon: LucideIcon }> = {
-  ready: { label: "Nutzbar", className: "bg-emerald-50 text-emerald-800 ring-emerald-600/20", Icon: CircleCheck },
-  limited: { label: "Eingeschränkt", className: "bg-amber-50 text-amber-800 ring-amber-600/20", Icon: CircleAlert },
-  empty: { label: "Noch leer", className: "bg-neutral-100 text-neutral-600 ring-neutral-500/20", Icon: CircleDashed },
+  ready: { get label() { return m.tool_ready(); }, className: "bg-emerald-50 text-emerald-800 ring-emerald-600/20", Icon: CircleCheck },
+  limited: { get label() { return m.tool_limited(); }, className: "bg-amber-50 text-amber-800 ring-amber-600/20", Icon: CircleAlert },
+  empty: { get label() { return m.tool_empty(); }, className: "bg-neutral-100 text-neutral-600 ring-neutral-500/20", Icon: CircleDashed },
 };
 
 /** One icon per tool, shown at the top of its card. */
-const toolIcons: Record<ToolName, LucideIcon> = {
+const toolIcons: Record<string, LucideIcon> = {
   generate_color_scheme: WandSparkles,
   list_brand_kits: Library,
   get_brand_kit: SwatchBook,
@@ -63,7 +65,7 @@ const toolIcons: Record<ToolName, LucideIcon> = {
   find_components: Component,
   find_reference_components: Blocks,
   get_reference_jsx: FileCode,
-};
+} satisfies Record<ToolName, LucideIcon>;
 
 // The MCP tools a coding agent gets, grouped by task: one card per tool with
 // its purpose. Opening a card shows a typical request and what it delivers on
@@ -71,17 +73,13 @@ const toolIcons: Record<ToolName, LucideIcon> = {
 function Tools() {
   return (
     <main className="mx-auto max-w-screen-2xl px-5 pt-2 pb-16 sm:px-8">
-      <Link to="/einstellungen" className="inline-flex items-center gap-1.5 text-sm text-neutral-500 hover:text-neutral-900">
-        <span aria-hidden>←</span> Einstellungen
-      </Link>
-      <h1 className="mt-4 text-2xl font-semibold tracking-tight">Werkzeuge</h1>
+      <Link to="/settings" className="inline-flex items-center gap-1.5 text-sm text-neutral-500 hover:text-neutral-900">
+        <span aria-hidden>←</span> {m.settings_title()}</Link>
+      <h1 className="mt-4 text-2xl font-semibold tracking-tight">{m.tools_title()}</h1>
       <p className="mt-1 max-w-prose text-[15px] text-neutral-600">
-        Diese Werkzeuge bekommt ein Coding-Agent wie Claude Code über MCP aus deiner Bibliothek. Den Befehl zum Anbinden
-        und den Token dafür findest du in den{" "}
-        <Link to="/einstellungen" className="text-neutral-900 underline underline-offset-4 hover:text-neutral-600">
-          Einstellungen
-        </Link>
-        .
+        {m.tools_intro()}{" "}
+        <Link to="/settings" className="text-neutral-900 underline underline-offset-4 hover:text-neutral-600">
+          {m.tools_settings_link()}</Link>
       </p>
       <StatusSummary />
 
@@ -91,9 +89,9 @@ function Tools() {
           {/* items-start: an opened card grows alone instead of stretching its row. */}
           <ul className="mt-4 grid items-start gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {tools
-              .filter((tool) => tool.group === group.id)
+              .filter((tool) => tool.guide.group === group.id)
               .map((tool) => (
-                <ToolCard key={tool.name} tool={tool} />
+                <ToolCard key={tool.name} name={tool.name} tool={tool.guide} />
               ))}
           </ul>
         </section>
@@ -107,15 +105,15 @@ function StatusSummary() {
   return (
     <p className="mt-5 flex flex-wrap gap-2">
       {toolStatuses.map((status) => (
-        <StatusBadge key={status} status={status} count={tools.filter((tool) => tool.status === status).length} />
+        <StatusBadge key={status} status={status} count={tools.filter((tool) => tool.guide.status === status).length} />
       ))}
     </p>
   );
 }
 
 /** A tool card that shows icon, name, status and purpose; opening it reveals when to use it and its state. */
-function ToolCard({ tool }: { tool: ToolGuide & { name: ToolName } }) {
-  const Icon = toolIcons[tool.name];
+function ToolCard({ tool, name }: { tool: ToolGuide; name: string }) {
+  const Icon = toolIcons[name] ?? ScanEye;
   return (
     <li>
       <details className="group rounded-xl border border-neutral-200 bg-white shadow-xs open:shadow-sm">
@@ -125,7 +123,7 @@ function ToolCard({ tool }: { tool: ToolGuide & { name: ToolName } }) {
               <Icon className="size-5" strokeWidth={1.75} />
             </span>
             <div className="flex min-w-0 flex-1 flex-wrap items-center justify-between gap-x-3 gap-y-1 pt-1.5">
-              <h3 className="min-w-0 font-semibold break-words text-neutral-900">{tool.name}</h3>
+              <h3 className="min-w-0 font-semibold break-words text-neutral-900">{name}</h3>
               <StatusBadge status={tool.status} />
             </div>
           </div>
@@ -139,10 +137,10 @@ function ToolCard({ tool }: { tool: ToolGuide & { name: ToolName } }) {
           </div>
         </summary>
         <dl className="flex flex-col gap-4 border-t border-neutral-100 px-5 pt-4 pb-5 text-[15px]">
-          <Explanation label="Wann nutzen">
-            <span className="text-neutral-600">{`„${tool.askedFor}“`}</span>
+          <Explanation label={m.tool_when()}>
+            <span className="text-neutral-600">{m.tools_example_question({ question: tool.askedFor })}</span>
           </Explanation>
-          <Explanation label="Stand">
+          <Explanation label={m.tool_state()}>
             <span className="text-sm text-neutral-500">
               {tool.note}
             </span>
@@ -163,6 +161,8 @@ function Explanation({ label, children }: { label: string; children: ReactNode }
   );
 }
 
+const statusCounts = { ready: m.tool_ready_count, limited: m.tool_limited_count, empty: m.tool_empty_count } satisfies Record<ToolStatus, (input: { count: number; formattedCount: string }) => string>;
+
 function StatusBadge({ status, count }: { status: ToolStatus; count?: number }) {
   const { label, className, Icon } = statusBadges[status];
   return (
@@ -170,7 +170,7 @@ function StatusBadge({ status, count }: { status: ToolStatus; count?: number }) 
       className={`inline-flex shrink-0 items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium ring-1 ring-inset ${className}`}
     >
       <Icon aria-hidden className="size-3.5" strokeWidth={2} />
-      {count === undefined ? label : `${count} ${label.toLowerCase()}`}
+      {count === undefined ? label : statusCounts[status]({ count, formattedCount: formatNumber(count) })}
     </span>
   );
 }

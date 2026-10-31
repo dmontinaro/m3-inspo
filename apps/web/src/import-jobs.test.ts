@@ -35,6 +35,7 @@ beforeAll(async () => {
   useFakeGithub([owner]);
   app = await startTestApp({ OWNER_GITHUB_ID: String(owner.id), WORKER_TOKEN: workerToken, EMBEDDINGS_API_KEY: "" });
   browser = app.browser();
+  browser.setCookie("PARAGLIDE_LOCALE", "de");
   await signInWithGithub(browser, owner);
 }, 60_000);
 

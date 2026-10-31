@@ -1,3 +1,6 @@
+import { contentLanguageForUi } from "#/lib/format";
+import { getLocale } from "#/paraglide/runtime.js";
+import { parseWeb, webValidator } from "#/lib/validation";
 import { notFound } from "@tanstack/react-router";
 import { createServerFn } from "@tanstack/react-start";
 import type { Typography } from "@m3-inspo/shared/fonts";
@@ -31,7 +34,7 @@ export const getBrandKits = createServerFn({ method: "GET" }).handler(() => list
 
 /** One kit with its Color Scheme, source references, CSS export and whether the generator now computes other values. */
 export const getBrandKit = createServerFn({ method: "GET" })
-  .validator(z.object({ slug: z.string() }))
+  .validator(webValidator(z.object({ slug: z.string() })))
   .handler(async ({ data }) => {
     const kit = await findBrandKit(data.slug);
     if (!kit) throw notFound();
@@ -45,7 +48,7 @@ export const getBrandKit = createServerFn({ method: "GET" })
  */
 export const saveBrandKit = createServerFn({ method: "POST" })
   // Name and project get their owner-facing check in createBrandKit; this only caps the size.
-  .validator(z.object({ name: z.string().max(1000), project: z.string().max(1000), scheme: colorSchemeInput }))
+  .validator(webValidator(z.object({ name: z.string().max(1000), project: z.string().max(1000), scheme: colorSchemeInput })))
   .handler(({ data: { scheme, ...fields } }) => createBrandKit(fields, scheme));
 
 /**
@@ -56,7 +59,7 @@ export const saveBrandKit = createServerFn({ method: "POST" })
 export const saveBrandKitChanges = createServerFn({ method: "POST" })
   // Typed as the page holds the typography; Zod narrows each font role to its source.
   .validator((data: { slug: string; scheme: ColorSchemeInput; typography: Typography | null }) =>
-    z.object({ slug: z.string(), scheme: colorSchemeInput, typography: typographyInput.nullable() }).parse(data),
+    parseWeb(z.object({ slug: z.string(), scheme: colorSchemeInput, typography: typographyInput.nullable() }), data),
   )
   .handler(async ({ data }) => {
     const stored = await overwriteBrandKit(data.slug, data.scheme, data.typography);
@@ -70,7 +73,7 @@ export const saveBrandKitChanges = createServerFn({ method: "POST" })
  * the same families.
  */
 export const keepBrandKitTypography = createServerFn({ method: "POST" })
-  .validator(z.object({ slug: z.string() }))
+  .validator(webValidator(z.object({ slug: z.string() })))
   .handler(async ({ data }) => {
     const result = await keepKitTypography(data.slug);
     if (!result) throw notFound();
@@ -79,14 +82,14 @@ export const keepBrandKitTypography = createServerFn({ method: "POST" })
 
 /** The kit's notes; an empty text clears them. */
 export const updateBrandKitNotes = createServerFn({ method: "POST" })
-  .validator(z.object({ slug: z.string(), notes: z.string().max(maxBrandKitNotesLength) }))
+  .validator(webValidator(z.object({ slug: z.string(), notes: z.string().max(maxBrandKitNotesLength) })))
   .handler(async ({ data }) => {
     if (!(await setBrandKitNotes(data.slug, data.notes))) throw notFound();
   });
 
 /** The brand's design briefing in Markdown, independently of colours and typography. */
 export const updateBrandKitDesignBriefing = createServerFn({ method: "POST" })
-  .validator(z.object({ slug: z.string(), designBriefing: z.string().max(maxDesignBriefingLength) }))
+  .validator(webValidator(z.object({ slug: z.string(), designBriefing: z.string().max(maxDesignBriefingLength) })))
   .handler(async ({ data }) => {
     if (!(await setBrandKitDesignBriefing(data.slug, data.designBriefing))) throw notFound();
   });
@@ -97,9 +100,10 @@ export const updateBrandKitDesignBriefing = createServerFn({ method: "POST" })
  * did not deliver. Takes up to a minute.
  */
 export const draftBrandKitDesignBriefing = createServerFn({ method: "POST" })
-  .validator(z.object({ slug: z.string() }))
+  .validator(webValidator(z.object({ slug: z.string() })))
   .handler(async ({ data }) => {
-    const result = await draftKitBriefing(data.slug);
+    const outputLanguage = contentLanguageForUi(getLocale());
+    const result = await draftKitBriefing({ slug: data.slug, outputLanguage });
     if (!result) throw notFound();
     return result;
   });
@@ -110,14 +114,14 @@ export const draftBrandKitDesignBriefing = createServerFn({ method: "POST" })
  * page asks before.
  */
 export const setBrandKitStatus = createServerFn({ method: "POST" })
-  .validator(z.object({ slug: z.string(), status: z.enum(brandKitStatuses) }))
+  .validator(webValidator(z.object({ slug: z.string(), status: z.enum(brandKitStatuses) })))
   .handler(async ({ data }) => {
     if (!(await changeBrandKitStatus(data.slug, data.status))) throw notFound();
   });
 
 /** "Duplizieren": a draft copy named "… (Kopie)"; answers its slug, which the page opens. */
 export const duplicateBrandKit = createServerFn({ method: "POST" })
-  .validator(z.object({ slug: z.string() }))
+  .validator(webValidator(z.object({ slug: z.string() })))
   .handler(async ({ data }) => {
     const copy = await copyBrandKit(data.slug);
     if (!copy) throw notFound();
@@ -126,7 +130,7 @@ export const duplicateBrandKit = createServerFn({ method: "POST" })
 
 /** Deletes the kit for good with its links; the page asks for confirmation first. */
 export const deleteBrandKit = createServerFn({ method: "POST" })
-  .validator(z.object({ slug: z.string() }))
+  .validator(webValidator(z.object({ slug: z.string() })))
   .handler(async ({ data }) => {
     if (!(await removeBrandKit(data.slug))) throw notFound();
   });
