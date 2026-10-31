@@ -24,12 +24,12 @@ import { Route as LibraryCollectionsIndexRouteImport } from './routes/_library/c
 import { Route as LibraryCollectionsSlugRouteImport } from './routes/_library/collections.$slug'
 import { Route as LibraryReferencesSlugRouteImport } from './routes/_library/references.$slug'
 import { Route as LibraryTypePairingsIndexRouteImport } from './routes/_library/type-pairings.index'
-import { Route as LibraryTypePairingsNewRouteImport } from './routes/_library/type-pairings.new'
 import { Route as ApiAssetsSplatRouteImport } from './routes/api/assets/$'
 import { Route as ApiAuthSplatRouteImport } from './routes/api/auth/$'
 import { Route as ApiWorkerSplatRouteImport } from './routes/api/worker/$'
 import { Route as LibraryTypePairingsSlugIndexRouteImport } from './routes/_library/type-pairings.$slug.index'
 import { Route as LibraryTypePairingsSlugEditRouteImport } from './routes/_library/type-pairings.$slug.edit'
+import { Route as LibraryTypePairingsNewIndexRouteImport } from './routes/_library/type-pairings.new.index'
 import { Route as LibraryTypePairingsNewViewRouteImport } from './routes/_library/type-pairings.new.view'
 
 const LibraryRoute = LibraryRouteImport.update({
@@ -107,11 +107,6 @@ const LibraryTypePairingsIndexRoute =
     path: '/type-pairings/',
     getParentRoute: () => LibraryRoute,
   } as any)
-const LibraryTypePairingsNewRoute = LibraryTypePairingsNewRouteImport.update({
-  id: '/type-pairings/new',
-  path: '/type-pairings/new',
-  getParentRoute: () => LibraryRoute,
-} as any)
 const ApiAssetsSplatRoute = ApiAssetsSplatRouteImport.update({
   id: '/api/assets/$',
   path: '/api/assets/$',
@@ -139,11 +134,17 @@ const LibraryTypePairingsSlugEditRoute =
     path: '/type-pairings/$slug/edit',
     getParentRoute: () => LibraryRoute,
   } as any)
+const LibraryTypePairingsNewIndexRoute =
+  LibraryTypePairingsNewIndexRouteImport.update({
+    id: '/type-pairings/new/',
+    path: '/type-pairings/new/',
+    getParentRoute: () => LibraryRoute,
+  } as any)
 const LibraryTypePairingsNewViewRoute =
   LibraryTypePairingsNewViewRouteImport.update({
-    id: '/view',
-    path: '/view',
-    getParentRoute: () => LibraryTypePairingsNewRoute,
+    id: '/type-pairings/new/view',
+    path: '/type-pairings/new/view',
+    getParentRoute: () => LibraryRoute,
   } as any)
 
 export interface FileRoutesByFullPath {
@@ -158,7 +159,6 @@ export interface FileRoutesByFullPath {
   '/brand-kits/$slug': typeof LibraryBrandKitsSlugRoute
   '/collections/$slug': typeof LibraryCollectionsSlugRoute
   '/references/$slug': typeof LibraryReferencesSlugRoute
-  '/type-pairings/new': typeof LibraryTypePairingsNewRouteWithChildren
   '/api/assets/$': typeof ApiAssetsSplatRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/api/worker/$': typeof ApiWorkerSplatRoute
@@ -168,6 +168,7 @@ export interface FileRoutesByFullPath {
   '/type-pairings/$slug/edit': typeof LibraryTypePairingsSlugEditRoute
   '/type-pairings/new/view': typeof LibraryTypePairingsNewViewRoute
   '/type-pairings/$slug/': typeof LibraryTypePairingsSlugIndexRoute
+  '/type-pairings/new/': typeof LibraryTypePairingsNewIndexRoute
 }
 export interface FileRoutesByTo {
   '/sign-in': typeof SignInRoute
@@ -181,7 +182,6 @@ export interface FileRoutesByTo {
   '/brand-kits/$slug': typeof LibraryBrandKitsSlugRoute
   '/collections/$slug': typeof LibraryCollectionsSlugRoute
   '/references/$slug': typeof LibraryReferencesSlugRoute
-  '/type-pairings/new': typeof LibraryTypePairingsNewRouteWithChildren
   '/api/assets/$': typeof ApiAssetsSplatRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/api/worker/$': typeof ApiWorkerSplatRoute
@@ -191,6 +191,7 @@ export interface FileRoutesByTo {
   '/type-pairings/$slug/edit': typeof LibraryTypePairingsSlugEditRoute
   '/type-pairings/new/view': typeof LibraryTypePairingsNewViewRoute
   '/type-pairings/$slug': typeof LibraryTypePairingsSlugIndexRoute
+  '/type-pairings/new': typeof LibraryTypePairingsNewIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -206,7 +207,6 @@ export interface FileRoutesById {
   '/_library/brand-kits/$slug': typeof LibraryBrandKitsSlugRoute
   '/_library/collections/$slug': typeof LibraryCollectionsSlugRoute
   '/_library/references/$slug': typeof LibraryReferencesSlugRoute
-  '/_library/type-pairings/new': typeof LibraryTypePairingsNewRouteWithChildren
   '/api/assets/$': typeof ApiAssetsSplatRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/api/worker/$': typeof ApiWorkerSplatRoute
@@ -216,6 +216,7 @@ export interface FileRoutesById {
   '/_library/type-pairings/$slug/edit': typeof LibraryTypePairingsSlugEditRoute
   '/_library/type-pairings/new/view': typeof LibraryTypePairingsNewViewRoute
   '/_library/type-pairings/$slug/': typeof LibraryTypePairingsSlugIndexRoute
+  '/_library/type-pairings/new/': typeof LibraryTypePairingsNewIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -231,7 +232,6 @@ export interface FileRouteTypes {
     | '/brand-kits/$slug'
     | '/collections/$slug'
     | '/references/$slug'
-    | '/type-pairings/new'
     | '/api/assets/$'
     | '/api/auth/$'
     | '/api/worker/$'
@@ -241,6 +241,7 @@ export interface FileRouteTypes {
     | '/type-pairings/$slug/edit'
     | '/type-pairings/new/view'
     | '/type-pairings/$slug/'
+    | '/type-pairings/new/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/sign-in'
@@ -254,7 +255,6 @@ export interface FileRouteTypes {
     | '/brand-kits/$slug'
     | '/collections/$slug'
     | '/references/$slug'
-    | '/type-pairings/new'
     | '/api/assets/$'
     | '/api/auth/$'
     | '/api/worker/$'
@@ -264,6 +264,7 @@ export interface FileRouteTypes {
     | '/type-pairings/$slug/edit'
     | '/type-pairings/new/view'
     | '/type-pairings/$slug'
+    | '/type-pairings/new'
   id:
     | '__root__'
     | '/_library'
@@ -278,7 +279,6 @@ export interface FileRouteTypes {
     | '/_library/brand-kits/$slug'
     | '/_library/collections/$slug'
     | '/_library/references/$slug'
-    | '/_library/type-pairings/new'
     | '/api/assets/$'
     | '/api/auth/$'
     | '/api/worker/$'
@@ -288,6 +288,7 @@ export interface FileRouteTypes {
     | '/_library/type-pairings/$slug/edit'
     | '/_library/type-pairings/new/view'
     | '/_library/type-pairings/$slug/'
+    | '/_library/type-pairings/new/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -406,13 +407,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LibraryTypePairingsIndexRouteImport
       parentRoute: typeof LibraryRoute
     }
-    '/_library/type-pairings/new': {
-      id: '/_library/type-pairings/new'
-      path: '/type-pairings/new'
-      fullPath: '/type-pairings/new'
-      preLoaderRoute: typeof LibraryTypePairingsNewRouteImport
-      parentRoute: typeof LibraryRoute
-    }
     '/api/assets/$': {
       id: '/api/assets/$'
       path: '/api/assets/$'
@@ -448,29 +442,22 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LibraryTypePairingsSlugEditRouteImport
       parentRoute: typeof LibraryRoute
     }
+    '/_library/type-pairings/new/': {
+      id: '/_library/type-pairings/new/'
+      path: '/type-pairings/new'
+      fullPath: '/type-pairings/new/'
+      preLoaderRoute: typeof LibraryTypePairingsNewIndexRouteImport
+      parentRoute: typeof LibraryRoute
+    }
     '/_library/type-pairings/new/view': {
       id: '/_library/type-pairings/new/view'
-      path: '/view'
+      path: '/type-pairings/new/view'
       fullPath: '/type-pairings/new/view'
       preLoaderRoute: typeof LibraryTypePairingsNewViewRouteImport
-      parentRoute: typeof LibraryTypePairingsNewRoute
+      parentRoute: typeof LibraryRoute
     }
   }
 }
-
-interface LibraryTypePairingsNewRouteChildren {
-  LibraryTypePairingsNewViewRoute: typeof LibraryTypePairingsNewViewRoute
-}
-
-const LibraryTypePairingsNewRouteChildren: LibraryTypePairingsNewRouteChildren =
-  {
-    LibraryTypePairingsNewViewRoute: LibraryTypePairingsNewViewRoute,
-  }
-
-const LibraryTypePairingsNewRouteWithChildren =
-  LibraryTypePairingsNewRoute._addFileChildren(
-    LibraryTypePairingsNewRouteChildren,
-  )
 
 interface LibraryRouteChildren {
   LibraryAddRoute: typeof LibraryAddRoute
@@ -482,12 +469,13 @@ interface LibraryRouteChildren {
   LibraryBrandKitsSlugRoute: typeof LibraryBrandKitsSlugRoute
   LibraryCollectionsSlugRoute: typeof LibraryCollectionsSlugRoute
   LibraryReferencesSlugRoute: typeof LibraryReferencesSlugRoute
-  LibraryTypePairingsNewRoute: typeof LibraryTypePairingsNewRouteWithChildren
   LibraryBrandKitsIndexRoute: typeof LibraryBrandKitsIndexRoute
   LibraryCollectionsIndexRoute: typeof LibraryCollectionsIndexRoute
   LibraryTypePairingsIndexRoute: typeof LibraryTypePairingsIndexRoute
   LibraryTypePairingsSlugEditRoute: typeof LibraryTypePairingsSlugEditRoute
+  LibraryTypePairingsNewViewRoute: typeof LibraryTypePairingsNewViewRoute
   LibraryTypePairingsSlugIndexRoute: typeof LibraryTypePairingsSlugIndexRoute
+  LibraryTypePairingsNewIndexRoute: typeof LibraryTypePairingsNewIndexRoute
 }
 
 const LibraryRouteChildren: LibraryRouteChildren = {
@@ -500,12 +488,13 @@ const LibraryRouteChildren: LibraryRouteChildren = {
   LibraryBrandKitsSlugRoute: LibraryBrandKitsSlugRoute,
   LibraryCollectionsSlugRoute: LibraryCollectionsSlugRoute,
   LibraryReferencesSlugRoute: LibraryReferencesSlugRoute,
-  LibraryTypePairingsNewRoute: LibraryTypePairingsNewRouteWithChildren,
   LibraryBrandKitsIndexRoute: LibraryBrandKitsIndexRoute,
   LibraryCollectionsIndexRoute: LibraryCollectionsIndexRoute,
   LibraryTypePairingsIndexRoute: LibraryTypePairingsIndexRoute,
   LibraryTypePairingsSlugEditRoute: LibraryTypePairingsSlugEditRoute,
+  LibraryTypePairingsNewViewRoute: LibraryTypePairingsNewViewRoute,
   LibraryTypePairingsSlugIndexRoute: LibraryTypePairingsSlugIndexRoute,
+  LibraryTypePairingsNewIndexRoute: LibraryTypePairingsNewIndexRoute,
 }
 
 const LibraryRouteWithChildren =

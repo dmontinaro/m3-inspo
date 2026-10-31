@@ -108,7 +108,7 @@ export function KitTypography({
     <section aria-labelledby="kit-fonts" className="rounded-xl bg-white p-4 font-sans text-sm text-neutral-900 ring-1 ring-black/5 sm:p-5">
       <div className="flex items-baseline justify-between gap-3">
         <h3 id="kit-fonts" className="text-base font-semibold tracking-tight">
-          {m.type_pairings_title()}</h3>
+          {m.typography_title()}</h3>
         {typography && (
           <button
             type="button"

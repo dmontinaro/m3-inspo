@@ -38,6 +38,13 @@ describe("page migration at the HTTP boundary", () => {
     expect(canonicalPagePath(path)).toBeNull();
   });
 
+  it("canonicalizes static pairing segments without changing dynamic slug case", () => {
+    expect(canonicalPagePath("/Schriften/NEU")).toBe("/type-pairings/new");
+    expect(canonicalPagePath("/Type-Pairings/NEW")).toBe("/type-pairings/new");
+    expect(canonicalPagePath("/Type-Pairings/NEW/VIEW")).toBe("/type-pairings/new/view");
+    expect(canonicalPagePath("/schriften/HOTEL")).toBeNull();
+  });
+
   it("decodes individual segments once without changing slug meanings", () => {
     expect(canonicalPagePath("/REFERENZEN/zimmer%75ebersicht/")).toBe("/references/zimmeruebersicht");
     expect(canonicalPagePath("/schriften/%6eew")).toBe("/type-pairings/new/view");

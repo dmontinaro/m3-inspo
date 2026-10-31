@@ -51,6 +51,8 @@
   "action_delete_permanently": "Delete permanently",
   "typography_save_first": "Save first. Only saved typography can be kept.",
   "typography_keep_help": "Create a new Type Pairing from these fonts.",
+  "typography_title": "Typography",
+  "reference_fonts": "Fonts",
   "type_pairings_title": "Type Pairings",
   "action_remove": "Remove",
   "typography_choose_other": "Choose another",

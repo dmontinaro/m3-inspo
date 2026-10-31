@@ -2,7 +2,7 @@
 
 Start with the [local setup](README.md#local-setup). Use pnpm and Node.js 24 or newer. The domain vocabulary is in [CONTEXT.md](CONTEXT.md), the architecture in [docs/spec.md](docs/spec.md).
 
-Keep changes focused and describe the problem and resulting behavior in the pull request. Code, identifiers and commit messages are English. The current interface and domain documentation are German.
+Keep changes focused and describe the problem and resulting behavior in the pull request. Code, identifiers and commit messages are English. The web interface supports English and German; domain documentation is German.
 
 Run `pnpm typecheck`, `pnpm lint` and the relevant tests. The full `pnpm test` suite needs Postgres with pgvector and Playwright Chromium. Tests create and drop their own isolated database; point `TEST_DATABASE_SERVER_URL` at a development server where creating databases is allowed.
 

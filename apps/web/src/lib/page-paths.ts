@@ -27,14 +27,15 @@ export function canonicalPagePath(pathname: string): string | null {
     const page = staticPages.get(root);
     return page ? `/${page}` : null;
   }
+  // Creation and the fixed `new/view` exception contain static segments, like the first segment.
+  if (parts.length === 2 && ((root === "schriften" && slug.toLowerCase() === "neu") || (root === "type-pairings" && slug.toLowerCase() === "new"))) return "/type-pairings/new";
+  if (parts.length === 3 && root === "type-pairings" && slug.toLowerCase() === "new" && action.toLowerCase() === "view") return "/type-pairings/new/view";
   if (!slug || !slugPattern.test(slug)) return null;
   if (root === "schriften" || root === "type-pairings") {
     if (parts.length === 2) {
-      if (root === "schriften" && slug === "neu") return "/type-pairings/new";
       return slug === "new" ? (root === "schriften" ? "/type-pairings/new/view" : "/type-pairings/new") : `/type-pairings/${slug}`;
     }
     if (parts.length === 3 && (action.toLowerCase() === (root === "schriften" ? "bearbeiten" : "edit"))) return `/type-pairings/${slug}/edit`;
-    if (parts.length === 3 && root === "type-pairings" && slug === "new" && action.toLowerCase() === "view") return "/type-pairings/new/view";
     return null;
   }
   if (parts.length !== 2) return null;

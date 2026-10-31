@@ -51,6 +51,8 @@
   "action_delete_permanently": "Endgültig löschen",
   "typography_save_first": "Erst speichern: gemerkt wird die gespeicherte Typografie.",
   "typography_keep_help": "Legt aus diesen Schriften ein neues Type Pairing an.",
+  "typography_title": "Typografie",
+  "reference_fonts": "Schriften",
   "type_pairings_title": "Schriften",
   "action_remove": "Entfernen",
   "typography_choose_other": "Anderes wählen",

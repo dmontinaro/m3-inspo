@@ -5,6 +5,8 @@
  * the Zod check of the font roles on write.
  */
 
+import { getDb } from "@m3-inspo/db/client";
+import { typePairings } from "@m3-inspo/db/library-schema";
 import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
 import { callServerFunction, startTestApp } from "./test/app";
 import { signInWithGithub, useFakeGithub } from "./test/fake-github";
@@ -126,6 +128,16 @@ describe("keeping a pairing by hand", () => {
   it.each(["Neu", "New"])("reserves the creation slug for %s", async (name) => {
     const slug = await create({ name, roles: { heading: fontsource(`${name} Heading`, [700]), body: fontsource(`${name} Body`, [400]) } });
     expect(slug).toMatch(new RegExp(`^${name.toLowerCase()}-.+`));
+  });
+
+  it("renders a legacy pairing named new independently of the creation form", async () => {
+    await getDb().insert(typePairings).values({ slug: "new", name: "Legacy new pairing", roles: { heading: fontsource("Legacy Heading", [700]), body: fontsource("Legacy Body", [400]) } });
+    const detail = await browser.get("/type-pairings/new/view");
+    expect(detail.status).toBe(200);
+    expect(await detail.text()).toMatch(/<h1\b[^>]*>Legacy new pairing<\/h1>/);
+    const editor = await browser.get("/type-pairings/new/edit");
+    expect(editor.status).toBe(200);
+    expect(await editor.text()).toContain('value="Legacy new pairing"');
   });
 
   it("answers not found for an unknown slug", async () => {

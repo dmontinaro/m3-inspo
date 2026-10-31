@@ -221,6 +221,7 @@ describe("localized page and server-function boundaries", () => {
     await signInWithGithub(browser, owner);
     const upload = await app.serverFunctionUrl("/src/server/library.functions.ts", "uploadImage");
     const early = await app.serverFunctionUrl("/src/server/brand-kits.functions.ts", "updateBrandKitNotes");
+    const token = await app.serverFunctionUrl("/src/server/mcp-tokens.functions.ts", "createMcpToken");
     const requests = ["en", "de", "en", "de"].map(async (locale) => {
       // Each request carries its own locale while retaining the signed-in session.
       const localized = { ...browser, send: (path: string, init: RequestInit = {}) => {
@@ -232,6 +233,10 @@ describe("localized page and server-function boundaries", () => {
       const result = await callServerFunction(localized, upload, data, "POST");
       expect(result).toEqual({ ok: false, reason: locale === "de" ? "Verwende für Titel höchstens 200 Zeichen." : "Use at most 200 characters for Title." });
       await expect(callServerFunction(localized, early, { slug: "unknown", notes: "x".repeat(5001) }, "POST")).rejects.toThrow(locale === "de" ? "Verwende für Hinweise höchstens 4.000 Zeichen." : "Use at most 4,000 characters for Notes.");
+      const emptyToken = new FormData();
+      emptyToken.set("name", " ");
+      emptyToken.set("expiresInDays", "90");
+      await expect(callServerFunction(localized, token, emptyToken, "POST")).rejects.toThrow(locale === "de" ? "Bitte fülle Name aus." : "Enter a value for Name.");
     });
     await Promise.all(requests);
   });

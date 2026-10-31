@@ -1,3 +1,4 @@
+import * as m from "#/paraglide/messages.js";
 import { createFileRoute } from "@tanstack/react-router";
 import { PairingEditor } from "#/components/pairing-editor";
 import { PairingNotFound } from "#/components/pairing-not-found";
@@ -12,7 +13,7 @@ export const Route = createFileRoute("/_library/type-pairings/$slug/edit")({
     const catalog = await getCatalogFonts({ data: { ids: [...new Set(ids)] } });
     return { pairing, catalogWeights: Object.fromEntries(catalog.map((font) => [font.id, font.weights])) };
   },
-  head: ({ loaderData }) => ({ meta: [{ title: loaderData ? `${loaderData.pairing.name} bearbeiten · m3 inspo` : "m3 inspo" }] }),
+  head: ({ loaderData }) => ({ meta: [{ title: loaderData ? m.pairing_edit_page_title({ name: loaderData.pairing.name }) : "m3 inspo" }] }),
   component: EditPairing,
   notFoundComponent: PairingNotFound,
 });

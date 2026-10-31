@@ -1,3 +1,5 @@
+import { newTokenFields } from "#/lib/mcp-token-fields";
+import { issueMessage } from "#/lib/validation";
 import { formatDate, formatNumber } from "#/lib/format";
 import { useLanguageGuard, useFormLanguageGuard , LanguageControl  } from "#/components/language-control";
 import * as m from "#/paraglide/messages.js";
@@ -90,10 +92,13 @@ function CreateTokenForm({ onCreated }: { onCreated: (token: NewToken) => Promis
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    const data = new FormData(event.currentTarget);
+    const parsed = newTokenFields.safeParse(Object.fromEntries(data));
+    if (!parsed.success) { setError(issueMessage(parsed.error.issues[0])); return; }
     setPending(true);
     setError(null);
     try {
-      const { token, credential } = await createMcpToken({ data: new FormData(event.currentTarget) });
+      const { token, credential } = await createMcpToken({ data });
       await onCreated({ name: credential.name, token });
     } catch {
       setError(m.token_create_failed());

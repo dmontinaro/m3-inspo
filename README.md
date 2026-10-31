@@ -10,7 +10,7 @@ A private taste library for the things you want to build. Save design references
 
 ![m3 inspo gallery with six design references, project tags and favorites](docs/images/taste-library.png)
 
-*Your references, organized by the way you think about design. App screenshots use fictional projects and original demo artwork. The current interface is German.*
+*Your references, organized by the way you think about design. App screenshots use fictional projects and original demo artwork. The screenshots show the German interface.*
 
 ## Give your agent a sense of your taste
 
@@ -35,7 +35,7 @@ Your library grows across projects. You can reuse a reference, organize it into 
 
 MCP, the Model Context Protocol, lets a coding agent query your library while it works. Your client connects to your own instance with a revocable token.
 
-Create a token under **Einstellungen**, then add it to Claude Code:
+Create a token under **Settings**, then add it to Claude Code:
 
 ```sh
 claude mcp add --transport http m3-inspo http://localhost:3000/api/mcp --header "Authorization: Bearer <your-token>"
@@ -76,6 +76,12 @@ Each installation has one owner, authenticated through GitHub. The library is pr
 
 Upload, capture, curation and text search work without AI keys. Optional AI analysis and semantic search add generated descriptions, tags and ranking. When enabled, these services send content to their configured providers. [Read about external services and data](docs/self-hosting.md#external-services-and-data).
 
+## Interface language
+
+The app starts in English. Choose **English** or **Deutsch** on the sign-in page, in Settings or in the owner menu. The choice stays in this browser. Both languages use the same English page paths; existing German links redirect to them.
+
+Changing language reloads the page. Unsaved inputs require confirmation, and pending saves, uploads, briefing requests and newly created tokens block the change. Your notes, names, tags and saved briefings keep their original text. AI analysis still offers both English and German content independently of the interface.
+
 ## Local setup
 
 You need **Node.js 24+**, **pnpm 11.5.3**, **Docker with Compose** and your own **GitHub OAuth app**.
@@ -101,6 +107,8 @@ Follow the [setup guide](docs/getting-started.md) to configure owner access, sta
 AI analysis sends screenshots and reference text to Anthropic. Embeddings send text to your configured endpoint, OpenRouter by default. Font metadata sync and previews also contact external services.
 
 ## Development
+
+Typechecking first generates Paraglide messages and declarations, checks catalog parity, then generates routes. Generated messages stay outside Git. To check the catalogs alone, run `pnpm --filter @m3-inspo/web i18n:check`.
 
 ```sh
 pnpm typecheck

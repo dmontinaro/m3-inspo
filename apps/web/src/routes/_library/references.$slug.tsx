@@ -224,7 +224,7 @@ function DesignValues({ analysis, slug, approved }: { analysis: NonNullable<Refe
       <dl className="mt-3 grid grid-cols-[auto_minmax(0,1fr)] gap-x-6 gap-y-1.5 text-sm">
         {fonts.length > 0 && (
           <>
-            <dt className="text-neutral-500">{m.type_pairings_title()}</dt>
+            <dt className="text-neutral-500">{m.reference_fonts()}</dt>
             <dd className="text-neutral-800">
               {fonts.map(fontLabel).join(", ")}
               <span className="block text-xs text-neutral-500">{provenanceOf(fonts)}</span>
