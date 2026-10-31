@@ -107,7 +107,7 @@
   "generator_url_skipped": "Der Link war nicht ganz lesbar. Übersprungen:",
   "notice_close": "Hinweis schließen",
   "role_primary": "primary",
-  "contrast_on": "darauf",
+  "primary_foreground_contrast": "{origin} mit einem Kontrastverhältnis von {ratio}.",
   "preview_title": "Vorschau",
   "lock_open_help": "Offen: Würfeln ändert die Farbe",
   "lock_hue_help": "Farbton gesperrt: Würfeln ändert nur Helligkeit und Sättigung",

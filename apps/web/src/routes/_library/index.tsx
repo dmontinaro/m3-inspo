@@ -11,6 +11,7 @@ import { FavoriteStar } from "#/components/favorite-star";
 import { useDismiss } from "#/components/use-dismiss";
 import { curationStatuses, deviceLabels, devices, statusLabels } from "#/lib/curation";
 import { stackCollections } from "#/lib/gallery-stacks";
+import { parseSearch, stringifySearch } from "#/lib/search";
 import type { GalleryItem } from "#/lib/gallery-stacks";
 import { getCollections } from "#/server/collections.functions";
 import { listGallery, listTags } from "#/server/library.functions";
@@ -267,9 +268,8 @@ function GalleryToolbar() {
     clearTimeout(timer.current);
     if ((query.trim() || undefined) === search.q) return;
     const url = new URL(window.location.href);
-    if (query.trim()) url.searchParams.set("q", query.trim());
-    else url.searchParams.delete("q");
-    window.history.replaceState(window.history.state, "", url.pathname + url.search + url.hash);
+    const nextSearch = stringifySearch({ ...parseSearch(url.search), q: query.trim() || undefined });
+    window.history.replaceState(window.history.state, "", url.pathname + nextSearch + url.hash);
   } });
 
   function changeQuery(value: string) {

@@ -107,7 +107,7 @@
   "generator_url_skipped": "Parts of this link could not be read. Skipped:",
   "notice_close": "Dismiss notice",
   "role_primary": "primary",
-  "contrast_on": "on it",
+  "primary_foreground_contrast": "{origin} with a contrast ratio of {ratio}.",
   "preview_title": "Preview",
   "lock_open_help": "Open: rolling changes this colour",
   "lock_hue_help": "Hue locked: rolling changes lightness and saturation only",

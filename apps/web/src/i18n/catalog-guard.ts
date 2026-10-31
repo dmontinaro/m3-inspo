@@ -74,6 +74,10 @@ export async function importCatalog(source: string, locale: string) {
       if (!(variant.pattern ?? []).some((part) => part.type !== "text" || part.value.trim())) throw new Error(`Empty variant ${bundle.id}`);
       for (const match of variant.matches ?? []) if (!known.has(match.key)) throw new Error(`Unknown selector ${match.key}`);
     }
+    const selectors = message.selectors ?? [];
+    if (selectors.length > 0 && !variants.some((variant) => selectors.every((selector) =>
+      variant.matches?.some((match) => match.key === selector.name && match.type === "catchall-match"),
+    ))) throw new Error(`Missing joint selector fallback in ${bundle.id}`);
     for (const declaration of bundle.declarations ?? []) {
       if (declaration.type !== "local-variable" || declaration.value.annotation?.name !== "plural") continue;
       if (!(message.selectors ?? []).some((selector) => selector.name === declaration.name)) throw new Error(`Missing plural selector ${bundle.id}`);

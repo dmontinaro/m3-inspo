@@ -61,6 +61,17 @@ describe("catalog guard failures", () => {
     const source = JSON.stringify({ greeting: [{ declarations: ["input name"], match: { "*": "Hello {other}" } }] });
     await expect(checkCatalogParity(source, source)).rejects.toThrow();
   });
+  it("requires a joint fallback for multiple plural selectors", async () => {
+    const source = (match: Record<string, string>) => JSON.stringify({ greeting: [{
+      declarations: ["input first", "input second", "local a = first: plural", "local b = second: plural"],
+      selectors: ["a", "b"],
+      match,
+    }] });
+    const incomplete = source({ "a=one, b=*": "One first", "a=*, b=one": "One second" });
+    await expect(checkCatalogParity(incomplete, incomplete)).rejects.toThrow("fallback");
+    const complete = source({ "a=one, b=*": "One first", "a=*, b=one": "One second", "a=*, b=*": "Many of both" });
+    await expect(checkCatalogParity(complete, complete)).resolves.toBeDefined();
+  });
   it("rejects blank branches, undeclared references and missing plural catchall", async () => {
     const message = (match: Record<string, string>) => JSON.stringify({ count_message: [{ declarations: ["input count", "local countPlural = count: plural"], selectors: ["countPlural"], match }] });
     await expect(checkCatalogParity(message({ "countPlural=one": " ", "countPlural=*": "Many" }), simple)).rejects.toThrow();

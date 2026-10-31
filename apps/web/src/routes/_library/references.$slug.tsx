@@ -3,6 +3,7 @@ import * as m from "#/paraglide/messages.js";
 import { Link, createFileRoute, useRouter } from "@tanstack/react-router";
 import { useState } from "react";
 import { Palette } from "lucide-react";
+import { isDisplayClass } from "@m3-inspo/taxonomy";
 import type { CurationStatus } from "@m3-inspo/db/library-schema";
 import { poolValue } from "@m3-inspo/shared/color-scheme";
 import { WEBGL_TECH } from "@m3-inspo/shared";
@@ -26,6 +27,7 @@ import {
 } from "#/lib/curation";
 import { inputClassName } from "#/lib/form-styles";
 import { paletteSearch } from "#/lib/generator";
+import { displayClassesLabels } from "#/lib/taxonomy-labels";
 import { maxNoteLength } from "#/lib/upload-limits";
 import { getCollections } from "#/server/collections.functions";
 import { deleteReference, getReference, setReferenceFavorite, setReferenceStatus } from "#/server/library.functions";
@@ -182,7 +184,7 @@ function provenanceOf(values: { source: TokenSource; confidence?: number }[]) {
 
 /** A font as shown: a family name as read, a style estimate ("roman-serif") in words. */
 const fontLabel = (font: { value: string; source: TokenSource }) =>
-  font.source === "vision" ? font.value.replaceAll("-", " ") : font.value;
+  font.source === "vision" && isDisplayClass(font.value) ? displayClassesLabels[font.value]() : font.value;
 
 const modeLabels = { get light() { return m.mode_light(); }, get dark() { return m.mode_dark(); } } as const;
 

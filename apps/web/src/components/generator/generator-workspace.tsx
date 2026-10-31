@@ -239,7 +239,9 @@ export function GeneratorWorkspace({
           <span className="size-4 rounded ring-1 ring-black/10" style={{ background: snapshot.roles.primary.hex }} />
           <span className="uppercase tabular-nums">{snapshot.roles.primary.hex.slice(1)}</span>
           <span className="text-neutral-400">·</span>
-          {roleOriginText(page.calculation.roleOrigins["primary-foreground"])} {m.contrast_on()}{onPrimary.contrast && formatRatio(onPrimary.contrast.ratio)}
+          {onPrimary.contrast
+            ? m.primary_foreground_contrast({ origin: roleOriginText(page.calculation.roleOrigins["primary-foreground"]), ratio: formatRatio(onPrimary.contrast.ratio) })
+            : roleOriginText(page.calculation.roleOrigins["primary-foreground"])}
         </p>
         {page.calculation.diagnostics.map((warning) => (
           <p key={warning.role + warning.kind} className="flex items-center gap-1.5 rounded-md bg-amber-50 px-2 py-1 text-amber-900">
