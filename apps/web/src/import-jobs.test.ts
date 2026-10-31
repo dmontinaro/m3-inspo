@@ -571,6 +571,8 @@ describe("refused results", () => {
         ],
       });
       expect(response.status).toBe(422);
+      const rejection = z.object({ error: z.string() }).parse(await response.json());
+      expect(rejection.error).toContain(`Capture 2 (${uploadId}):`);
     }
     expect(await listJobs()).toMatchObject([{ status: "processing", referenceSlug: null }]);
   });

@@ -1,3 +1,4 @@
+import { useFormLanguageGuard, useLanguageGuard } from "#/components/language-control";
 import * as m from "#/paraglide/messages.js";
 import { useState } from "react";
 import type { FormEvent } from "react";
@@ -35,6 +36,8 @@ export function AddToCollection({
   const [creating, setCreating] = useState(false);
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const languageForm = useFormLanguageGuard();
+  useLanguageGuard({ blocker: pending ? m.language_block_mutation() : undefined });
   const members = new Set(memberOf.map((collection) => collection.slug));
 
   async function run(action: () => Promise<string | undefined>) {
@@ -109,7 +112,7 @@ export function AddToCollection({
 
           <div className="mx-2.5 my-1.5 border-t border-neutral-100" />
           {creating ? (
-            <form onSubmit={create} className="flex gap-1.5 p-1">
+            <form ref={languageForm.form} noValidate onSubmit={create} className="flex gap-1.5 p-1">
               <label className="sr-only" htmlFor="new-collection-name">
                 {m.collection_new_name()}</label>
               <input

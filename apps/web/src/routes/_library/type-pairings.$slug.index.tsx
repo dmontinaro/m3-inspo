@@ -147,7 +147,7 @@ function Origin({ origin }: { origin: Pairing["origin"] }) {
     if (!origin.brandKit) return m.pairing_kit_origin_deleted();
     return (
       <>
-        {m.kit_origin()}
+        {m.kit_origin()}{" "}
         <Link to="/brand-kits/$slug" params={{ slug: origin.brandKit.slug }} className="underline underline-offset-2 hover:text-neutral-900">
           {origin.brandKit.name}
         </Link>
@@ -157,7 +157,7 @@ function Origin({ origin }: { origin: Pairing["origin"] }) {
   if (!origin.reference) return m.pairing_reference_origin_deleted();
   return (
     <>
-      {m.reference_origin()}
+      {m.reference_origin()}{" "}
       <Link to="/references/$slug" params={{ slug: origin.reference.slug }} className="underline underline-offset-2 hover:text-neutral-900">
         {origin.reference.title}
       </Link>

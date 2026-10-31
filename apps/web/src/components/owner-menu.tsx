@@ -1,3 +1,4 @@
+import { beginLanguageOperation } from "#/lib/language-operations";
 import { LanguageControl } from "#/components/language-control";
 import * as m from "#/paraglide/messages.js";
 import { Link } from "@tanstack/react-router";
@@ -31,8 +32,11 @@ export function OwnerMenu({ name, image }: { name: string; image: string | null 
   const container = useDismiss(open, setOpen);
 
   async function signOut() {
-    await authClient.signOut();
-    window.location.assign(signInPath);
+    const finish = beginLanguageOperation("mutation");
+    try {
+      await authClient.signOut();
+      window.location.assign(signInPath);
+    } finally { finish(); }
   }
 
   return (
@@ -40,6 +44,7 @@ export function OwnerMenu({ name, image }: { name: string; image: string | null 
       <button
         type="button"
         onClick={() => setOpen((value) => !value)}
+        data-language-control
         aria-expanded={open}
         aria-label={m.owner_signed_in_name({ name })}
         title={m.owner_signed_in_name({ name })}

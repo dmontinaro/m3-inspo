@@ -123,9 +123,9 @@ describe("keeping a pairing by hand", () => {
     });
   });
 
-  it("does not hand out the slug of the new-pairing page", async () => {
-    const slug = await create({ name: "Neu", roles: { heading: fontsource("Neu Heading", [700]), body: fontsource("Neu Body", [400]) } });
-    expect(slug).toMatch(/^neu-.+/);
+  it.each(["Neu", "New"])("reserves the creation slug for %s", async (name) => {
+    const slug = await create({ name, roles: { heading: fontsource(`${name} Heading`, [700]), body: fontsource(`${name} Body`, [400]) } });
+    expect(slug).toMatch(new RegExp(`^${name.toLowerCase()}-.+`));
   });
 
   it("answers not found for an unknown slug", async () => {

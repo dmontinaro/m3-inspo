@@ -1,4 +1,4 @@
-import { formatDate } from "#/lib/format";
+import { formatDate, formatNumber } from "#/lib/format";
 import * as m from "#/paraglide/messages.js";
 import { Link, createFileRoute, useRouter } from "@tanstack/react-router";
 import { useState } from "react";

@@ -525,7 +525,7 @@ export async function completeJob(id: string, body: unknown): Promise<Outcome<{ 
   const images = [];
   for (const [index, capture] of captures.entries()) {
     const staged = await readStaged(stagingKey(id, holder, capture.uploadId));
-    if (!staged.ok) return refuse("rejected", staged.reason);
+    if (!staged.ok) return refuse("rejected", `Capture ${index + 1} (${capture.uploadId}): ${staged.reason}`);
     const check = await prepareImage(staged.bytes);
     if (!check.ok) return refuse("rejected", `Capture ${index + 1} (${capture.uploadId}): ${imageDiagnostics[check.reason]}`);
     images.push({ image: check.image, placement: { viewport: capture.viewport, kind: capture.kind } });
@@ -589,7 +589,7 @@ export async function completeJob(id: string, body: unknown): Promise<Outcome<{ 
  */
 async function completeFontPreview(id: string, holder: number, uploadId: string): Promise<Outcome<object>> {
   const staged = await readStaged(stagingKey(id, holder, uploadId));
-  if (!staged.ok) return refuse("rejected", staged.reason);
+  if (!staged.ok) return refuse("rejected", `Capture 1 (${uploadId}): ${staged.reason}`);
   const check = await prepareImage(staged.bytes);
   if (!check.ok) return refuse("rejected", `Capture 1 (${uploadId}): ${imageDiagnostics[check.reason]}`);
 
