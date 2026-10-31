@@ -125,7 +125,7 @@ type QueueResult = { ok: true; jobId: string } | { ok: false; reason: string; du
  * Queues a `url_capture` job from the upload page's form (`requestId`, `url`,
  * `title`, `takeNote`, `avoidNote` as strings, `tags` as a list,
  * `confirmDuplicate` as a flag). Sending the same `requestId` again returns
- * the job it created the first time. Answers a German reason when the input
+ * the job it created the first time. Answers a localized reason when the input
  * is rejected: an address the URL guard refuses, or (with `duplicate`) a
  * page that is already in the library or being imported, until the owner
  * confirms it with `confirmDuplicate`.

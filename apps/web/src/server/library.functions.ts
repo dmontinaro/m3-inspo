@@ -27,7 +27,7 @@ function formData(data: FormData) {
 /**
  * Upload form: `file` plus `title`, `takeNote`, `avoidNote`, `sourceUrl` and
  * one `tags` entry per tag; all but file and title may be missing. Answers
- * `{ ok: false, reason }` with a German reason when the upload is rejected.
+ * `{ ok: false, reason }` with a localized reason when the upload is rejected.
  */
 export const uploadImage = createServerFn({ method: "POST" })
   .validator(formData)
@@ -71,7 +71,7 @@ export const getReference = createServerFn({ method: "GET" })
 
 /**
  * The detail view's edit form: `slug` plus the edited fields, one `tags`
- * entry per tag. Answers `{ ok: false, errors }` with German messages per
+ * entry per tag. Answers `{ ok: false, errors }` with localized messages per
  * field when rejected.
  */
 export const updateReference = createServerFn({ method: "POST" })

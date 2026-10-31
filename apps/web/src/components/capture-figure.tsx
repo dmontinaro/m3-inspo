@@ -384,7 +384,7 @@ function IconButton({
 type RegionFields = { componentType: ComponentType; note: string };
 
 /**
- * Type and note of a new or an existing region. `onSave` answers a German
+ * Type and note of a new or an existing region. `onSave` answers a localized
  * reason to show, or null once saved. Escape cancels, Ctrl/⌘+Enter saves.
  */
 function RegionForm({

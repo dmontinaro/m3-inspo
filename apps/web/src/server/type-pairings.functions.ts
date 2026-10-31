@@ -10,7 +10,7 @@ import type { PairingInput } from "./type-pairings.server";
  * Server functions for the type pairing pages ("Schriften"). The global
  * owner gate has already let the caller in. The save functions pass the
  * form on unchecked: type-pairings.server.ts checks it with Zod and answers
- * German messages per field.
+ * Localized messages per field.
  */
 
 /** Pairings that are not archived, newest first. */

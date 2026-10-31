@@ -52,7 +52,7 @@ const firstIssue = (error: z.ZodError) => issueMessage(error.issues[0]);
 /**
  * Marks a region on a capture of the reference `slug`: cuts the rectangle out
  * of the capture's full-size image, stores the crop and its small version
- * and saves the region. Answers a German reason when the input is rejected,
+ * and saves the region. Answers a localized reason when the input is rejected,
  * e.g. a rectangle that does not lie on the capture, or null if the slug is
  * unknown.
  */
@@ -112,7 +112,7 @@ export async function markRegion(slug: string, input: Record<string, unknown>): 
 
 /**
  * Changes a region's type and note; the rectangle and its crop stay. Answers
- * a German reason when the input is rejected, or null if the region is unknown.
+ * a localized reason when the input is rejected, or null if the region is unknown.
  */
 export async function editRegion(id: string, input: Record<string, unknown>): Promise<RegionResult | null> {
   const parsed = regionFields.safeParse(input);

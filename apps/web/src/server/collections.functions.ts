@@ -43,7 +43,7 @@ export const getCollection = createServerFn({ method: "GET" })
 
 /**
  * The new-collection form: `name`, `description` and `project`. Answers
- * `{ ok: false, errors }` with German messages per field when rejected.
+ * `{ ok: false, errors }` with localized messages per field when rejected.
  */
 export const addCollection = createServerFn({ method: "POST" })
   .validator(formData)

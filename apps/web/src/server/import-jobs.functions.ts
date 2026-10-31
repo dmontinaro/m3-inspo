@@ -10,7 +10,7 @@ import { listJobs, queueUrlImport, retryJob } from "./import-jobs.server";
  * The upload page's import form: `requestId` (one per submission), `url`, and
  * optionally `title`, `takeNote`, `avoidNote`, one `tags` entry per tag and
  * `confirmDuplicate=1` once the owner chose to import a known page again.
- * Answers `{ ok: false, reason, duplicate? }` with a German reason when rejected.
+ * Answers `{ ok: false, reason, duplicate? }` with a localized reason when rejected.
  */
 export const createUrlImport = createServerFn({ method: "POST" })
   .validator((data: FormData) => {

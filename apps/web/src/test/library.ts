@@ -28,7 +28,7 @@ type UploadFields = { takeNote?: string; avoidNote?: string; sourceUrl?: string;
 
 /**
  * Uploads a small screenshot with the upload sheet's fields and returns the
- * new reference's slug. Throws the German reason if the upload is rejected.
+ * new reference's slug. Throws the localized reason if the upload is rejected.
  */
 export async function uploadScreenshot(app: TestApp, browser: TestBrowser, title: string, fields: UploadFields = {}) {
   const png =

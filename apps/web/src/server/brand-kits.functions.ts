@@ -43,7 +43,7 @@ export const getBrandKit = createServerFn({ method: "GET" })
 
 /**
  * The generator's save dialog: name, project and the Color Scheme. Creates a
- * draft and answers its slug, or `{ ok: false, errors }` with German
+ * draft and answers its slug, or `{ ok: false, errors }` with localized
  * messages per field.
  */
 export const saveBrandKit = createServerFn({ method: "POST" })

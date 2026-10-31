@@ -33,7 +33,7 @@ const noteClassName = `${fieldClassName} field-sizing-content min-h-24 leading-r
 
 /**
  * The detail view's sidebar in edit mode: every curation field of one
- * reference in a single form. The server checks the input and answers German
+ * reference in a single form. The server checks the input and answers localized
  * messages per field, shown under the field. Escape cancels, Ctrl/⌘+Enter saves.
  */
 export function ReferenceEditForm({ reference, onSaved, onCancel }: ReferenceEditFormProps) {

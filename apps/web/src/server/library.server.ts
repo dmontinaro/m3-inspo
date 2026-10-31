@@ -140,7 +140,7 @@ export async function queueEmbedding(tx: Queries, referenceId: string, trigger: 
  * upload sheet's fields (`title`, `takeNote`, `avoidNote` and `sourceUrl` as
  * strings, `tags` as a list) and queues its AI analysis and its embedding
  * (each if on). Its format follows the image's proportions (`deviceOfImage`). Uploads are approved right away in this phase; drafts arrive with
- * URL import. Returns a German reason for the owner when the input is
+ * URL import. Returns a localized reason for the owner when the input is
  * rejected.
  */
 export async function createImageReference(imageFile: unknown, input: Record<string, unknown>): Promise<UploadResult> {
@@ -555,7 +555,7 @@ export type ReferenceEditErrors = Partial<Record<keyof z.input<typeof referenceF
  * list clears them). Fields left out stay as they are, so an inline edit of
  * one field sends only that one. The slug stays as it is, so links and
  * agents' slugs keep working after a new title. Queues a refresh of the
- * embedding, since title, notes and tags are part of it. Answers German
+ * embedding, since title, notes and tags are part of it. Answers localized
  * messages per field when the input is rejected, or null if the slug is unknown.
  */
 export async function editReference(
