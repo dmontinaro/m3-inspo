@@ -65,12 +65,12 @@ describe("Paraglide against the actual Start request handler", () => {
           { title: "", delay: 5 + (index % 5) * 10 },
           "POST",
         );
-        return { locale, result };
+        return { locale, result, expectedMessage: messages[locale] };
       }),
     );
 
-    for (const { locale, result } of results) {
-      expect(result).toEqual({ before: locale, after: locale, errors: [messages[locale]] });
+    for (const { locale, result, expectedMessage } of results) {
+      expect(result).toEqual({ before: locale, after: locale, errors: [expectedMessage] });
     }
   });
 
