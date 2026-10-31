@@ -232,7 +232,7 @@ function TokenRow({ token, onRevoke }: { token: ListedToken; onRevoke: () => voi
             onClick={onRevoke}
             className="shrink-0 rounded-md px-2.5 py-1.5 text-sm text-rose-700 hover:bg-rose-50"
           >
-            {m.token_revoked()}</button>
+            {m.token_revoke()}</button>
         )}
       </div>
       <dl className="mt-2 grid grid-cols-2 gap-x-4 gap-y-1 text-sm sm:grid-cols-3">

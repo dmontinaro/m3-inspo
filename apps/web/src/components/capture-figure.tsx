@@ -182,7 +182,7 @@ export function CaptureFigure({
           className="flex items-center gap-1.5 rounded-full px-2.5 py-1 text-sm text-neutral-600 ring-1 ring-neutral-300 ring-inset hover:bg-neutral-100 hover:text-neutral-900 aria-pressed:bg-neutral-900 aria-pressed:text-white aria-pressed:ring-neutral-900 max-md:hidden"
         >
           <SquareDashedMousePointer aria-hidden className="size-3.5" strokeWidth={1.75} />
-          {marking ? m.job_ready() : m.region_mark()}
+          {marking ? m.action_done() : m.region_mark()}
         </button>
       </figcaption>
 
