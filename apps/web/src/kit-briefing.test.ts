@@ -5,12 +5,15 @@
  * test files share the database, so this file's names carry its run marker.
  */
 
+import Anthropic from "@anthropic-ai/sdk";
+import { z } from "zod";
+import { briefingSections, briefingTemplate } from "./lib/briefing-content";
 import { randomUUID } from "node:crypto";
 import { eq } from "drizzle-orm";
 import { afterAll, afterEach, beforeAll, describe, expect, it, vi } from "vitest";
 import { getDb } from "@m3-inspo/db/client";
 import { referenceAnalyses, references } from "@m3-inspo/db/library-schema";
-import { draftKitBriefing } from "./server/kit-briefing.server";
+import { claudeBriefingWriter, draftKitBriefing } from "./server/kit-briefing.server";
 import { callServerFunction, startTestApp } from "./test/app";
 import { signInWithGithub, useFakeGithub } from "./test/fake-github";
 import { uploadScreenshot } from "./test/library";
@@ -88,7 +91,7 @@ describe("Mit KI entwerfen", () => {
   it("drafts from the kit's colours, its source reference and the project's approved references", async () => {
     vi.stubEnv("ANTHROPIC_API_KEY", "test-key");
     const prompts: string[] = [];
-    const result = await draftKitBriefing(kitSlug, async (prompt) => {
+    const result = await draftKitBriefing({ slug: kitSlug, outputLanguage: "de" }, async (prompt) => {
       prompts.push(prompt);
       return "# Seehotel\n\n## Geltungsbereich\n\n- Buchungsstrecke";
     });
@@ -108,10 +111,34 @@ describe("Mit KI entwerfen", () => {
     expect(prompt).not.toContain("Entwurfsnotiz");
   });
 
+  it.each(["en", "de"] as const)("fixes %s output, sources and headings without saving the draft", async (outputLanguage) => {
+    vi.stubEnv("ANTHROPIC_API_KEY", "test-key");
+    const requests: { system: string; messages: { content: string }[] }[] = [];
+    const writer = claudeBriefingWriter(new Anthropic({
+      apiKey: "synthetic-key",
+      fetch: async (_request, init) => {
+        requests.push(z.object({ system: z.string(), messages: z.array(z.object({ content: z.string() })) }).parse(JSON.parse(String(init?.body))));
+        await Promise.resolve();
+        return Response.json({ id: "synthetic-message", type: "message", role: "assistant", model: "synthetic-model", content: [{ type: "text", text: briefingTemplate(`Seehotel ${run}`, outputLanguage) }], stop_reason: "end_turn", stop_sequence: null, usage: { input_tokens: 1, output_tokens: 1 } });
+      },
+    }));
+    const result = await draftKitBriefing({ slug: kitSlug, outputLanguage }, writer);
+    expect(result).toEqual({ ok: true, briefing: briefingTemplate(`Seehotel ${run}`, outputLanguage).trim() });
+    const request = requests[0];
+    expect(request.system).toContain(outputLanguage === "de" ? "Write natural German Markdown" : "Write natural English Markdown");
+    for (const heading of briefingSections[outputLanguage]) expect(request.system).toContain(heading);
+    const prompt = request.messages[0]?.content;
+    expect(prompt).toContain(outputLanguage === "de" ? "AI description: Ruhige Fotostrecke mit viel Weißraum." : "AI description: Calm photo spread.");
+    expect(prompt).toContain(outputLanguage === "de" ? "AI layout summary: Hero, dann ein Grid aus Zimmern." : "AI layout summary: Hero, then a room grid.");
+    expect(prompt).toContain("Kupferorange nur für Buchen");
+    const stored = await callServerFunction<typeof getBrandKit>(browser, await app.serverFunctionUrl(file, "getBrandKit"), { slug: kitSlug });
+    expect(stored.designBriefing).toBeNull();
+  });
+
   it("says so when the model fails, without a key, and for an unknown kit", async () => {
     vi.stubEnv("ANTHROPIC_API_KEY", "test-key");
     vi.spyOn(console, "error").mockImplementationOnce(() => undefined);
-    expect(await draftKitBriefing(kitSlug, () => Promise.reject(new Error("overloaded")))).toEqual({ ok: false, reason: "failed" });
+    expect(await draftKitBriefing({ slug: kitSlug, outputLanguage: "de" }, () => Promise.reject(new Error("overloaded")))).toEqual({ ok: false, reason: "failed" });
 
     vi.stubEnv("ANTHROPIC_API_KEY", "");
     const draft = await app.serverFunctionUrl(file, "draftBrandKitDesignBriefing");

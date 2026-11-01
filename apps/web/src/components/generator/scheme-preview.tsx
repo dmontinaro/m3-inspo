@@ -1,3 +1,6 @@
+import { formatNumber } from "#/lib/format";
+import { roleOriginText } from "#/lib/scheme-labels";
+import * as m from "#/paraglide/messages.js";
 /**
  * The generator's preview, painted only with the scheme's CSS variables
  * (`--primary`, `--brand-600`, `--teal-100` …, the names of the export) and
@@ -10,8 +13,8 @@
 
 import type { CSSProperties, ReactNode } from "react";
 import { BedDouble, Building2, CalendarDays, CircleAlert, LayoutDashboard, Settings, Users } from "lucide-react";
-import { ROLE_NAMES, STEPS, buildDarkRoles } from "@m3-inspo/shared/color-scheme";
-import type { ColorSchemeSnapshot, Role, RoleName } from "@m3-inspo/shared/color-scheme";
+import { ROLE_NAMES, STEPS, calculateDarkRoles } from "@m3-inspo/shared/color-scheme";
+import type { ColorSchemeSnapshot, Role, RoleName, RoleOrigin } from "@m3-inspo/shared/color-scheme";
 import { fallbackStacks } from "@m3-inspo/shared/fonts";
 import type { FontRoles } from "@m3-inspo/shared/fonts";
 import { useFontFaces } from "#/components/font-faces";
@@ -62,8 +65,10 @@ export function SchemePreview({
   fonts = null,
   aside,
   dark = false,
+  roleOrigins,
 }: {
   snapshot: ColorSchemeSnapshot;
+  roleOrigins: Partial<Record<string, RoleOrigin>>;
   extras: string[];
   fonts?: FontRoles | null;
   aside?: ReactNode;
@@ -72,7 +77,9 @@ export function SchemePreview({
   // Without extras the brand stands in for chart lines, tags and icons.
   const accents = extras.length > 0 ? extras : ["brand"];
   const fontVariables = useFontVariables(fonts);
-  const roles = dark ? buildDarkRoles(snapshot).roles : snapshot.roles;
+  const darkValues = dark ? calculateDarkRoles(snapshot, roleOrigins) : null;
+  const roles = darkValues?.roles ?? snapshot.roles;
+  const origins = darkValues?.roleOrigins ?? roleOrigins;
   return (
     <div
       style={{ ...schemeVariables(snapshot, roles), ...fontVariables, fontFamily: "var(--font-body)", colorScheme: dark ? "dark" : "light" }}
@@ -80,7 +87,7 @@ export function SchemePreview({
     >
       <div className="flex min-w-0 flex-col gap-4">
         {aside}
-        <BuildingBlocks snapshot={snapshot} roles={roles} accents={accents} dark={dark} />
+        <BuildingBlocks roleOrigins={origins} snapshot={snapshot} roles={roles} accents={accents} dark={dark} />
       </div>
       <div className="@container overflow-hidden rounded-xl border border-(--border) lg:sticky lg:top-4">
         <AppOverview accents={accents} dark={dark} />
@@ -92,10 +99,10 @@ export function SchemePreview({
 /* ────────────── Building blocks ────────────── */
 
 const textSteps: { label: string; className: string; text: string; role: RoleName }[] = [
-  { label: "Überschrift", className: `${headingFont} text-3xl font-semibold tracking-tight`, text: "Übersicht", role: "foreground" },
-  { label: "Zwischentitel", className: `${headingFont} text-lg font-semibold`, text: "Nächste Anreisen", role: "foreground" },
-  { label: "Fließtext", className: "text-[15px] leading-relaxed", text: "Zimmer, Schichten und Anreisen an einem Ort.", role: "foreground" },
-  { label: "Nebentext", className: "text-[13px]", text: "Montag, 29. September · 4 Häuser", role: "muted-foreground" },
+  { get label() { return m.font_role_heading(); }, className: `${headingFont} text-3xl font-semibold tracking-tight`, get text() { return m.demo_overview(); }, role: "foreground" },
+  { get label() { return m.demo_subheading(); }, className: `${headingFont} text-lg font-semibold`, get text() { return m.demo_arrivals(); }, role: "foreground" },
+  { get label() { return m.font_role_body(); }, className: "text-[15px] leading-relaxed", get text() { return m.demo_body(); }, role: "foreground" },
+  { get label() { return m.demo_secondary_text(); }, className: "text-[13px]", get text() { return m.demo_date_houses(); }, role: "muted-foreground" },
 ];
 
 function Block({ title, children }: { title: string; children: ReactNode }) {
@@ -110,18 +117,20 @@ function Block({ title, children }: { title: string; children: ReactNode }) {
 function BuildingBlocks({
   snapshot,
   roles,
+  roleOrigins,
   accents,
   dark,
 }: {
   snapshot: ColorSchemeSnapshot;
   roles: Record<RoleName, Role>;
+  roleOrigins: Partial<Record<string, RoleOrigin>>;
   accents: string[];
   dark: boolean;
 }) {
-  const scaleLabel = (name: string) => (name === "brand" ? "Marke" : name === "neutral" ? "Neutral" : name === "danger" ? "Signal" : name);
+  const scaleLabel = (name: string) => (name === "brand" ? m.source_brand() : name === "neutral" ? m.source_neutral() : name === "danger" ? m.source_signal() : name);
   return (
     <div className="rounded-xl border border-(--border) bg-(--card) text-(--card-foreground)">
-      <Block title="Text">
+      <Block title={m.text_label()}>
         <div className="space-y-3">
           {textSteps.map((step) => (
             <div key={step.label}>
@@ -134,12 +143,12 @@ function BuildingBlocks({
             </div>
           ))}
           <p className="text-[15px]">
-            Mit einem <span className="font-medium text-(--primary) underline underline-offset-4">Link in primary</span>.
+            <span className="font-medium text-(--primary) underline underline-offset-4">{m.demo_link_sentence()}</span>
           </p>
         </div>
       </Block>
 
-      <Block title="Rollen">
+      <Block title={m.color_roles()}>
         <ul className="space-y-2">
           {ROLE_NAMES.map((name) => {
             const role = roles[name];
@@ -149,7 +158,7 @@ function BuildingBlocks({
                 <div className="min-w-0 flex-1 leading-tight">
                   <p className="truncate text-[13px] font-medium">{name}</p>
                   <p className="truncate text-[11px] text-(--muted-foreground)">
-                    {role.derivation} · <span className="uppercase tabular-nums">{role.hex.slice(1)}</span>
+                    {roleOriginText(roleOrigins[name])} · <span className="uppercase tabular-nums">{role.hex.slice(1)}</span>
                   </p>
                 </div>
                 {role.contrast && <ContrastBadge ratio={role.contrast.ratio} min={role.contrast.min} />}
@@ -159,7 +168,7 @@ function BuildingBlocks({
         </ul>
       </Block>
 
-      <Block title="Skalen">
+      <Block title={m.color_scales()}>
         <div className="space-y-2.5">
           {snapshot.scales.map((scale) => (
             <div key={scale.name}>
@@ -181,16 +190,16 @@ function BuildingBlocks({
         </div>
       </Block>
 
-      <Block title="Elemente">
+      <Block title={m.preview_elements()}>
         <div className="space-y-4 text-sm">
           <div className="flex flex-wrap gap-2">
-            <span className="rounded-md bg-(--primary) px-3 py-1.5 font-medium text-(--primary-foreground)">Speichern</span>
-            <span className="rounded-md border border-(--border) bg-(--card) px-3 py-1.5 font-medium">Abbrechen</span>
-            <span className="rounded-md bg-(--muted) px-3 py-1.5 font-medium">Später</span>
-            <span className="rounded-md bg-(--destructive) px-3 py-1.5 font-medium text-white">Löschen</span>
+            <span className="rounded-md bg-(--primary) px-3 py-1.5 font-medium text-(--primary-foreground)">{m.action_save()}</span>
+            <span className="rounded-md border border-(--border) bg-(--card) px-3 py-1.5 font-medium">{m.action_cancel()}</span>
+            <span className="rounded-md bg-(--muted) px-3 py-1.5 font-medium">{m.action_later()}</span>
+            <span className="rounded-md bg-(--destructive) px-3 py-1.5 font-medium text-white">{m.action_delete()}</span>
           </div>
           <div className="flex flex-wrap gap-1.5 text-xs font-medium">
-            <span className="rounded-full bg-(--muted) px-2 py-0.5 text-(--muted-foreground)">Bestätigt</span>
+            <span className="rounded-full bg-(--muted) px-2 py-0.5 text-(--muted-foreground)">{m.demo_confirmed()}</span>
             {["brand", ...accents.filter((name) => name !== "brand"), "danger"].map((name) => (
               <span key={name} className="rounded-full px-2 py-0.5" style={tint(name, dark)}>
                 {scaleLabel(name)}
@@ -198,29 +207,25 @@ function BuildingBlocks({
             ))}
           </div>
           <div className="space-y-2">
-            <span className="block rounded-md border border-(--border) bg-(--card) px-3 py-2 text-(--muted-foreground)">Name eingeben …</span>
+            <span className="block rounded-md border border-(--border) bg-(--card) px-3 py-2 text-(--muted-foreground)">{m.demo_enter_name()}</span>
             <span className="block rounded-md border border-(--border) bg-(--card) px-3 py-2 ring-2 ring-(--ring) ring-offset-2 ring-offset-(--card)">
-              Mit Fokus-Ring
-            </span>
+              {m.demo_focus_ring()}</span>
           </div>
           <div className="flex items-center gap-5">
             <span className="flex items-center gap-2">
               <span className="inline-flex h-5 w-9 items-center rounded-full bg-(--primary) p-0.5">
                 <span className="ml-auto size-4 rounded-full bg-(--primary-foreground)" />
               </span>
-              An
-            </span>
+              {m.label_on()}</span>
             <span className="flex items-center gap-2">
               <span className="inline-flex h-5 w-9 items-center rounded-full bg-(--border) p-0.5">
                 <span className="size-4 rounded-full bg-(--card) shadow-sm" />
               </span>
-              Aus
-            </span>
+              {m.label_off()}</span>
           </div>
           <p className="flex gap-2 rounded-md px-3 py-2" style={alertTint(dark)}>
             <CircleAlert aria-hidden className="mt-0.5 size-4 shrink-0" strokeWidth={2} />
-            Zimmer 4 ist doppelt belegt.
-          </p>
+            {m.demo_double_booking()}</p>
         </div>
       </Block>
     </div>
@@ -230,21 +235,21 @@ function BuildingBlocks({
 /* ────────────── App overview ────────────── */
 
 const navigation = [
-  { label: "Übersicht", icon: LayoutDashboard },
-  { label: "Belegung", icon: BedDouble },
-  { label: "Schichten", icon: CalendarDays },
-  { label: "Mitarbeitende", icon: Users },
-  { label: "Häuser", icon: Building2 },
-  { label: "Einstellungen", icon: Settings },
+  { get label() { return m.demo_overview(); }, icon: LayoutDashboard },
+  { get label() { return m.demo_occupancy(); }, icon: BedDouble },
+  { get label() { return m.demo_shifts(); }, icon: CalendarDays },
+  { get label() { return m.demo_staff(); }, icon: Users },
+  { get label() { return m.demo_properties(); }, icon: Building2 },
+  { get label() { return m.settings_title(); }, icon: Settings },
 ];
 
-const houses = ["Haus am See", "Alte Mühle", "Stadtloft", "Waldhof", "Seeblick"];
+const houses = [m.demo_lake_house, m.demo_old_mill, m.demo_city_loft, m.demo_forest_farm, m.demo_lake_view];
 
 const arrivals = [
-  { name: "Lena Brandt", house: "Haus am See", date: "Mo, 29.09.", status: "Bestätigt" },
-  { name: "Jonas Keller", house: "Alte Mühle", date: "Di, 30.09.", status: "Offen" },
-  { name: "Mira Özdemir", house: "Haus am See", date: "Mi, 01.10.", status: "Neu" },
-  { name: "Tim Albers", house: "Stadtloft", date: "Fr, 03.10.", status: "Saison" },
+  { name: "Lena Brandt", get house() { return m.demo_lake_house(); }, get date() { return m.demo_date_monday(); }, get status() { return m.demo_confirmed(); } },
+  { name: "Jonas Keller", get house() { return m.demo_old_mill(); }, get date() { return m.demo_date_tuesday(); }, get status() { return m.lock_open(); } },
+  { get name() { return m.demo_guest_name(); }, get house() { return m.demo_lake_house(); }, get date() { return m.demo_date_wednesday(); }, get status() { return m.demo_new(); } },
+  { name: "Tim Albers", get house() { return m.demo_city_loft(); }, get date() { return m.demo_date_friday(); }, get status() { return m.demo_season(); } },
 ];
 
 const accentAt = (accents: string[], index: number) => accents[index % accents.length];
@@ -259,15 +264,15 @@ function Tag({ scale, dark, children }: { scale: string; dark: boolean; children
 
 function AppOverview({ accents, dark }: { accents: string[]; dark: boolean }) {
   const stats = [
-    { label: "Belegte Betten", value: "42 / 48", hint: "+3 seit gestern", icon: BedDouble },
-    { label: "Offene Schichten", value: "7", hint: "2 davon heute", icon: CalendarDays },
-    { label: "Anreisen", value: "12", hint: "diese Woche", icon: Users },
+    { label: m.demo_occupied_beds(), value: "42 / 48", hint: m.demo_since_yesterday({ count: formatNumber(3) }), icon: BedDouble },
+    { label: m.demo_open_shifts(), value: "7", hint: m.demo_today({ count: formatNumber(2) }), icon: CalendarDays },
+    { label: m.demo_arrival_label(), value: "12", hint: m.demo_this_week(), icon: Users },
   ];
   return (
     <div className="flex bg-(--background) text-sm">
       <aside className="hidden w-48 shrink-0 flex-col gap-0.5 border-r border-(--border) bg-(--card) p-3 @3xl:flex">
         <p className={`${headingFont} mb-5 px-2 pt-1 text-base font-semibold tracking-tight`}>
-          Hausbuch<span className="text-(--primary)">.</span>
+          {m.demo_housebook()}<span className="text-(--primary)">.</span>
         </p>
         {navigation.map(({ label, icon: Icon }, index) => (
           <span
@@ -283,12 +288,12 @@ function AppOverview({ accents, dark }: { accents: string[]; dark: boolean }) {
       <div className="min-w-0 flex-1 space-y-5 p-4 @lg:p-6">
         <header className="flex flex-wrap items-end justify-between gap-3">
           <div>
-            <p className="text-(--muted-foreground)">Montag, 29. September</p>
-            <h2 className={`${headingFont} text-2xl font-semibold tracking-tight`}>Übersicht</h2>
+            <p className="text-(--muted-foreground)">{m.demo_date()}</p>
+            <h2 className={`${headingFont} text-2xl font-semibold tracking-tight`}>{m.demo_overview()}</h2>
           </div>
           <div className="flex gap-2">
-            <span className="rounded-md border border-(--border) bg-(--card) px-3 py-2 font-medium">Exportieren</span>
-            <span className="rounded-md bg-(--primary) px-3.5 py-2 font-medium text-(--primary-foreground)">Schicht planen</span>
+            <span className="rounded-md border border-(--border) bg-(--card) px-3 py-2 font-medium">{m.action_export()}</span>
+            <span className="rounded-md bg-(--primary) px-3.5 py-2 font-medium text-(--primary-foreground)">{m.demo_plan_shift()}</span>
           </div>
         </header>
 
@@ -313,40 +318,40 @@ function AppOverview({ accents, dark }: { accents: string[]; dark: boolean }) {
         <div className="grid gap-3 @3xl:grid-cols-5">
           <div className="rounded-xl border border-(--border) bg-(--card) p-4 @3xl:col-span-3">
             <div className="mb-3 flex items-baseline justify-between gap-2">
-              <h3 className={`${headingFont} font-semibold`}>Belegung nach Haus</h3>
-              <span className="text-xs text-(--muted-foreground)">letzte 8 Wochen</span>
+              <h3 className={`${headingFont} font-semibold`}>{m.demo_occupancy_by_property()}</h3>
+              <span className="text-xs text-(--muted-foreground)">{m.demo_last_weeks()}</span>
             </div>
             <LayerChart accents={accents} dark={dark} />
             <div className="mt-3 flex flex-wrap gap-x-4 gap-y-1 text-xs text-(--muted-foreground)">
               {accents.map((scale, index) => (
                 <span key={scale} className="inline-flex items-center gap-1.5">
                   <span className="h-0.5 w-4 rounded-full" style={{ background: `var(--${scale}-${dark ? 400 : 600})` }} />
-                  {houses[index % houses.length]}
+                  {houses[index % houses.length]?.()}
                 </span>
               ))}
             </div>
           </div>
 
           <div className="space-y-3 rounded-xl border border-(--border) bg-(--card) p-4 @3xl:col-span-2">
-            <h3 className={`${headingFont} font-semibold`}>Schnell eintragen</h3>
+            <h3 className={`${headingFont} font-semibold`}>{m.demo_quick_entry()}</h3>
             <div className="space-y-1">
-              <p className="text-xs text-(--muted-foreground)">Mitarbeiter:in</p>
-              <p className="rounded-md border border-(--border) bg-(--card) px-3 py-2 ring-2 ring-(--ring) ring-offset-2 ring-offset-(--card)">Lena Br</p>
+              <p className="text-xs text-(--muted-foreground)">{m.demo_employee()}</p>
+              <p className="rounded-md border border-(--border) bg-(--card) px-3 py-2 ring-2 ring-(--ring) ring-offset-2 ring-offset-(--card)">{m.demo_employee_name()}</p>
             </div>
             <div className="space-y-1">
-              <p className="text-xs text-(--muted-foreground)">Haus</p>
-              <p className="rounded-md border border-(--border) bg-(--muted) px-3 py-2 text-(--muted-foreground)">Haus wählen …</p>
+              <p className="text-xs text-(--muted-foreground)">{m.demo_property()}</p>
+              <p className="rounded-md border border-(--border) bg-(--muted) px-3 py-2 text-(--muted-foreground)">{m.demo_choose_property()}</p>
             </div>
             <div className="flex flex-wrap items-center justify-between gap-2 pt-1">
-              <span className="font-medium text-(--primary) underline underline-offset-4">Alle Anfragen</span>
-              <span className="rounded-md bg-(--destructive) px-3 py-1.5 font-medium text-white">Stornieren</span>
+              <span className="font-medium text-(--primary) underline underline-offset-4">{m.demo_all_requests()}</span>
+              <span className="rounded-md bg-(--destructive) px-3 py-1.5 font-medium text-white">{m.action_cancel_booking()}</span>
             </div>
-            <p className="rounded-md px-3 py-2 text-xs" style={alertTint(dark)}>Zimmer 4 im Stadtloft ist doppelt belegt.</p>
+            <p className="rounded-md px-3 py-2 text-xs" style={alertTint(dark)}>{m.demo_double_booking_property()}</p>
           </div>
         </div>
 
         <div className="overflow-hidden rounded-xl border border-(--border) bg-(--card)">
-          <h3 className={`${headingFont} border-b border-(--border) px-4 py-3 font-semibold`}>Nächste Anreisen</h3>
+          <h3 className={`${headingFont} border-b border-(--border) px-4 py-3 font-semibold`}>{m.demo_arrivals()}</h3>
           {arrivals.map((row, index) => (
             <div key={row.name} className="grid grid-cols-[1fr_auto] items-center gap-2 border-b border-(--border) px-4 py-2.5 last:border-0 @lg:grid-cols-4">
               <span className="font-medium">{row.name}</span>

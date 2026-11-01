@@ -1,3 +1,6 @@
+import { formatNumber } from "#/lib/format";
+import { useLanguageGuard } from "#/components/language-control";
+import * as m from "#/paraglide/messages.js";
 import { useEffect, useId, useState } from "react";
 import type { KeyboardEvent } from "react";
 import { disallowedTagCharacters, maxTagLength, maxTags, normalizeTag } from "#/lib/tags";
@@ -43,6 +46,7 @@ export function TagInput({ id, defaultTags = [], errorId, autoFocus }: TagInputP
   }, []);
 
   const typed = normalizeTag(draft);
+  useLanguageGuard({ dirty: normalizeTag(draft) !== "" || JSON.stringify(tags) !== JSON.stringify(defaultTags) });
   const suggestions = known
     .filter((tag) => !tags.includes(tag) && tag.includes(typed) && tag !== typed)
     .slice(0, maxSuggestions);
@@ -102,7 +106,7 @@ export function TagInput({ id, defaultTags = [], errorId, autoFocus }: TagInputP
             <button
               type="button"
               onClick={() => setTags(tags.filter((current) => current !== tag))}
-              aria-label={`Tag „${tag}“ entfernen`}
+              aria-label={m.tag_remove({ tag })}
               className="grid size-5 place-items-center rounded-full text-neutral-400 hover:bg-neutral-200 hover:text-neutral-800"
             >
               <svg aria-hidden viewBox="0 0 16 16" className="size-3 fill-none stroke-current stroke-2">
@@ -120,13 +124,13 @@ export function TagInput({ id, defaultTags = [], errorId, autoFocus }: TagInputP
           onChange={(event) => change(event.target.value)}
           onKeyDown={handleKeys}
           onFocus={() => setFocused(true)}
-          onBlur={() => {
+          onBlur={(event) => {
             setFocused(false);
-            if (typed) add([typed]);
+            if (typed && !(event.relatedTarget instanceof Element && event.relatedTarget.closest("[data-language-control]"))) add([typed]);
           }}
           // Full: no more typing, but Backspace still removes the last tag.
           readOnly={full}
-          placeholder={full ? `Höchstens ${maxTags} Tags` : tags.length === 0 ? "z. B. Projekt oder Thema" : ""}
+          placeholder={full ? m.tags_maximum({ max: formatNumber(maxTags) }) : tags.length === 0 ? m.tag_placeholder() : ""}
           autoComplete="off"
           enterKeyHint="enter"
           role="combobox"
@@ -143,7 +147,7 @@ export function TagInput({ id, defaultTags = [], errorId, autoFocus }: TagInputP
       <ul
         id={listId}
         role="listbox"
-        aria-label="Vorschläge"
+        aria-label={m.tag_suggestions()}
         hidden={!open}
         className="mt-2 flex flex-wrap items-center gap-1.5"
       >

@@ -35,6 +35,7 @@ beforeAll(async () => {
   // No embedding provider in tests; search stays lexical.
   app = await startTestApp({ OWNER_GITHUB_ID: String(owner.id), EMBEDDINGS_API_KEY: "" });
   browser = app.browser();
+  browser.setCookie("PARAGLIDE_LOCALE", "de");
   await signInWithGithub(browser, owner);
 }, 60_000);
 
@@ -136,7 +137,7 @@ describe("maintaining collections", () => {
   });
 
   it("answers German messages for a missing name and an invalid project", async () => {
-    expect(await saveNewCollection({ name: "  " })).toEqual({ ok: false, errors: { name: ["Bitte gib einen Namen ein."] } });
+    expect(await saveNewCollection({ name: "  " })).toEqual({ ok: false, errors: { name: ["Bitte fülle Name aus."] } });
     expect(await saveNewCollection({ name: "Projekt", project: "<b>" })).toEqual({
       ok: false,
       errors: { project: ["Das Projekt darf nur Buchstaben, Ziffern, Leerzeichen, - und _ enthalten."] },

@@ -1,3 +1,5 @@
+import * as m from "#/paraglide/messages.js";
+import { issueMessage } from "#/lib/validation";
 /**
  * Regions ("Bereiche markieren"): the owner marks a rectangle on a capture,
  * gives it a component type and a note, and the library keeps it as a
@@ -24,19 +26,19 @@ import { getStorage } from "./storage.server";
 
 /** Type and note of a region; an empty note becomes null. Messages are for the owner. */
 const regionFields = z.object({
-  componentType: z.enum(COMPONENT_TYPES, "Bitte wähle einen Komponententyp."),
+  componentType: z.enum(COMPONENT_TYPES),
   note: z
     .string()
     .trim()
-    .max(maxNoteLength, `Die Notiz ist zu lang (höchstens ${maxNoteLength} Zeichen).`)
+    .max(maxNoteLength)
     .transform((value) => value || null),
 });
 
-const side = z.number().int().min(minRegionSide, "Der Bereich ist zu klein.").max(maxRegionSide, "Der Bereich ist zu groß.");
+const side = z.number().int().min(minRegionSide).max(maxRegionSide);
 
 /** A new region: the capture, the rectangle in its pixels, type and note. */
 const newRegion = regionFields.extend({
-  captureId: z.uuid("Unbekannte Aufnahme."),
+  captureId: z.uuid(),
   x: z.number().int().min(0),
   y: z.number().int().min(0),
   width: side,
@@ -45,12 +47,12 @@ const newRegion = regionFields.extend({
 
 type RegionResult = { ok: true; id: string } | { ok: false; reason: string };
 
-const firstIssue = (error: z.ZodError) => error.issues[0]?.message ?? "Die Angaben sind ungültig.";
+const firstIssue = (error: z.ZodError) => issueMessage(error.issues[0]);
 
 /**
  * Marks a region on a capture of the reference `slug`: cuts the rectangle out
  * of the capture's full-size image, stores the crop and its small version
- * and saves the region. Answers a German reason when the input is rejected,
+ * and saves the region. Answers a localized reason when the input is rejected,
  * e.g. a rectangle that does not lie on the capture, or null if the slug is
  * unknown.
  */
@@ -71,9 +73,9 @@ export async function markRegion(slug: string, input: Record<string, unknown>): 
   });
   if (!reference) return null;
   const capture = reference.captures.at(0);
-  if (!capture) return { ok: false, reason: "Diese Aufnahme gehört nicht zur Referenz." };
+  if (!capture) return { ok: false, reason: m.region_wrong_capture() };
   if (rect.x + rect.width > capture.width || rect.y + rect.height > capture.height) {
-    return { ok: false, reason: "Der Bereich liegt nicht ganz auf der Aufnahme." };
+    return { ok: false, reason: m.region_outside_capture() };
   }
 
   const original = await getStorage().read(capture.assetKey);
@@ -110,7 +112,7 @@ export async function markRegion(slug: string, input: Record<string, unknown>): 
 
 /**
  * Changes a region's type and note; the rectangle and its crop stay. Answers
- * a German reason when the input is rejected, or null if the region is unknown.
+ * a localized reason when the input is rejected, or null if the region is unknown.
  */
 export async function editRegion(id: string, input: Record<string, unknown>): Promise<RegionResult | null> {
   const parsed = regionFields.safeParse(input);

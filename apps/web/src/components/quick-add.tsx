@@ -1,3 +1,7 @@
+import { formatNumber } from "#/lib/format";
+import { beginLanguageOperation } from "#/lib/language-operations";
+import { useLanguageGuard } from "#/components/language-control";
+import * as m from "#/paraglide/messages.js";
 import { useRouter } from "@tanstack/react-router";
 import { createContext, use, useEffect, useEffectEvent, useRef, useState } from "react";
 import type { ReactNode } from "react";
@@ -37,6 +41,7 @@ export function QuickAdd({ children }: { children: ReactNode }) {
   const [dragging, setDragging] = useState(false);
   // Dragging something from the page itself (e.g. a gallery image) is no upload.
   const draggingFromPage = useRef(false);
+  useLanguageGuard({ dirty: draft !== null || trayItems.some((item) => item.status === "failed") });
 
   function updateItem(id: string, item: TrayItem) {
     setTrayItems((items) => items.map((current) => (current.id === id ? item : current)));
@@ -55,10 +60,12 @@ export function QuickAdd({ children }: { children: ReactNode }) {
     }));
     setTrayItems((items) => [
       ...items,
-      ...queued.map(({ id, title: label, reason }): TrayItem =>
-        reason ? { id, label, status: "failed", reason } : { id, label, status: "uploading" },
+      ...queued.map(({ id, title: label, reason, file }): TrayItem =>
+        reason ? { id, label, status: "failed", reason, file } : { id, label, status: "uploading" },
       ),
     ]);
+    const finishUpload = beginLanguageOperation("upload");
+    try {
     // One after another, so the server decodes one large image at a time.
     for (const { id, file, title: label, reason } of queued) {
       if (reason) continue;
@@ -66,9 +73,10 @@ export function QuickAdd({ children }: { children: ReactNode }) {
       data.set("file", file);
       data.set("title", label);
       const result = await send(data);
-      updateItem(id, result.ok ? { id, label, status: "saved", slug: result.slug } : { id, label, status: "failed", reason: result.reason });
+      updateItem(id, result.ok ? { id, label, status: "saved", slug: result.slug } : { id, label, status: "failed", reason: result.reason, file });
       if (result.ok) void router.invalidate();
     }
+    } finally { finishUpload(); }
   }
 
   /**
@@ -83,7 +91,7 @@ export function QuickAdd({ children }: { children: ReactNode }) {
 
     const draftTitle = title ?? titleFromFileName(file.name);
     const reason = precheckFile(file);
-    if (reason) return setTrayItems((items) => [...items, { id: crypto.randomUUID(), label: draftTitle, status: "failed", reason }]);
+    if (reason) return setTrayItems((items) => [...items, { id: crypto.randomUUID(), label: draftTitle, status: "failed", reason, file }]);
     setDraft({ id: crypto.randomUUID(), file, title: draftTitle });
   }
 
@@ -154,8 +162,8 @@ export function QuickAdd({ children }: { children: ReactNode }) {
           className="fixed inset-0 z-50 flex bg-stone-50/80 p-4 backdrop-blur-sm sm:p-8"
         >
           <div className="pointer-events-none flex flex-1 flex-col items-center justify-center rounded-2xl border-2 border-dashed border-neutral-400 text-center">
-            <p className="text-lg font-medium text-neutral-900">Loslassen zum Hinzufügen</p>
-            <p className="mt-1 text-sm text-neutral-500">{`PNG, JPEG oder WebP, bis ${maxUploadMegabytes} MB. Mehrere Dateien auf einmal gehen auch.`}</p>
+            <p className="text-lg font-medium text-neutral-900">{m.upload_drop()}</p>
+            <p className="mt-1 text-sm text-neutral-500">{m.upload_drop_help({ max: formatNumber(maxUploadMegabytes) })}</p>
           </div>
         </div>
       )}
@@ -181,7 +189,7 @@ async function send(data: FormData): Promise<Awaited<ReturnType<typeof uploadIma
   try {
     return await uploadImage({ data });
   } catch {
-    return { ok: false, reason: "Das Hochladen hat nicht geklappt. Bitte versuche es noch einmal." };
+    return { ok: false, reason: m.upload_failed() };
   }
 }
 

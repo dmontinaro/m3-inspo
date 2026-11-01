@@ -1,16 +1,17 @@
+import * as m from "#/paraglide/messages.js";
 import { Link } from "@tanstack/react-router";
 
 export type TrayItem = { id: string; label: string } & (
   | { status: "uploading" }
   | { status: "saved"; slug: string }
-  | { status: "failed"; reason: string }
+  | { status: "failed"; reason: string; file: File }
 );
 
 /** How each status looks. Saved lines show a link instead of `text`. */
 const statusStyles: Record<TrayItem["status"], { dot: string; text: string; textClassName: string }> = {
-  uploading: { dot: "animate-pulse bg-neutral-400", text: "Läuft …", textClassName: "text-neutral-500" },
-  saved: { dot: "bg-emerald-500", text: "Gespeichert", textClassName: "text-neutral-600" },
-  failed: { dot: "bg-rose-500", text: "Abgelehnt", textClassName: "text-rose-700" },
+  uploading: { dot: "animate-pulse bg-neutral-400", get text() { return m.upload_running(); }, textClassName: "text-neutral-500" },
+  saved: { dot: "bg-emerald-500", get text() { return m.upload_saved(); }, textClassName: "text-neutral-600" },
+  failed: { dot: "bg-rose-500", get text() { return m.upload_rejected(); }, textClassName: "text-rose-700" },
 };
 
 /** Small panel in the corner with one line per upload: running, saved (with a link) or rejected (with the reason). */
@@ -18,14 +19,14 @@ export function UploadTray({ items, onClose }: { items: TrayItem[]; onClose: () 
   if (items.length === 0) return null;
 
   const heading = items.some((item) => item.status === "uploading")
-    ? "Wird hochgeladen …"
+    ? m.upload_in_progress()
     : items.some((item) => item.status === "failed")
-      ? "Nicht alles wurde gespeichert"
-      : "Gespeichert";
+      ? m.upload_partial()
+      : m.upload_saved();
 
   return (
     <section
-      aria-label="Uploads"
+      aria-label={m.uploads_title()}
       className="fixed right-4 bottom-4 z-40 w-[23rem] overflow-hidden rounded-lg bg-white text-sm shadow-lg ring-1 shadow-black/10 ring-black/10 max-sm:inset-x-3 max-sm:bottom-3 max-sm:w-auto"
     >
       <header className="flex items-center justify-between gap-3 border-b border-neutral-100 py-2 pr-2 pl-4">
@@ -35,7 +36,7 @@ export function UploadTray({ items, onClose }: { items: TrayItem[]; onClose: () 
         <button
           type="button"
           onClick={onClose}
-          aria-label="Schließen"
+          aria-label={m.action_close()}
           className="rounded-md px-2 py-1 text-neutral-500 hover:bg-neutral-100 hover:text-neutral-900"
         >
           <span aria-hidden>✕</span>
@@ -49,12 +50,11 @@ export function UploadTray({ items, onClose }: { items: TrayItem[]; onClose: () 
               <span className="min-w-0 flex-1 truncate text-neutral-800">{item.label}</span>
               {item.status === "saved" ? (
                 <Link
-                  to="/referenzen/$slug"
+                  to="/references/$slug"
                   params={{ slug: item.slug }}
                   className="shrink-0 text-neutral-600 underline underline-offset-2 hover:text-neutral-900"
                 >
-                  Ansehen
-                </Link>
+                  {m.action_view()}</Link>
               ) : (
                 <span className={`shrink-0 ${statusStyles[item.status].textClassName}`}>{statusStyles[item.status].text}</span>
               )}

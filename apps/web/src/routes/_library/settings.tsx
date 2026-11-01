@@ -1,3 +1,8 @@
+import { newTokenFields } from "#/lib/mcp-token-fields";
+import { issueMessage } from "#/lib/validation";
+import { formatDate, formatNumber } from "#/lib/format";
+import { useLanguageGuard, useFormLanguageGuard , LanguageControl  } from "#/components/language-control";
+import * as m from "#/paraglide/messages.js";
 import { Link, createFileRoute, useRouter } from "@tanstack/react-router";
 import { useState } from "react";
 import type { FormEvent, ReactNode } from "react";
@@ -6,8 +11,8 @@ import { defaultTokenLifetimeDays, maxTokenNameLength, mcpPath, tokenLifetimeDay
 import type { TokenLifetimeDays } from "#/lib/mcp-tokens";
 import { createMcpToken, listMcpTokens, revokeMcpToken } from "#/server/mcp-tokens.functions";
 
-export const Route = createFileRoute("/_library/einstellungen")({
-  head: () => ({ meta: [{ title: "Einstellungen · m3 inspo" }] }),
+export const Route = createFileRoute("/_library/settings")({
+  head: () => ({ meta: [{ title: m.settings_page_title() }] }),
   loader: () => listMcpTokens(),
   component: Settings,
 });
@@ -15,14 +20,8 @@ export const Route = createFileRoute("/_library/einstellungen")({
 type ListedToken = Awaited<ReturnType<typeof listMcpTokens>>[number];
 type NewToken = { name: string; token: string };
 
-const lifetimeLabels: Record<TokenLifetimeDays, string> = { 30: "30 Tage", 90: "90 Tage", 365: "1 Jahr" };
+const lifetimeLabels: Record<TokenLifetimeDays, () => string> = { 30: () => m.token_lifetime_days({ days: formatNumber(30) }), 90: () => m.token_lifetime_days({ days: formatNumber(90) }), 365: m.token_lifetime_year };
 
-const dateFormat = new Intl.DateTimeFormat("de-DE", { dateStyle: "medium", timeZone: "Europe/Berlin" });
-const dateTimeFormat = new Intl.DateTimeFormat("de-DE", {
-  dateStyle: "medium",
-  timeStyle: "short",
-  timeZone: "Europe/Berlin",
-});
 
 // Settings: MCP tokens for coding agents. A new token's plaintext exists only in this
 // page's state until the owner leaves or presses "Fertig"; the server keeps a hash.
@@ -30,30 +29,33 @@ function Settings() {
   const tokens = Route.useLoaderData();
   const router = useRouter();
   const [newToken, setNewToken] = useState<NewToken | null>(null);
+  const [revokeFailed, setRevokeFailed] = useState(false);
+  useLanguageGuard({ blocker: newToken ? m.language_block_token() : undefined });
 
   async function revoke(token: ListedToken) {
-    if (!window.confirm(`Token „${token.name}“ widerrufen? Agenten mit diesem Token verlieren sofort den Zugriff.`)) return;
-    await revokeMcpToken({ data: { id: token.id } });
-    await router.invalidate();
+    if (!window.confirm(m.token_revoke_confirm({ name: token.name }))) return;
+    setRevokeFailed(false);
+    try {
+      await revokeMcpToken({ data: { id: token.id } });
+      await router.invalidate();
+    } catch {
+      setRevokeFailed(true);
+    }
   }
 
   return (
     <main className="mx-auto max-w-3xl px-5 pt-2 pb-16 sm:px-8">
       <Link to="/" className="inline-flex items-center gap-1.5 text-sm text-neutral-500 hover:text-neutral-900">
-        <span aria-hidden>←</span> Galerie
-      </Link>
-      <h1 className="mt-4 text-2xl font-semibold tracking-tight">Einstellungen</h1>
+        <span aria-hidden>←</span> {m.gallery_title()}</Link>
+      <h1 className="mt-4 text-2xl font-semibold tracking-tight">{m.settings_title()}</h1>
 
+      <LanguageControl />
       <section className="mt-8">
-        <h2 className="text-lg font-semibold tracking-tight">MCP-Zugang</h2>
+        <h2 className="text-lg font-semibold tracking-tight">{m.mcp_access()}</h2>
         <p className="mt-1 max-w-prose text-[15px] text-neutral-600">
-          Mit einem Token greifen Coding-Agenten wie Claude Code auf deine freigegebenen Referenzen zu, mit Notizen und
-          Bildern. Entwürfe und archivierte Referenzen sehen sie nicht. Welche Werkzeuge sie dabei bekommen und wofür, steht
-          unter{" "}
-          <Link to="/werkzeuge" className="text-neutral-900 underline underline-offset-4 hover:text-neutral-600">
-            Werkzeuge
-          </Link>
-          .
+          {m.mcp_access_help()}{" "}
+          <Link to="/tools" className="text-neutral-900 underline underline-offset-4 hover:text-neutral-600">
+            {m.mcp_tools_link()}</Link>
         </p>
 
         {newToken ? (
@@ -67,9 +69,10 @@ function Settings() {
           />
         )}
 
-        <h3 className="mt-10 text-sm font-semibold text-neutral-900">Tokens</h3>
+        {revokeFailed && <p role="alert" className="mt-4 text-sm text-rose-700">{m.action_failed()}</p>}
+        <h3 className="mt-10 text-sm font-semibold text-neutral-900">{m.tokens_title()}</h3>
         {tokens.length === 0 ? (
-          <p className="mt-2 text-[15px] text-neutral-500">Noch keine Tokens.</p>
+          <p className="mt-2 text-[15px] text-neutral-500">{m.tokens_none()}</p>
         ) : (
           <ul className="mt-3 divide-y divide-neutral-200 rounded-lg border border-neutral-200 bg-white">
             {tokens.map((token) => (
@@ -83,47 +86,50 @@ function Settings() {
 }
 
 function CreateTokenForm({ onCreated }: { onCreated: (token: NewToken) => Promise<void> }) {
+  const languageForm = useFormLanguageGuard();
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    const data = new FormData(event.currentTarget);
+    const parsed = newTokenFields.safeParse(Object.fromEntries(data));
+    if (!parsed.success) { setError(issueMessage(parsed.error.issues[0])); return; }
     setPending(true);
     setError(null);
     try {
-      const { token, credential } = await createMcpToken({ data: new FormData(event.currentTarget) });
+      const { token, credential } = await createMcpToken({ data });
       await onCreated({ name: credential.name, token });
     } catch {
-      setError("Der Token konnte nicht erstellt werden. Bitte versuche es noch einmal.");
+      setError(m.token_create_failed());
     } finally {
       setPending(false);
     }
   }
 
   return (
-    <form onSubmit={submit} className="mt-6 rounded-lg border border-neutral-200 bg-white p-4 sm:p-5">
+    <form ref={languageForm.form} noValidate onSubmit={submit} className="mt-6 rounded-lg border border-neutral-200 bg-white p-4 sm:p-5">
+      <fieldset disabled={pending} className="contents">
       <div className="grid gap-4 sm:grid-cols-[minmax(0,1fr)_10rem_auto] sm:items-end">
         <div>
           <label htmlFor="name" className="text-sm font-medium text-neutral-900">
-            Name
-          </label>
+            {m.field_name()}</label>
           <input
             id="name"
             name="name"
             required
             maxLength={maxTokenNameLength}
-            placeholder="z. B. Claude Code MacBook"
+            placeholder={m.token_name_placeholder()}
             className={fieldClassName}
           />
         </div>
         <div>
           <label htmlFor="expiresInDays" className="text-sm font-medium text-neutral-900">
-            Gültig für
-          </label>
+            {m.token_valid_for()}</label>
           <select id="expiresInDays" name="expiresInDays" defaultValue={defaultTokenLifetimeDays} className={fieldClassName}>
             {tokenLifetimeDays.map((days) => (
               <option key={days} value={days}>
-                {lifetimeLabels[days]}
+                {lifetimeLabels[days]()}
               </option>
             ))}
           </select>
@@ -133,7 +139,7 @@ function CreateTokenForm({ onCreated }: { onCreated: (token: NewToken) => Promis
           disabled={pending}
           className="rounded-md bg-neutral-900 px-4 py-2.5 text-sm font-medium text-white hover:bg-neutral-700 disabled:opacity-60"
         >
-          {pending ? "Wird erstellt …" : "Token erstellen"}
+          {pending ? m.token_creating() : m.token_create()}
         </button>
       </div>
       {error && (
@@ -141,7 +147,8 @@ function CreateTokenForm({ onCreated }: { onCreated: (token: NewToken) => Promis
           {error}
         </p>
       )}
-    </form>
+    </fieldset>
+      </form>
   );
 }
 
@@ -153,21 +160,18 @@ function CreatedToken({ token, onDone }: { token: NewToken; onDone: () => void }
 
   return (
     <div role="status" className="mt-6 rounded-lg border border-amber-300 bg-amber-50 p-4 sm:p-5">
-      <p className="font-medium text-neutral-900">{`Token „${token.name}“ erstellt`}</p>
+      <p className="font-medium text-neutral-900">{m.token_created_name({ name: token.name })}</p>
       <p className="mt-1 text-sm text-amber-900">
-        Kopiere ihn jetzt. Er wird nur dieses eine Mal angezeigt und lässt sich später nicht wieder abrufen.
-      </p>
+        {m.token_copy_now()}</p>
 
       <CopyField label="Token" value={token.token} />
-      <CopyField label="Claude Code anbinden" value={command} />
+      <CopyField label={m.token_connect_claude()} value={command} />
       <CopyField
-        label="claude.ai anbinden"
+        label={m.token_connect_claude_web()}
         value={serverUrl}
         hint={
           <>
-            Als Connector-URL eintragen, dazu den Header <code className="font-mono text-[13px]">x-api-key</code> mit dem
-            Token von oben.
-          </>
+            {m.token_connector_help()}<code className="font-mono text-[13px]">x-api-key</code> {m.token_header_help()}</>
         }
       />
 
@@ -176,8 +180,7 @@ function CreatedToken({ token, onDone }: { token: NewToken; onDone: () => void }
         onClick={onDone}
         className="mt-5 rounded-md border border-neutral-300 bg-white px-4 py-2 text-sm font-medium text-neutral-900 hover:bg-neutral-100"
       >
-        Fertig
-      </button>
+        {m.action_done()}</button>
     </div>
   );
 }
@@ -207,7 +210,7 @@ function CopyField({ label, value, hint }: { label: string; value: string; hint?
           onClick={copy}
           className="shrink-0 rounded-md bg-neutral-900 px-3 py-2 text-sm font-medium text-white hover:bg-neutral-700"
         >
-          {copied ? "Kopiert" : "Kopieren"}
+          {copied ? m.action_copied() : m.action_copy()}
         </button>
       </div>
       {hint && <p className="mt-1.5 text-sm text-neutral-600">{hint}</p>}
@@ -234,14 +237,13 @@ function TokenRow({ token, onRevoke }: { token: ListedToken; onRevoke: () => voi
             onClick={onRevoke}
             className="shrink-0 rounded-md px-2.5 py-1.5 text-sm text-rose-700 hover:bg-rose-50"
           >
-            Widerrufen
-          </button>
+            {m.token_revoke()}</button>
         )}
       </div>
       <dl className="mt-2 grid grid-cols-2 gap-x-4 gap-y-1 text-sm sm:grid-cols-3">
-        <Detail label="Erstellt" value={dateFormat.format(token.createdAt)} />
-        <Detail label={tokenStatuses[status].dateLabel} value={dateFormat.format(token.revokedAt ?? token.expiresAt)} />
-        <Detail label="Zuletzt genutzt" value={token.lastUsedAt ? dateTimeFormat.format(token.lastUsedAt) : "Noch nie"} />
+        <Detail label={m.token_created()} value={formatDate(token.createdAt, { dateStyle: "medium", timeStyle: "short" })} />
+        <Detail label={tokenStatuses[status].dateLabel} value={formatDate(token.revokedAt ?? token.expiresAt)} />
+        <Detail label={m.token_last_used()} value={token.lastUsedAt ? formatDate(token.lastUsedAt, { dateStyle: "medium", timeStyle: "short" }) : m.token_never_used()} />
       </dl>
     </li>
   );
@@ -258,9 +260,9 @@ function Detail({ label, value }: { label: string; value: string }) {
 
 /** Per token status: the badge, and the label of the date shown next to "Erstellt". */
 const tokenStatuses = {
-  active: { label: "Aktiv", dateLabel: "Läuft ab", className: "bg-emerald-50 text-emerald-800 ring-emerald-600/20" },
-  expired: { label: "Abgelaufen", dateLabel: "Abgelaufen", className: "bg-neutral-100 text-neutral-600 ring-neutral-500/20" },
-  revoked: { label: "Widerrufen", dateLabel: "Widerrufen", className: "bg-rose-50 text-rose-700 ring-rose-600/20" },
+  active: { get label() { return m.token_active(); }, get dateLabel() { return m.token_expires(); }, className: "bg-emerald-50 text-emerald-800 ring-emerald-600/20" },
+  expired: { get label() { return m.token_expired(); }, get dateLabel() { return m.token_expired(); }, className: "bg-neutral-100 text-neutral-600 ring-neutral-500/20" },
+  revoked: { get label() { return m.token_revoked(); }, get dateLabel() { return m.token_revoked(); }, className: "bg-rose-50 text-rose-700 ring-rose-600/20" },
 };
 
 function StatusBadge({ status }: { status: keyof typeof tokenStatuses }) {

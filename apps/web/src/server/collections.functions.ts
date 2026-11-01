@@ -1,3 +1,5 @@
+import * as m from "#/paraglide/messages.js";
+import { webValidator } from "#/lib/validation";
 import { notFound } from "@tanstack/react-router";
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
@@ -16,7 +18,7 @@ import {
 
 /** Rejects anything but a multipart form, before the handler reads it. */
 function formData(data: FormData) {
-  if (!(data instanceof FormData)) throw new Error("Expected form data.");
+  if (!(data instanceof FormData)) throw new Error(m.validation_invalid_input());
   return data;
 }
 
@@ -32,7 +34,7 @@ export const getCollections = createServerFn({ method: "GET" }).handler(() => li
 
 /** One collection with its references in order. */
 export const getCollection = createServerFn({ method: "GET" })
-  .validator(z.object({ slug: z.string() }))
+  .validator(webValidator(z.object({ slug: z.string() })))
   .handler(async ({ data }) => {
     const collection = await findCollection(data.slug);
     if (!collection) throw notFound();
@@ -41,7 +43,7 @@ export const getCollection = createServerFn({ method: "GET" })
 
 /**
  * The new-collection form: `name`, `description` and `project`. Answers
- * `{ ok: false, errors }` with German messages per field when rejected.
+ * `{ ok: false, errors }` with localized messages per field when rejected.
  */
 export const addCollection = createServerFn({ method: "POST" })
   .validator(formData)
@@ -58,7 +60,7 @@ export const updateCollection = createServerFn({ method: "POST" })
 
 /** Deletes the collection, not its references; the UI asks for confirmation first. */
 export const deleteCollection = createServerFn({ method: "POST" })
-  .validator(z.object({ slug: z.string() }))
+  .validator(webValidator(z.object({ slug: z.string() })))
   .handler(async ({ data }) => {
     if (!(await removeCollection(data.slug))) throw notFound();
   });
@@ -67,20 +69,20 @@ const membership = z.object({ collection: z.string(), reference: z.string() });
 
 /** Adds a reference at the end of a collection. */
 export const addReferenceToCollection = createServerFn({ method: "POST" })
-  .validator(membership)
+  .validator(webValidator(membership))
   .handler(async ({ data }) => {
     if (!(await addToCollection(data.collection, data.reference))) throw notFound();
   });
 
 export const removeReferenceFromCollection = createServerFn({ method: "POST" })
-  .validator(membership)
+  .validator(webValidator(membership))
   .handler(async ({ data }) => {
     if (!(await removeFromCollection(data.collection, data.reference))) throw notFound();
   });
 
 /** The collection's references in their new order, as slugs. */
 export const setCollectionOrder = createServerFn({ method: "POST" })
-  .validator(z.object({ collection: z.string(), references: z.array(z.string()).max(1000) }))
+  .validator(webValidator(z.object({ collection: z.string(), references: z.array(z.string()).max(1000) })))
   .handler(async ({ data }) => {
     if (!(await reorderCollection(data.collection, data.references))) throw notFound();
   });

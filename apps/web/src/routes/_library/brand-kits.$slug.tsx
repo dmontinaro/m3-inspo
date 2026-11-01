@@ -1,5 +1,7 @@
+import { useLanguageGuard } from "#/components/language-control";
+import * as m from "#/paraglide/messages.js";
 import { Link, createFileRoute, useRouter } from "@tanstack/react-router";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { TriangleAlert } from "lucide-react";
 import { parseGeneratorSearch, serializeGeneratorSearch } from "@m3-inspo/shared/color-scheme";
 import { KitDesignBriefing } from "#/components/brand-kits/kit-design-briefing";
@@ -63,10 +65,9 @@ export const Route = createFileRoute("/_library/brand-kits/$slug")({
   component: BrandKitPage,
   notFoundComponent: () => (
     <main className="mx-auto max-w-md px-5 py-24 text-center">
-      <h1 className="text-xl font-semibold">Brand Kit nicht gefunden</h1>
+      <h1 className="text-xl font-semibold">{m.kit_not_found()}</h1>
       <Link to="/brand-kits" className="mt-4 inline-block text-sm text-neutral-600 underline underline-offset-4">
-        Zu den Brand Kits
-      </Link>
+        {m.kits_back()}</Link>
     </main>
   ),
 });
@@ -108,14 +109,16 @@ function BrandKitPage() {
   const typography = changedTypography ?? savedTypography;
   const typographyChanged = !sameTypography(typography.typography, kit.typography);
   const unsaved = colorsChanged || typographyChanged;
+  const current = useRef({ draft: page.draft, typography });
+  current.current = { draft: page.draft, typography };
+  useLanguageGuard({ dirty: typographyChanged });
 
   return (
     <main className="mx-auto max-w-screen-2xl px-5 pt-2 pb-8 sm:px-8">
       <div className="flex flex-wrap items-end justify-between gap-x-6 gap-y-3">
         <div className="min-w-0">
           <Link to="/brand-kits" className="text-sm text-neutral-500 hover:text-neutral-900">
-            Brand Kits
-          </Link>
+            {m.brand_kits_title()}</Link>
           <h1 className="truncate text-2xl font-semibold tracking-tight">{kit.name}</h1>
           <KitStatusControl kit={kit} />
         </div>
@@ -159,14 +162,15 @@ function BrandKitPage() {
           kit={kit}
           unsaved={unsaved}
           onSave={async () => {
+            const submitted = { draft: page.draft, typography };
             const stored = await saveBrandKitChanges({
               data: { slug: kit.slug, scheme: { sources: page.draft.sources, primary: page.draft.primary }, typography: typography.typography },
             });
             const storedDraft = draftFromScheme(stored.colorScheme);
             // The server may have dropped a link to a reference deleted meanwhile; the draft follows what it stored.
-            if (!isSameScheme(page.draft, storedDraft)) page.generator.apply(() => storedDraft);
+            if (isSameScheme(current.current.draft, submitted.draft) && !isSameScheme(submitted.draft, storedDraft)) page.generator.apply(() => storedDraft);
             await router.invalidate();
-            setChangedTypography(undefined);
+            setChangedTypography((latest) => latest === submitted.typography ? undefined : latest);
           }}
           // A step of its own, so `Z` brings the discarded colour changes back; font changes simply go.
           onDiscard={() => {
@@ -180,7 +184,7 @@ function BrandKitPage() {
   );
 }
 
-const outdatedNotice = "Der Generator liefert inzwischen andere Werte. Speichern übernimmt sie.";
+
 
 /**
  * Floats at the bottom while the page differs from the saved kit: changes
@@ -192,9 +196,9 @@ function SaveBar({ kit, unsaved, onSave, onDiscard }: { kit: Kit; unsaved: boole
   const [state, setState] = useState<"idle" | "pending" | "failed">("idle");
   const lines = [
     // Also when saving only takes over the generator's new values: agents see those too.
-    ...(kit.status === "approved" ? ["Dieses Kit ist freigegeben, Agenten sehen die Änderung sofort."] : []),
-    ...(unsaved && kit.outdated ? [outdatedNotice] : []),
-    ...(state === "failed" ? ["Speichern hat nicht geklappt. Bitte versuche es noch einmal."] : []),
+    ...(kit.status === "approved" ? [m.kit_approved_changes()] : []),
+    ...(unsaved && kit.outdated ? [m.kit_snapshot_stale()] : []),
+    ...(state === "failed" ? [m.save_failed()] : []),
   ];
 
   async function save() {
@@ -214,7 +218,7 @@ function SaveBar({ kit, unsaved, onSave, onDiscard }: { kit: Kit; unsaved: boole
       <div className="flex min-w-0 flex-1 items-start gap-2.5">
         {!unsaved && <TriangleAlert aria-hidden className="mt-0.5 size-4 shrink-0 text-amber-300" strokeWidth={2} />}
         <div role="status" className="min-w-0">
-          <p className="font-medium">{unsaved ? "Ungespeicherte Änderungen" : outdatedNotice}</p>
+          <p className="font-medium">{unsaved ? m.unsaved_changes() : m.kit_snapshot_stale()}</p>
           {lines.map((line) => (
             <p key={line} className="text-neutral-300">
               {line}
@@ -230,8 +234,7 @@ function SaveBar({ kit, unsaved, onSave, onDiscard }: { kit: Kit; unsaved: boole
             disabled={state === "pending"}
             className="rounded-md px-3.5 py-2 font-medium text-neutral-200 hover:bg-white/10 hover:text-white disabled:opacity-60"
           >
-            Verwerfen
-          </button>
+            {m.action_discard()}</button>
         )}
         <button
           type="button"
@@ -239,7 +242,7 @@ function SaveBar({ kit, unsaved, onSave, onDiscard }: { kit: Kit; unsaved: boole
           disabled={state === "pending"}
           className="rounded-md bg-white px-4 py-2 font-medium text-neutral-900 hover:bg-neutral-200 disabled:opacity-60"
         >
-          {state === "pending" ? "Speichert …" : "Speichern"}
+          {state === "pending" ? m.action_saving() : m.action_save()}
         </button>
       </div>
     </div>

@@ -30,6 +30,6 @@ describe("titleFromFileName", () => {
 
 describe("screenshotTitle", () => {
   it("names a pasted image after the moment it was pasted", () => {
-    expect(screenshotTitle(new Date(2026, 8, 23, 14, 7))).toBe("Screenshot 23.09.2026, 14:07");
+    expect(screenshotTitle(new Date("2026-09-23T12:07:00Z"))).toBe("Screenshot 23 Sept 2026, 14:07");
   });
 });

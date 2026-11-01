@@ -1,3 +1,6 @@
+import { beginLanguageOperation } from "#/lib/language-operations";
+import { LanguageControl } from "#/components/language-control";
+import * as m from "#/paraglide/messages.js";
 import { Link } from "@tanstack/react-router";
 import { LogOut, Palette, Settings, Type } from "lucide-react";
 import { useState } from "react";
@@ -29,8 +32,11 @@ export function OwnerMenu({ name, image }: { name: string; image: string | null 
   const container = useDismiss(open, setOpen);
 
   async function signOut() {
-    await authClient.signOut();
-    window.location.assign(signInPath);
+    const finish = beginLanguageOperation("mutation");
+    try {
+      await authClient.signOut();
+      window.location.assign(signInPath);
+    } finally { finish(); }
   }
 
   return (
@@ -38,9 +44,10 @@ export function OwnerMenu({ name, image }: { name: string; image: string | null 
       <button
         type="button"
         onClick={() => setOpen((value) => !value)}
+        data-language-control
         aria-expanded={open}
-        aria-label={`Angemeldet als ${name}`}
-        title={`Angemeldet als ${name}`}
+        aria-label={m.owner_signed_in_name({ name })}
+        title={m.owner_signed_in_name({ name })}
         className="block rounded-full focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-neutral-900"
       >
         {image && !imageFailed ? (
@@ -62,28 +69,24 @@ export function OwnerMenu({ name, image }: { name: string; image: string | null 
 
       {open && (
         <div className="absolute right-0 z-30 mt-2 w-56 rounded-xl border border-neutral-200 bg-white p-1.5 shadow-lg shadow-black/10">
+          <LanguageControl />
           <div className="px-2.5 pt-1.5 pb-2">
-            <p className="text-xs text-neutral-500">Angemeldet als</p>
-            <p className="truncate text-sm font-medium text-neutral-900">{name}</p>
+            <p className="text-sm text-neutral-700">{m.owner_signed_in_name({ name })}</p>
           </div>
           {/* Phones only; from md up the header links to it. */}
-          <Link to="/schriften" onClick={() => setOpen(false)} className={`${itemClassName} md:hidden`}>
+          <Link to="/type-pairings" onClick={() => setOpen(false)} className={`${itemClassName} md:hidden`}>
             <Type aria-hidden className="size-4 text-neutral-500" strokeWidth={1.75} />
-            Schriften
-          </Link>
+            {m.type_pairings_title()}</Link>
           {/* The header shows Brand Kits from md up; on phones it lives here. */}
           <Link to="/brand-kits" onClick={() => setOpen(false)} className={`${itemClassName} md:hidden`}>
             <Palette aria-hidden className="size-4 text-neutral-500" strokeWidth={1.75} />
-            Brand Kits
-          </Link>
-          <Link to="/einstellungen" onClick={() => setOpen(false)} className={itemClassName}>
+            {m.brand_kits_title()}</Link>
+          <Link to="/settings" onClick={() => setOpen(false)} className={itemClassName}>
             <Settings aria-hidden className="size-4 text-neutral-500" strokeWidth={1.75} />
-            Einstellungen
-          </Link>
+            {m.settings_title()}</Link>
           <button type="button" onClick={signOut} className={itemClassName}>
             <LogOut aria-hidden className="size-4 text-neutral-500" strokeWidth={1.75} />
-            Abmelden
-          </button>
+            {m.action_sign_out()}</button>
         </div>
       )}
     </div>

@@ -51,6 +51,7 @@ beforeAll(async () => {
   useFakeGithub([owner]);
   app = await startTestApp({ OWNER_GITHUB_ID: String(owner.id) });
   browser = app.browser();
+  browser.setCookie("PARAGLIDE_LOCALE", "de");
   await signInWithGithub(browser, owner);
   hotel = await addReference("Hotel Einstieg", ["#e56236", "#8a7a72"]);
   plain = await addReference("Ohne Palette");
@@ -89,7 +90,7 @@ async function openGenerator(href: string) {
 
 describe("„Color Scheme daraus“", () => {
   it("on a reference opens the generator with only that reference as the pool, and rolls from it", async () => {
-    const href = await entryLink(`/referenzen/${hotel}`);
+    const href = await entryLink(`/references/${hotel}`);
     expect(href).toBe(`/generator?pool=${hotel}`);
 
     const html = await openGenerator(href ?? "");
@@ -99,7 +100,7 @@ describe("„Color Scheme daraus“", () => {
   });
 
   it("on a collection opens the generator with the collection as the pool, and rolls from it", async () => {
-    const href = await entryLink(`/sammlungen/${collection}`);
+    const href = await entryLink(`/collections/${collection}`);
     expect(href).toBe(`/generator?pool=collection:${collection}`);
 
     const html = await openGenerator(href ?? "");
@@ -108,7 +109,7 @@ describe("„Color Scheme daraus“", () => {
   });
 
   it("on a reference without a palette rolls freely, without a reference", async () => {
-    const href = await entryLink(`/referenzen/${plain}`);
+    const href = await entryLink(`/references/${plain}`);
     expect(href).toBe(`/generator?pool=${plain}`);
 
     const html = await openGenerator(href ?? "");
@@ -120,6 +121,6 @@ describe("„Color Scheme daraus“", () => {
     // Uploads start approved; imports start as drafts.
     const draft = await uploadScreenshot(app, browser, `Entwurf ${run}`);
     await getDb().update(references).set({ curationStatus: "draft" }).where(eq(references.slug, draft));
-    expect(await entryLink(`/referenzen/${draft}`)).toBeUndefined();
+    expect(await entryLink(`/references/${draft}`)).toBeUndefined();
   });
 });

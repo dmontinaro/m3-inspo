@@ -1,3 +1,4 @@
+import { formatDate } from "#/lib/format";
 /** Browser-side helpers for files the owner pastes, drops or picks before they go to `uploadImage`. */
 
 import { acceptedImageTypes, maxUploadBytes, rejectionReasons } from "./upload-limits";
@@ -21,9 +22,8 @@ export function titleFromFileName(name: string): string {
   return name.replace(/\.[^.]+$/, "").replace(/[-_]+/g, " ");
 }
 
-const pasteTimeFormat = new Intl.DateTimeFormat("de-DE", { dateStyle: "medium", timeStyle: "short" });
 
 /** Default title for a pasted image, which has no useful file name: "Screenshot 23.09.2026, 14:07". */
 export function screenshotTitle(pastedAt: Date): string {
-  return `Screenshot ${pasteTimeFormat.format(pastedAt)}`;
+  return `Screenshot ${formatDate(pastedAt, { dateStyle: "medium", timeStyle: "short" })}`;
 }

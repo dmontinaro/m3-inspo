@@ -1,3 +1,5 @@
+import { useFormLanguageGuard } from "#/components/language-control";
+import * as m from "#/paraglide/messages.js";
 import { useState } from "react";
 import type { FormEvent, KeyboardEvent, ReactNode } from "react";
 import { Pencil } from "lucide-react";
@@ -27,7 +29,8 @@ type InlineFieldProps = {
  * field, so the rest of the reference stays as it is. Enter in a text field
  * or Ctrl/⌘+Enter saves, Escape cancels.
  */
-export function InlineField({ slug, name, editLabel, value, emptyText = "Nicht angegeben", control, onSaved }: InlineFieldProps) {
+export function InlineField({ slug, name, editLabel, value, emptyText = m.field_not_provided(), control, onSaved }: InlineFieldProps) {
+  const languageForm = useFormLanguageGuard();
   const [editing, setEditing] = useState(false);
   const [error, setError] = useState<string>();
   const [pending, setPending] = useState(false);
@@ -47,9 +50,9 @@ export function InlineField({ slug, name, editLabel, value, emptyText = "Nicht a
       if (result.ok) {
         await onSaved();
         close();
-      } else setError(result.errors[name]?.[0] ?? "Das hat nicht geklappt. Bitte versuche es noch einmal.");
+      } else setError(result.errors[name]?.[0] ?? m.action_failed());
     } catch {
-      setError("Das hat nicht geklappt. Bitte versuche es noch einmal.");
+      setError(m.action_failed());
     }
     setPending(false);
   }
@@ -71,7 +74,8 @@ export function InlineField({ slug, name, editLabel, value, emptyText = "Nicht a
   if (editing) {
     const errorId = error ? `${id}-error` : undefined;
     return (
-      <form onSubmit={submit} onKeyDown={handleKeys} noValidate className="min-w-0">
+      <form ref={languageForm.form} noValidate onSubmit={submit} onKeyDown={handleKeys} className="min-w-0">
+      <fieldset disabled={pending} className="contents">
         <input type="hidden" name="slug" value={slug} />
         {control({ id, errorId })}
         {error && (
@@ -85,7 +89,7 @@ export function InlineField({ slug, name, editLabel, value, emptyText = "Nicht a
             disabled={pending}
             className="rounded-md bg-neutral-900 px-3 py-1.5 text-sm font-medium text-white hover:bg-neutral-700 disabled:opacity-60"
           >
-            {pending ? "Speichert …" : "Speichern"}
+            {pending ? m.action_saving() : m.action_save()}
           </button>
           <button
             type="button"
@@ -93,9 +97,9 @@ export function InlineField({ slug, name, editLabel, value, emptyText = "Nicht a
             onClick={close}
             className="rounded-md px-2.5 py-1.5 text-sm text-neutral-600 hover:text-neutral-900 disabled:opacity-60"
           >
-            Abbrechen
-          </button>
+            {m.action_cancel()}</button>
         </div>
+      </fieldset>
       </form>
     );
   }
@@ -104,7 +108,7 @@ export function InlineField({ slug, name, editLabel, value, emptyText = "Nicht a
     return (
       <button
         type="button"
-        onClick={() => setEditing(true)}
+        onClick={() => (languageForm.reset(), setEditing(true))}
         aria-label={editLabel}
         className="group/inline -mx-1.5 flex items-center gap-1.5 rounded-md px-1.5 text-left text-neutral-400 hover:bg-neutral-200/60 hover:text-neutral-700"
       >
@@ -119,7 +123,7 @@ export function InlineField({ slug, name, editLabel, value, emptyText = "Nicht a
       <div className="min-w-0">{value}</div>
       <button
         type="button"
-        onClick={() => setEditing(true)}
+        onClick={() => (languageForm.reset(), setEditing(true))}
         aria-label={editLabel}
         title={editLabel}
         className="-my-0.5 shrink-0 rounded-md p-1 text-neutral-400 opacity-0 group-hover/inline:opacity-100 hover:bg-neutral-200/60 hover:text-neutral-800 focus-visible:opacity-100 [@media(hover:none)]:opacity-100"

@@ -35,6 +35,7 @@ beforeAll(async () => {
   useFakeGithub([owner]);
   app = await startTestApp({ OWNER_GITHUB_ID: String(owner.id), WORKER_TOKEN: workerToken, EMBEDDINGS_API_KEY: "" });
   browser = app.browser();
+  browser.setCookie("PARAGLIDE_LOCALE", "de");
   await signInWithGithub(browser, owner);
 }, 60_000);
 
@@ -570,6 +571,8 @@ describe("refused results", () => {
         ],
       });
       expect(response.status).toBe(422);
+      const rejection = z.object({ error: z.string() }).parse(await response.json());
+      expect(rejection.error).toContain(`Capture 2 (${uploadId}):`);
     }
     expect(await listJobs()).toMatchObject([{ status: "processing", referenceSlug: null }]);
   });

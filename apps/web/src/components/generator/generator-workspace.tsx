@@ -1,8 +1,11 @@
+import { diagnosticText, roleOriginText } from "#/lib/scheme-labels";
+import { useLanguageGuard } from "#/components/language-control";
+import * as m from "#/paraglide/messages.js";
 import { useLocation, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { ReactNode } from "react";
 import { Moon, Shuffle, Sun, TriangleAlert, Undo2, X } from "lucide-react";
-import { buildColorScheme } from "@m3-inspo/shared/color-scheme";
+import { calculateColorScheme } from "@m3-inspo/shared/color-scheme";
 import type { Pool, PrimaryStrategy, SourceKey } from "@m3-inspo/shared/color-scheme";
 import type { FontRoles } from "@m3-inspo/shared/fonts";
 import { describeSkipped } from "#/lib/generator";
@@ -78,9 +81,13 @@ export function useGeneratorPage({ path, poolData, read, search, paused = false 
 
   // The search string as the router shows it, to tell the page's own URL steps from outside ones.
   const target = stringifySearch(parseSearch(search(draft, pool, [...references.values()])));
+  useLanguageGuard({ flush: () => {
+    if (target === seenSearch) return;
+    window.history.replaceState(window.history.state, "", `${path}${target}${window.location.hash}`);
+  } });
   useEffect(() => {
     if (target === seenSearch) return;
-    const href = `${path}${target}`;
+    const href = `${path}${target}${window.location.hash}`;
     const timer = window.setTimeout(() => {
       written.current.add(target);
       void navigate({ href, replace: true, resetScroll: false });
@@ -95,9 +102,10 @@ export function useGeneratorPage({ path, poolData, read, search, paused = false 
   }, [path, target, seenSearch, navigate]);
 
   useGeneratorKeys(generator, paused || picker !== null);
-  const snapshot = useMemo(() => buildColorScheme(draft.sources, draft.primary), [draft.sources, draft.primary]);
+  const calculation = useMemo(() => calculateColorScheme(draft.sources, draft.primary), [draft.sources, draft.primary]);
+  const { snapshot } = calculation;
 
-  return { generator, draft, snapshot, pool, setPool, skipped, setSkipped, references, picker, setPicker };
+  return { generator, draft, snapshot, calculation, pool, setPool, skipped, setSkipped, references, picker, setPicker };
 }
 
 export type GeneratorPage = ReturnType<typeof useGeneratorPage>;
@@ -108,15 +116,14 @@ export function GeneratorActions({ page, children }: { page: GeneratorPage; chil
   return (
     <div className="flex items-center gap-2">
       <p className="mr-2 hidden text-xs text-neutral-500 md:block">
-        <Kbd>Leertaste</Kbd> würfeln · <Kbd>Z</Kbd> zurück
-      </p>
+        <Kbd>{m.shortcut_space()}</Kbd> {m.shortcut_roll()}<Kbd>Z</Kbd> {m.shortcut_undo()}</p>
       {children}
       <button
         type="button"
         onClick={generator.undo}
         disabled={!generator.canUndo}
-        title="Zurück (Z)"
-        aria-label="Zurück"
+        title={m.action_undo_shortcut()}
+        aria-label={m.action_undo()}
         className="grid size-9 place-items-center rounded-md border border-neutral-300 bg-white text-neutral-700 hover:bg-neutral-100 disabled:pointer-events-none disabled:opacity-40"
       >
         <Undo2 aria-hidden className="size-4" strokeWidth={2} />
@@ -127,21 +134,20 @@ export function GeneratorActions({ page, children }: { page: GeneratorPage; chil
         className="flex items-center gap-2 rounded-md bg-neutral-900 px-3.5 py-2 text-sm font-medium text-white hover:bg-neutral-700"
       >
         <Shuffle aria-hidden className="size-4" strokeWidth={2} />
-        Würfeln
-      </button>
+        {m.generator_roll()}</button>
     </div>
   );
 }
 
 const primaryOptions: { value: PrimaryStrategy; label: string; hint: string }[] = [
-  { value: "vivid", label: "Kräftig", hint: "primary behält den Farbton der Marke und wird gerade so dunkel, dass weißer Text 4,5 : 1 schafft" },
-  { value: "hold", label: "Farbe halten", hint: "primary ist genau die Markenfarbe; der Text darauf passt sich an" },
+  { value: "vivid", get label() { return m.primary_vivid(); }, get hint() { return m.primary_vivid_help(); } },
+  { value: "hold", get label() { return m.primary_hold(); }, get hint() { return m.primary_hold_help(); } },
 ];
 
 /** The preview paints with the light roles or with their dark counterpart. */
 const previewModes = [
-  { dark: false, label: "Hell", icon: Sun },
-  { dark: true, label: "Dunkel", icon: Moon },
+  { dark: false, get label() { return m.mode_light(); }, icon: Sun },
+  { dark: true, get label() { return m.mode_dark(); }, icon: Moon },
 ];
 
 /**
@@ -174,14 +180,14 @@ export function GeneratorWorkspace({
         <div role="status" className="mt-5 flex items-start gap-3 rounded-lg bg-amber-50 px-4 py-3 text-sm text-amber-900 ring-1 ring-amber-200/70">
           <TriangleAlert aria-hidden className="mt-0.5 size-4 shrink-0" strokeWidth={2} />
           <div className="min-w-0 flex-1">
-            <p className="font-medium">Der Link war nicht ganz lesbar. Übersprungen:</p>
+            <p className="font-medium">{m.generator_url_skipped()}</p>
             <ul className="mt-0.5">
               {skipped.map((part, index) => (
                 <li key={index}>{describeSkipped(part)}</li>
               ))}
             </ul>
           </div>
-          <button type="button" onClick={() => setSkipped([])} aria-label="Hinweis schließen" className="rounded p-0.5 hover:bg-amber-100">
+          <button type="button" onClick={() => setSkipped([])} aria-label={m.notice_close()} className="rounded p-0.5 hover:bg-amber-100">
             <X aria-hidden className="size-4" strokeWidth={2} />
           </button>
         </div>
@@ -211,8 +217,8 @@ export function GeneratorWorkspace({
 
       <div className="mt-4 flex flex-wrap items-center gap-x-5 gap-y-3 text-sm">
         <div className="flex items-center gap-2">
-          <span className="text-neutral-500">primary</span>
-          <div className="flex rounded-lg bg-neutral-200/70 p-0.5" role="group" aria-label="primary-Strategie">
+          <span className="text-neutral-500">{"primary"}</span>
+          <div className="flex rounded-lg bg-neutral-200/70 p-0.5" role="group" aria-label={m.primary_strategy()}>
             {primaryOptions.map((option) => (
               <button
                 key={option.value}
@@ -233,22 +239,24 @@ export function GeneratorWorkspace({
           <span className="size-4 rounded ring-1 ring-black/10" style={{ background: snapshot.roles.primary.hex }} />
           <span className="uppercase tabular-nums">{snapshot.roles.primary.hex.slice(1)}</span>
           <span className="text-neutral-400">·</span>
-          {onPrimary.derivation} darauf {onPrimary.contrast && formatRatio(onPrimary.contrast.ratio)}
+          {onPrimary.contrast
+            ? m.primary_foreground_contrast({ origin: roleOriginText(page.calculation.roleOrigins["primary-foreground"]), ratio: formatRatio(onPrimary.contrast.ratio) })
+            : roleOriginText(page.calculation.roleOrigins["primary-foreground"])}
         </p>
-        {snapshot.warnings.map((warning) => (
-          <p key={warning.message} className="flex items-center gap-1.5 rounded-md bg-amber-50 px-2 py-1 text-amber-900">
+        {page.calculation.diagnostics.map((warning) => (
+          <p key={warning.role + warning.kind} className="flex items-center gap-1.5 rounded-md bg-amber-50 px-2 py-1 text-amber-900">
             <TriangleAlert aria-hidden className="size-3.5 shrink-0" strokeWidth={2} />
-            {warning.message}
+            {diagnosticText(warning)}
           </p>
         ))}
       </div>
 
       {children}
 
-      <section className="mt-12 border-t border-neutral-200 pt-8" aria-label="Vorschau">
+      <section className="mt-12 border-t border-neutral-200 pt-8" aria-label={m.preview_title()}>
         <div className="mb-4 flex items-center justify-between gap-3">
-          <h2 className="text-lg font-semibold tracking-tight">Vorschau</h2>
-          <div className="flex rounded-lg bg-neutral-200/70 p-0.5 text-sm" role="group" aria-label="Darstellung der Vorschau">
+          <h2 className="text-lg font-semibold tracking-tight">{m.preview_title()}</h2>
+          <div className="flex rounded-lg bg-neutral-200/70 p-0.5 text-sm" role="group" aria-label={m.preview_mode()}>
             {previewModes.map((mode) => (
               <button
                 key={mode.label}
@@ -266,6 +274,7 @@ export function GeneratorWorkspace({
           </div>
         </div>
         <SchemePreview
+          roleOrigins={page.calculation.roleOrigins}
           snapshot={snapshot}
           extras={draft.sources.extras.map((extra) => extra.name)}
           fonts={fonts}

@@ -1,3 +1,4 @@
+import { issueMessage, validationRule } from "#/lib/validation";
 /**
  * Brand Kits (spec #44, "Brand Kits" and "Speichern und Kit-Seite"): Color
  * Schemes the owner saved, with name, optional project, status, notes and
@@ -60,7 +61,7 @@ const sourcesSchema = z
   .object({ brand: sourceSchema, neutral: sourceSchema, extras: z.array(sourceSchema.extend({ name: z.string() })).max(MAX_EXTRAS) })
   .refine(
     ({ extras }) => extras.every(({ name }, index) => checkExtraName(name, extras.slice(0, index).map((extra) => extra.name)) === null),
-    { path: ["extras"], message: "Invalid or duplicate extra name." },
+    validationRule({ code: "extra_name" }),
   );
 
 const primarySchema = z.enum(["vivid", "hold"]);
@@ -161,17 +162,17 @@ const kitFields = z.object({
   name: z
     .string()
     .trim()
-    .min(1, "Bitte gib einen Namen ein.")
-    .max(maxBrandKitNameLength, `Der Name ist zu lang (höchstens ${maxBrandKitNameLength} Zeichen).`),
+    .min(1)
+    .max(maxBrandKitNameLength),
   // One owner tag, stored like the tags of references.
   project: z
     .string()
     .transform(normalizeTag)
     .refine(
       (tag) => tag.replace(disallowedTagCharacters, "") === tag,
-      "Das Projekt darf nur Buchstaben, Ziffern, Leerzeichen, - und _ enthalten.",
+      validationRule({ code: "project_characters" }),
     )
-    .refine((tag) => tag.length <= maxTagLength, `Das Projekt ist zu lang (höchstens ${maxTagLength} Zeichen).`)
+    .refine((tag) => tag.length <= maxTagLength, validationRule({ code: "tag_length", max: maxTagLength }))
     .transform((tag) => tag || null),
 });
 
@@ -187,7 +188,7 @@ export async function createBrandKit(
   scheme: ColorSchemeInput,
 ): Promise<{ ok: true; slug: string } | { ok: false; errors: BrandKitErrors }> {
   const parsed = kitFields.safeParse(fields);
-  if (!parsed.success) return { ok: false, errors: z.flattenError(parsed.error).fieldErrors };
+  if (!parsed.success) return { ok: false, errors: z.flattenError(parsed.error, issueMessage).fieldErrors };
 
   return getDb().transaction(async (tx) => {
     const slug = await freeKitSlug(tx, parsed.data.name);

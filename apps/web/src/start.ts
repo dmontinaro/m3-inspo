@@ -1,4 +1,5 @@
 import { createCsrfMiddleware, createMiddleware, createStart } from "@tanstack/react-start";
+import { beginLanguageOperation } from "./lib/language-operations";
 import { signInPath, signInUrl } from "./lib/sign-in";
 import { maxUploadBytes } from "./lib/upload-limits";
 import { isMcpPath } from "./lib/mcp-tokens";
@@ -26,7 +27,7 @@ const ownerGate = createMiddleware().server(async ({ request, pathname, handlerT
     return next();
   }
 
-  const isPageLoad = handlerType === "router" && request.method === "GET" && !pathname.startsWith("/api/");
+  const isPageLoad = handlerType === "router" && (request.method === "GET" || request.method === "HEAD") && !pathname.startsWith("/api/");
   if (isPageLoad) {
     const page = new URL(request.url);
     return new Response(null, { status: 307, headers: { location: signInUrl(page.pathname + page.search) } });
@@ -62,7 +63,14 @@ const noIndex = createMiddleware().server(async ({ next }) => {
 // server functions, so it is added back before the owner gate. It covers
 // server functions only; /api/mcp and /api/worker are safe without it, as they
 // ignore cookies (see their routes).
+const pendingBrowserMutation = createMiddleware({ type: "function" }).client(async ({ method, next }) => {
+  if (method !== "POST") return next();
+  const finish = beginLanguageOperation("mutation");
+  try { return await next(); } finally { finish(); }
+});
+
 export const startInstance = createStart(() => ({
+  functionMiddleware: [pendingBrowserMutation],
   requestMiddleware: [
     noIndex,
     bodySizeLimit,

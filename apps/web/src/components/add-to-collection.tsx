@@ -1,3 +1,5 @@
+import { useFormLanguageGuard, useLanguageGuard } from "#/components/language-control";
+import * as m from "#/paraglide/messages.js";
 import { useState } from "react";
 import type { FormEvent } from "react";
 import { Check, FolderPlus, Plus } from "lucide-react";
@@ -34,6 +36,8 @@ export function AddToCollection({
   const [creating, setCreating] = useState(false);
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const languageForm = useFormLanguageGuard();
+  useLanguageGuard({ blocker: pending ? m.language_block_mutation() : undefined });
   const members = new Set(memberOf.map((collection) => collection.slug));
 
   async function run(action: () => Promise<string | undefined>) {
@@ -44,7 +48,7 @@ export function AddToCollection({
       if (problem) return setError(problem);
       await onChanged();
     } catch {
-      setError("Das hat nicht geklappt. Bitte versuche es noch einmal.");
+      setError(m.action_failed());
     } finally {
       setPending(false);
     }
@@ -64,7 +68,7 @@ export function AddToCollection({
     const form = new FormData(event.currentTarget);
     return run(async () => {
       const created = await addCollection({ data: form });
-      if (!created.ok) return created.errors.name?.[0] ?? created.errors.project?.[0] ?? "Die Angaben sind ungültig.";
+      if (!created.ok) return created.errors.name?.[0] ?? created.errors.project?.[0] ?? m.validation_invalid_input();
       await addReferenceToCollection({ data: { collection: created.slug, reference: referenceSlug } });
       setCreating(false);
       return undefined;
@@ -80,14 +84,13 @@ export function AddToCollection({
         className="flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-sm text-neutral-600 ring-1 ring-neutral-300 ring-inset hover:bg-neutral-100 hover:text-neutral-900"
       >
         <FolderPlus aria-hidden className="size-3.5" strokeWidth={1.75} />
-        Zu Sammlung hinzufügen
-      </button>
+        {m.collection_add_reference()}</button>
 
       {open && (
         <div className="absolute left-0 z-20 mt-2 w-72 max-w-[calc(100vw-2.5rem)] rounded-xl border border-neutral-200 bg-white p-1.5 shadow-lg shadow-black/10">
-          <p className="px-2.5 pt-1.5 pb-2 text-xs font-medium tracking-wide text-neutral-400 uppercase">Sammlungen</p>
+          <p className="px-2.5 pt-1.5 pb-2 text-xs font-medium tracking-wide text-neutral-400 uppercase">{m.collections_title()}</p>
           {collections.length === 0 ? (
-            <p className="px-2.5 pb-2 text-sm text-neutral-500">Noch keine Sammlungen.</p>
+            <p className="px-2.5 pb-2 text-sm text-neutral-500">{m.collections_none()}</p>
           ) : (
             <ul className="max-h-64 overflow-y-auto">
               {collections.map((collection) => (
@@ -109,17 +112,17 @@ export function AddToCollection({
 
           <div className="mx-2.5 my-1.5 border-t border-neutral-100" />
           {creating ? (
-            <form onSubmit={create} className="flex gap-1.5 p-1">
+            <form ref={languageForm.form} noValidate onSubmit={create} className="flex gap-1.5 p-1">
+      <fieldset disabled={pending} className="contents">
               <label className="sr-only" htmlFor="new-collection-name">
-                Name der neuen Sammlung
-              </label>
+                {m.collection_new_name()}</label>
               <input
                 id="new-collection-name"
                 name="name"
                 required
                 autoFocus
                 maxLength={maxCollectionNameLength}
-                placeholder="Name"
+                placeholder={m.field_name()}
                 className="min-w-0 flex-1 rounded-md border border-neutral-300 px-2.5 py-1.5 text-sm focus:border-neutral-900 focus:ring-1 focus:ring-neutral-900 focus:outline-none"
               />
               <button
@@ -127,9 +130,9 @@ export function AddToCollection({
                 disabled={pending}
                 className="shrink-0 rounded-md bg-neutral-900 px-3 py-1.5 text-sm font-medium text-white hover:bg-neutral-700 disabled:opacity-60"
               >
-                Anlegen
-              </button>
-            </form>
+                {m.action_create()}</button>
+            </fieldset>
+      </form>
           ) : (
             <button
               type="button"
@@ -137,8 +140,7 @@ export function AddToCollection({
               className="flex w-full items-center gap-2 rounded-md px-2.5 py-1.5 text-sm text-neutral-700 hover:bg-neutral-100 hover:text-neutral-950"
             >
               <Plus aria-hidden className="size-4 text-neutral-400" strokeWidth={2} />
-              Neue Sammlung
-            </button>
+              {m.collection_new()}</button>
           )}
           {error && (
             <p role="alert" className="mx-1 mt-1 rounded-md bg-rose-50 px-2.5 py-1.5 text-sm text-rose-800">

@@ -85,10 +85,10 @@ describe("the generator URL", () => {
     expect(draft.sources.neutral).toEqual({ hex: "#8a7a72", lock: "open", origin: { kind: "rolled", seed: 3 } });
     expect(draft.sources.extras.map((extra) => extra.hex)).toEqual(["#2f7d6d"]);
     expect(skipped.map(describeSkipped)).toEqual([
-      "Marke „zz9“ nicht lesbar, neu gewürfelt",
-      "Zusatzfarbe „teal:2f7d6d~open“ teilweise nicht lesbar",
-      "Referenz „gone-ref“ unbekannt, Farbe behalten",
-      "Pool „nope-a“ unbekannt",
+      'Could not read Brand "zz9". Rolled again.' ,
+      'Part of Extra colour "teal:2f7d6d~open" could not be read.' ,
+      "Reference gone-ref is unknown. Colour kept.",
+      "Pool nope-a is unknown.",
     ]);
   });
 
@@ -101,13 +101,13 @@ describe("the generator URL", () => {
     expect(draft.sources.extras[1]?.name).not.toMatch(/^(teal|salbei)$/);
     expect(draft.sources.extras[2]).toMatchObject({ name: "salbei", hex: "#8a9a7b" });
     // A token that starts with `@` is not a reference of a readable colour.
-    expect(skipped.map(describeSkipped)).toEqual(["Zusatzfarbe „@nohex“ nicht lesbar, neu gewürfelt"]);
+    expect(skipped.map(describeSkipped)).toEqual(['Could not read Extra colour "@nohex". Rolled again.' ]);
   });
 
   it("names an unknown collection as pool", () => {
     const empty: PoolData = { ...data, references: [], colors: [] };
     expect(read("?brand=e56236&neutral=8a7a72&pool=collection:weg&seed=1", empty).skipped.map(describeSkipped)).toEqual([
-      "Pool „collection:weg“ unbekannt",
+      "Pool collection:weg is unknown.",
     ]);
   });
 });

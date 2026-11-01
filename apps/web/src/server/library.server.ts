@@ -1,3 +1,5 @@
+import * as m from "#/paraglide/messages.js";
+import { issueMessage, validationRule } from "#/lib/validation";
 /**
  * The library: creating, reading and curating references. Server functions
  * (library.functions.ts) call only this module; import jobs
@@ -33,18 +35,18 @@ import {
 import { z } from "zod";
 import { deviceOfImage, devices, focusAreas, maxAttributionLength, maxSourceUrlLength } from "#/lib/curation";
 import { disallowedTagCharacters, maxTagLength, maxTags, normalizeTag } from "#/lib/tags";
-import { maxNoteLength, maxTitleLength } from "#/lib/upload-limits";
+import { maxNoteLength, maxTitleLength, rejectionReasons } from "#/lib/upload-limits";
 import { forgetSourceReference } from "./brand-kits.server";
 import { imageFormats, prepareImage } from "./image.server";
 import type { PreparedImage } from "./image.server";
 import { slugify, withRandomSuffix } from "./slug";
 import { getStorage } from "./storage.server";
 
-const optionalText = (max: number, tooLong: string) =>
+const optionalText = (max: number) =>
   z
     .string()
     .trim()
-    .max(max, tooLong)
+    .max(max)
     .transform((value) => value || null);
 
 const isWebAddress = (value: string) => /^https?:$/.test(URL.parse(value)?.protocol ?? "");
@@ -57,38 +59,35 @@ export const referenceFields = z.object({
   title: z
     .string()
     .trim()
-    .min(1, "Bitte gib einen Titel ein.")
-    .max(maxTitleLength, `Der Titel ist zu lang (höchstens ${maxTitleLength} Zeichen).`),
+    .min(1)
+    .max(maxTitleLength),
   // "stripe.com/pricing" becomes "https://stripe.com/pricing"; other schemes stay and are turned away.
-  sourceUrl: optionalText(maxSourceUrlLength, `Die Adresse ist zu lang (höchstens ${maxSourceUrlLength} Zeichen).`)
+  sourceUrl: optionalText(maxSourceUrlLength)
     .transform((value) => (value && !/^[a-z][a-z0-9+.-]*:/i.test(value) ? `https://${value}` : value))
     .refine(
       (value) => value === null || isWebAddress(value),
-      "Bitte gib eine vollständige Adresse ein, die mit https:// oder http:// beginnt.",
+      validationRule({ code: "web_address" }),
     ),
-  attribution: optionalText(
-    maxAttributionLength,
-    `Der Urheberhinweis ist zu lang (höchstens ${maxAttributionLength} Zeichen).`,
-  ),
-  takeNote: optionalText(maxNoteLength, `Die Notiz ist zu lang (höchstens ${maxNoteLength} Zeichen).`),
-  avoidNote: optionalText(maxNoteLength, `Die Notiz ist zu lang (höchstens ${maxNoteLength} Zeichen).`),
+  attribution: optionalText(maxAttributionLength),
+  takeNote: optionalText(maxNoteLength),
+  avoidNote: optionalText(maxNoteLength),
   focus: z
-    .enum(["", ...focusAreas], "Bitte wähle einen Fokus aus der Liste.")
+    .enum(["", ...focusAreas])
     .transform((value) => value || null),
-  device: z.enum(devices, "Bitte wähle ein Format aus der Liste."),
+  device: z.enum(devices),
   // One form entry per chip; an entry with commas (typed, not yet a chip) holds several.
   tags: z
     .array(z.string())
     .transform((entries) => [...new Set(entries.flatMap((entry) => entry.split(",")).map(normalizeTag))].filter(Boolean))
     .refine(
       (tags) => tags.every((tag) => tag.replace(disallowedTagCharacters, "") === tag),
-      "Tags dürfen nur Buchstaben, Ziffern, Leerzeichen, - und _ enthalten.",
+      validationRule({ code: "tag_characters" }),
     )
     .refine(
       (tags) => tags.every((tag) => tag.length <= maxTagLength),
-      `Ein Tag ist zu lang (höchstens ${maxTagLength} Zeichen).`,
+      validationRule({ code: "tag_length", max: maxTagLength }),
     )
-    .refine((tags) => tags.length <= maxTags, `Höchstens ${maxTags} Tags.`),
+    .refine((tags) => tags.length <= maxTags, validationRule({ code: "tags_max", max: maxTags })),
 });
 
 /** What the upload sheet sends besides the file. Multi-file uploads send only a title. */
@@ -141,17 +140,17 @@ export async function queueEmbedding(tx: Queries, referenceId: string, trigger: 
  * upload sheet's fields (`title`, `takeNote`, `avoidNote` and `sourceUrl` as
  * strings, `tags` as a list) and queues its AI analysis and its embedding
  * (each if on). Its format follows the image's proportions (`deviceOfImage`). Uploads are approved right away in this phase; drafts arrive with
- * URL import. Returns a German reason for the owner when the input is
+ * URL import. Returns a localized reason for the owner when the input is
  * rejected.
  */
 export async function createImageReference(imageFile: unknown, input: Record<string, unknown>): Promise<UploadResult> {
   const parsed = imageUpload.safeParse(input);
-  if (!parsed.success) return { ok: false, reason: parsed.error.issues[0]?.message ?? "Die Angaben sind ungültig." };
+  if (!parsed.success) return { ok: false, reason: issueMessage(parsed.error.issues[0]) };
   const fields = parsed.data;
-  if (!(imageFile instanceof File)) return { ok: false, reason: "Bitte wähle eine Bilddatei aus." };
+  if (!(imageFile instanceof File)) return { ok: false, reason: m.upload_choose_file() };
 
   const check = await prepareImage(new Uint8Array(await imageFile.arrayBuffer()));
-  if (!check.ok) return check;
+  if (!check.ok) return { ok: false, reason: rejectionReasons[check.reason] };
 
   const referenceId = randomUUID();
   const capture = await storeCapture(referenceId, check.image, { viewport: "upload", kind: "original" });
@@ -556,7 +555,7 @@ export type ReferenceEditErrors = Partial<Record<keyof z.input<typeof referenceF
  * list clears them). Fields left out stay as they are, so an inline edit of
  * one field sends only that one. The slug stays as it is, so links and
  * agents' slugs keep working after a new title. Queues a refresh of the
- * embedding, since title, notes and tags are part of it. Answers German
+ * embedding, since title, notes and tags are part of it. Answers localized
  * messages per field when the input is rejected, or null if the slug is unknown.
  */
 export async function editReference(
@@ -564,7 +563,7 @@ export async function editReference(
   input: Record<string, unknown>,
 ): Promise<{ ok: true } | { ok: false; errors: ReferenceEditErrors } | null> {
   const parsed = referenceFields.partial().safeParse(input);
-  if (!parsed.success) return { ok: false, errors: z.flattenError(parsed.error).fieldErrors };
+  if (!parsed.success) return { ok: false, errors: z.flattenError(parsed.error, issueMessage).fieldErrors };
 
   const fields = parsed.data;
   const updated = await getDb().transaction(async (tx) => {

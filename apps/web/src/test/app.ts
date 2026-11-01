@@ -1,3 +1,4 @@
+import { defaultSerovalDeserializerPlugins } from "@tanstack/react-router/ssr/server";
 /**
  * Runs the real web app in-process for tests: Vite in test mode (no Nitro)
  * loads TanStack Start's server entry, and requests go straight to its
@@ -125,6 +126,7 @@ function createBrowser(fetchApp: ServerEntry["default"]["fetch"]) {
 
   return {
     send,
+    setCookie: (name: string, value: string) => { cookies.set(name, value); },
     get: (path: string, headers?: HeadersInit) => send(path, { headers }),
     post: (path: string, body?: unknown, headers?: HeadersInit) =>
       send(path, {
@@ -171,6 +173,7 @@ export async function callServerFunction<TFunction extends ServerFunction>(
   // Start's wire format: a seroval payload shaped `{ result }` or `{ error }`.
   const payload = fromCrossJSON<{ result?: Awaited<ReturnType<TFunction>>; error?: unknown }>(await response.json(), {
     refs: new Map(),
+    plugins: defaultSerovalDeserializerPlugins,
   });
   if (payload.error !== undefined) throw payload.error;
   return payload.result as Awaited<ReturnType<TFunction>>;

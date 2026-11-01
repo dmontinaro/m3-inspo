@@ -1,3 +1,5 @@
+import { formatNumber } from "#/lib/format";
+import * as m from "#/paraglide/messages.js";
 /** Small pieces the generator's strips, picker and preview share. */
 
 import { Lock as LockClosed, LockOpen, Palette } from "lucide-react";
@@ -12,12 +14,12 @@ import type { GeneratorReference } from "#/lib/generator";
  */
 export const inkOn = (hex: string) => (contrastRatio(hex, "#ffffff") >= contrastRatio(hex, "#000000") ? "#ffffff" : "#000000");
 
-export const lockLabels: Record<Lock, string> = { open: "Offen", hue: "Farbton", exact: "Exakt" };
+export const lockLabels: Record<Lock, string> = { get open() { return m.lock_open(); }, get hue() { return m.color_hue(); }, get exact() { return m.lock_exact(); } };
 
 export const lockHints: Record<Lock, string> = {
-  open: "Offen: Würfeln ändert die Farbe",
-  hue: "Farbton gesperrt: Würfeln ändert nur Helligkeit und Sättigung",
-  exact: "Exakt gesperrt: Würfeln behält die Farbe",
+  get open() { return m.lock_open_help(); },
+  get hue() { return m.lock_hue_help(); },
+  get exact() { return m.lock_exact_help(); },
 };
 
 export function LockIcon({ lock, className = "size-3.5" }: { lock: Lock; className?: string }) {
@@ -27,26 +29,26 @@ export function LockIcon({ lock, className = "size-3.5" }: { lock: Lock; classNa
 
 /** "Marke", "Neutral" or the extra colour's name. */
 export const sourceLabel = (sources: ColorSources, key: SourceKey) =>
-  key === "brand" ? "Marke" : key === "neutral" ? "Neutral" : (sources.extras[key]?.name ?? "");
+  key === "brand" ? m.source_brand() : key === "neutral" ? m.source_neutral() : (sources.extras[key]?.name ?? "");
 
 /** Where a source colour comes from, in a few words. */
 export function describeOrigin(origin: SourceOrigin, references: ReadonlyMap<string, GeneratorReference>): string {
-  if (origin.kind === "manual") return "Von Hand";
-  if (origin.kind === "rolled") return "Gewürfelt";
+  if (origin.kind === "manual") return m.source_manual();
+  if (origin.kind === "rolled") return m.source_rolled();
   const title = origin.referenceId ? references.get(origin.referenceId)?.title : undefined;
-  if (origin.measuredBy === "image") return title ? `Pipette in „${title}“` : "Pipette in gelöschter Referenz";
-  return title ? `Aus „${title}“` : "Aus gelöschter Referenz";
+  if (origin.measuredBy === "image") return title ? m.source_eyedropper_title({ title }) : m.source_deleted_eyedropper();
+  return title ? m.source_reference_title({ title }) : m.source_deleted_reference();
 }
 
 /** `4.62` → "4,62 : 1" */
-export const formatRatio = (ratio: number) => `${ratio.toFixed(2).replace(".", ",")} : 1`;
+export const formatRatio = (ratio: number) => `${formatNumber(ratio, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} : 1`;
 
 /** A WCAG 2 ratio against its minimum: quiet when it passes, red when it does not. Never blocks anything. */
 export function ContrastBadge({ ratio, min }: { ratio: number; min: number }) {
   const pass = ratio >= min;
   return (
     <span
-      title={pass ? `Erfüllt ${formatRatio(min)}` : `Nötig sind ${formatRatio(min)}`}
+      title={pass ? m.contrast_pass({ ratio: formatRatio(min) }) : m.contrast_required({ ratio: formatRatio(min) })}
       className={`inline-flex shrink-0 items-center rounded px-1.5 py-0.5 text-[11px] font-medium tabular-nums ${
         pass ? "bg-emerald-50 text-emerald-800" : "bg-red-50 text-red-700"
       }`}

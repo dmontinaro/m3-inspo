@@ -1,3 +1,4 @@
+import { webValidator } from "#/lib/validation";
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { MAX_EXTRAS } from "@m3-inspo/shared/color-scheme";
@@ -17,7 +18,7 @@ const pool = z.discriminatedUnion("kind", [
  * slugs) and the pool menu's projects and collections.
  */
 export const getGeneratorPool = createServerFn({ method: "GET" })
-  .validator(z.object({ pool, linked: z.array(z.string().max(200)).max(MAX_EXTRAS + 2) }))
+  .validator(webValidator(z.object({ pool, linked: z.array(z.string().max(200)).max(MAX_EXTRAS + 2) })))
   .handler(({ data }) => loadGeneratorPool(data.pool, data.linked));
 
 /**
@@ -26,5 +27,5 @@ export const getGeneratorPool = createServerFn({ method: "GET" })
  * `imageUrl`, but any stored asset works), or null where there is none.
  */
 export const readImagePixel = createServerFn({ method: "GET" })
-  .validator(z.object({ image: z.string().max(500), x: z.int().min(0).max(100_000), y: z.int().min(0).max(100_000) }))
+  .validator(webValidator(z.object({ image: z.string().max(500), x: z.int().min(0).max(100_000), y: z.int().min(0).max(100_000) })))
   .handler(({ data }) => readPixel(data.image, data.x, data.y));

@@ -1,3 +1,4 @@
+import * as m from "#/paraglide/messages.js";
 import { useEffect, useRef, useState } from "react";
 import type { KeyboardEvent, PointerEvent as ReactPointerEvent } from "react";
 import { GripVertical, Plus, X } from "lucide-react";
@@ -61,7 +62,7 @@ export function SourceStrips({ draft, snapshot, references, apply, onAdd, onOpen
           >
             <button
               type="button"
-              aria-label={`${label} anpassen`}
+              aria-label={m.color_adjust_source({ name: label })}
               onClick={(event) => {
                 if (!order.justDropped.current) onOpen(key, event.currentTarget);
               }}
@@ -83,8 +84,8 @@ export function SourceStrips({ draft, snapshot, references, apply, onAdd, onOpen
               <button
                 type="button"
                 onClick={() => apply((current) => cycleLock(current, key))}
-                title={`${lockHints[source.lock]}. Klicken zum Wechseln.`}
-                aria-label={`Sperre ${label}: ${lockLabels[source.lock]}`}
+                title={m.lock_change_help({ hint: lockHints[source.lock] })}
+                aria-label={m.source_lock_state({ name: label, lock: lockLabels[source.lock] })}
                 className={`flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium transition-colors ${chip}`}
               >
                 <LockIcon lock={source.lock} />
@@ -98,8 +99,8 @@ export function SourceStrips({ draft, snapshot, references, apply, onAdd, onOpen
                   }}
                   onPointerDown={(event) => order.start(event, extra, 0)}
                   onKeyDown={(event) => order.onKey(event, extra)}
-                  title={`${label} verschieben: ziehen oder Pfeiltasten`}
-                  aria-label={`${label} verschieben`}
+                  title={m.source_move_help({ name: label })}
+                  aria-label={m.source_move({ name: label })}
                   className={`cursor-grab touch-none rounded-full p-1.5 transition-opacity [@media(hover:hover)]:opacity-0 [@media(hover:hover)]:group-hover:opacity-100 [@media(hover:hover)]:focus-visible:opacity-100 ${chip}`}
                 >
                   <GripVertical aria-hidden className="size-3.5 sm:rotate-90" strokeWidth={2} />
@@ -109,8 +110,8 @@ export function SourceStrips({ draft, snapshot, references, apply, onAdd, onOpen
                 <button
                   type="button"
                   onClick={() => apply((current) => removeExtra(current, key))}
-                  title={`${label} entfernen`}
-                  aria-label={`${label} entfernen`}
+                  title={m.remove_named({ name: label })}
+                  aria-label={m.remove_named({ name: label })}
                   className={`rounded-full p-1.5 transition-opacity [@media(hover:hover)]:opacity-0 [@media(hover:hover)]:group-hover:opacity-100 [@media(hover:hover)]:focus-visible:opacity-100 ${chip}`}
                 >
                   <X aria-hidden className="size-3.5" strokeWidth={2} />
@@ -133,12 +134,11 @@ export function SourceStrips({ draft, snapshot, references, apply, onAdd, onOpen
         <button
           type="button"
           onClick={onAdd}
-          title="Zusatzfarbe hinzufügen. Gewürfelt wird nur die neue."
+          title={m.color_extra_add_help()}
           className="flex h-12 shrink-0 items-center justify-center gap-1.5 bg-neutral-200/70 text-sm text-neutral-600 hover:bg-neutral-300/70 hover:text-neutral-900 focus-visible:outline-2 focus-visible:-outline-offset-4 focus-visible:outline-neutral-900 sm:h-auto sm:w-16 sm:flex-col sm:gap-1 sm:text-xs"
         >
           <Plus aria-hidden className="size-5" strokeWidth={1.75} />
-          Farbe
-        </button>
+          {m.color_label()}</button>
       )}
     </div>
   );

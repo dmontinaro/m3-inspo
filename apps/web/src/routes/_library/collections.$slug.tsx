@@ -1,3 +1,4 @@
+import * as m from "#/paraglide/messages.js";
 import { Link, createFileRoute, useRouter } from "@tanstack/react-router";
 import { useState } from "react";
 import { ArrowDown, ArrowUp, ListFilter, Palette, X } from "lucide-react";
@@ -13,7 +14,7 @@ import {
 } from "#/server/collections.functions";
 import { listTags } from "#/server/library.functions";
 
-export const Route = createFileRoute("/_library/sammlungen/$slug")({
+export const Route = createFileRoute("/_library/collections/$slug")({
   loader: async ({ params }) => {
     const [collection, tags] = await Promise.all([getCollection({ data: { slug: params.slug } }), listTags()]);
     return { collection, tags };
@@ -22,10 +23,9 @@ export const Route = createFileRoute("/_library/sammlungen/$slug")({
   component: CollectionDetail,
   notFoundComponent: () => (
     <main className="mx-auto max-w-md px-5 py-24 text-center">
-      <h1 className="text-xl font-semibold">Sammlung nicht gefunden</h1>
-      <Link to="/sammlungen" className="mt-4 inline-block text-sm text-neutral-600 underline underline-offset-4">
-        Zu den Sammlungen
-      </Link>
+      <h1 className="text-xl font-semibold">{m.collection_not_found()}</h1>
+      <Link to="/collections" className="mt-4 inline-block text-sm text-neutral-600 underline underline-offset-4">
+        {m.collections_back()}</Link>
     </main>
   ),
 });
@@ -66,23 +66,22 @@ function CollectionDetail() {
   }
 
   function remove() {
-    const question = `Sammlung „${collection.name}“ löschen? Die Referenzen darin bleiben erhalten.`;
+    const question = m.collection_delete_confirm({ name: collection.name });
     if (!window.confirm(question)) return;
     return change(
       () => deleteCollection({ data: { slug: collection.slug } }),
-      () => router.navigate({ to: "/sammlungen" }),
+      () => router.navigate({ to: "/collections" }),
     );
   }
 
   return (
     <main className="mx-auto max-w-3xl px-5 pt-2 pb-16 sm:px-8">
-      <Link to="/sammlungen" className="inline-flex items-center gap-1.5 text-sm text-neutral-500 hover:text-neutral-900">
-        <span aria-hidden>←</span> Sammlungen
-      </Link>
+      <Link to="/collections" className="inline-flex items-center gap-1.5 text-sm text-neutral-500 hover:text-neutral-900">
+        <span aria-hidden>←</span> {m.collections_title()}</Link>
 
       {editing ? (
         <div className="mt-4">
-          <h1 className="sr-only">{`${collection.name} bearbeiten`}</h1>
+          <h1 className="sr-only">{m.edit_named({ name: collection.name })}</h1>
           <CollectionForm
             collection={collection}
             tags={tags}
@@ -98,8 +97,7 @@ function CollectionDetail() {
           <h1 className="text-2xl font-semibold tracking-tight text-balance">{collection.name}</h1>
           {collection.project && (
             <p className="mt-2 flex items-center gap-2 text-sm text-neutral-500">
-              Projekt
-              <Link
+              {m.field_project()}<Link
                 to="/"
                 search={{ tag: collection.project }}
                 className="rounded-full bg-neutral-100 px-2.5 py-0.5 text-neutral-800 ring-1 ring-neutral-200 ring-inset hover:bg-neutral-200"
@@ -120,50 +118,43 @@ function CollectionDetail() {
               className="flex items-center gap-1.5 rounded-md border border-neutral-300 bg-white px-3.5 py-2 text-sm font-medium text-neutral-900 hover:bg-neutral-100"
             >
               <ListFilter aria-hidden className="size-4" strokeWidth={1.75} />
-              In der Galerie zeigen
-            </Link>
+              {m.collection_show_gallery()}</Link>
             <Link
               to="/generator"
               search={{ pool: poolValue({ kind: "collection", slug: collection.slug }) }}
               className="flex items-center gap-1.5 rounded-md border border-neutral-300 bg-white px-3.5 py-2 text-sm font-medium text-neutral-900 hover:bg-neutral-100"
             >
               <Palette aria-hidden className="size-4" strokeWidth={1.75} />
-              Color Scheme daraus
-            </Link>
+              {m.scheme_from_reference()}</Link>
             <button
               type="button"
               onClick={() => setEditing(true)}
               className="rounded-md border border-neutral-300 bg-white px-3.5 py-2 text-sm font-medium text-neutral-900 hover:bg-neutral-100"
             >
-              Bearbeiten
-            </button>
+              {m.action_edit()}</button>
             <button
               type="button"
               disabled={pending}
               onClick={remove}
               className="ml-auto rounded-md px-2.5 py-1.5 text-sm text-rose-700 hover:bg-rose-50 disabled:opacity-60"
             >
-              Sammlung löschen
-            </button>
+              {m.collection_delete()}</button>
           </div>
         </header>
       )}
 
       {failed && (
         <p role="alert" className="mt-6 rounded-md bg-rose-50 px-3 py-2 text-sm text-rose-800">
-          Das hat nicht geklappt. Bitte versuche es noch einmal.
-        </p>
+          {m.action_failed()}</p>
       )}
 
       {collection.references.length === 0 ? (
         <div className="mt-10 rounded-xl border border-dashed border-neutral-300 px-6 py-12 text-center">
-          <p className="font-medium text-neutral-900">Noch keine Referenzen</p>
+          <p className="font-medium text-neutral-900">{m.gallery_empty()}</p>
           <p className="mx-auto mt-1 max-w-sm text-[15px] text-neutral-500">
-            Öffne eine Referenz und wähle „Zu Sammlung hinzufügen“.
-          </p>
+            {m.collection_empty_help()}</p>
           <Link to="/" className="mt-4 inline-block text-sm text-neutral-600 underline underline-offset-4 hover:text-neutral-900">
-            Zur Galerie
-          </Link>
+            {m.gallery_back()}</Link>
         </div>
       ) : (
         <>
@@ -185,8 +176,7 @@ function CollectionDetail() {
             ))}
           </ol>
           <p className="mt-3 text-xs text-neutral-500">
-            Agenten sehen diese Sammlung in dieser Reihenfolge, aber nur mit freigegebenen Referenzen.
-          </p>
+            {m.collection_order_help()}</p>
         </>
       )}
     </main>
@@ -215,7 +205,7 @@ function ReferenceRow({
   return (
     <li className="flex items-center gap-3 p-2.5 pr-2 sm:gap-4 sm:p-3">
       <span className="w-5 shrink-0 text-right text-sm text-neutral-400 tabular-nums">{position}</span>
-      <Link to="/referenzen/$slug" params={{ slug: reference.slug }} className="group flex min-w-0 flex-1 items-center gap-3 sm:gap-4">
+      <Link to="/references/$slug" params={{ slug: reference.slug }} className="group flex min-w-0 flex-1 items-center gap-3 sm:gap-4">
         {reference.thumbUrl ? (
           <img
             src={reference.thumbUrl}
@@ -246,15 +236,15 @@ function ReferenceRow({
         </span>
       </Link>
       <div className="flex shrink-0 items-center">
-        <button type="button" disabled={disabled || !onUp} onClick={onUp} aria-label="Nach oben" title="Nach oben" className={iconButtonClassName}>
+        <button type="button" disabled={disabled || !onUp} onClick={onUp} aria-label={m.collection_move_up()} title={m.collection_move_up()} className={iconButtonClassName}>
           <ArrowUp aria-hidden className="size-4" strokeWidth={1.75} />
         </button>
         <button
           type="button"
           disabled={disabled || !onDown}
           onClick={onDown}
-          aria-label="Nach unten"
-          title="Nach unten"
+          aria-label={m.collection_move_down()}
+          title={m.collection_move_down()}
           className={iconButtonClassName}
         >
           <ArrowDown aria-hidden className="size-4" strokeWidth={1.75} />
@@ -263,8 +253,8 @@ function ReferenceRow({
           type="button"
           disabled={disabled}
           onClick={onRemove}
-          aria-label="Aus der Sammlung entfernen"
-          title="Aus der Sammlung entfernen"
+          aria-label={m.collection_remove_reference()}
+          title={m.collection_remove_reference()}
           className={`${iconButtonClassName} hover:bg-rose-50 hover:text-rose-700`}
         >
           <X aria-hidden className="size-4" strokeWidth={1.75} />

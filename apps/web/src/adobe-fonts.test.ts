@@ -82,7 +82,7 @@ describe("saving an Adobe family", () => {
   it("refuses a name Adobe does not know", async () => {
     expect(await save("Vertippt", { heading: typed("Neue Hass Unica"), body: local("Vertippt Lokal") })).toEqual({
       status: "invalid",
-      errors: { roles: ["Adobe Fonts kennt „Neue Hass Unica“ nicht. Schreib den Namen wie auf fonts.adobe.com."] },
+      errors: { roles: ["Adobe Fonts does not recognise Neue Hass Unica. Use the name from fonts.adobe.com."] },
     });
   });
 

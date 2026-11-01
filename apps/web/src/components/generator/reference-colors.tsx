@@ -1,3 +1,5 @@
+import { LanguageControl } from "#/components/language-control";
+import * as m from "#/paraglide/messages.js";
 import { useEffect, useRef, useState } from "react";
 import type { KeyboardEvent, MouseEvent } from "react";
 import { Pipette, X, ZoomIn, ZoomOut } from "lucide-react";
@@ -8,8 +10,8 @@ import type { PixelReader } from "#/lib/pipette";
 import { readImagePixel } from "#/server/generator.functions";
 
 const measuredLabels: Record<PoolColor["measuredBy"], string> = {
-  dom: "aus der Seite gelesen",
-  vision: "von der KI geschätzt",
+  get dom() { return m.measurement_dom(); },
+  get vision() { return m.measurement_vision(); },
 };
 
 /** Up to this width the pipette fits the image to the screen; past it, it shows it shrunk. */
@@ -34,12 +36,12 @@ export function ReferenceColors({ references, colors, source, onTake }: Props) {
 
   if (references.length === 0)
     return (
-      <p className="py-6 text-center text-xs leading-snug text-neutral-500">Keine Referenzen im Pool. Wähle oben einen anderen Pool.</p>
+      <p className="py-6 text-center text-xs leading-snug text-neutral-500">{m.pool_no_references()}</p>
     );
 
   return (
     <>
-      <ul className="-mx-1 max-h-64 space-y-1 overflow-y-auto overscroll-contain px-1" aria-label="Referenzen im Pool">
+      <ul className="-mx-1 max-h-64 space-y-1 overflow-y-auto overscroll-contain px-1" aria-label={m.pool_references()}>
         {references.map((reference) => {
           // A hex the palette names twice shows once.
           const measured = [
@@ -50,8 +52,8 @@ export function ReferenceColors({ references, colors, source, onTake }: Props) {
               <button
                 type="button"
                 onClick={(event) => setEnlarged({ reference, opener: event.currentTarget })}
-                aria-label={`Bild von ${reference.title} für die Pipette öffnen`}
-                title="Vergrößern und mit der Pipette eine Farbe aus dem Bild nehmen"
+                aria-label={m.eyedropper_open_reference({ title: reference.title })}
+                title={m.eyedropper_open_help()}
                 className="group relative h-11 w-16 shrink-0 overflow-hidden rounded-md bg-neutral-200 ring-1 ring-black/10 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-neutral-900"
               >
                 {reference.thumbUrl && <img src={reference.thumbUrl} alt="" loading="lazy" className="size-full object-cover object-top" />}
@@ -71,7 +73,7 @@ export function ReferenceColors({ references, colors, source, onTake }: Props) {
                           type="button"
                           onClick={() => onTake(color.hex, reference.id)}
                           aria-pressed={taken}
-                          aria-label={`${color.hex.slice(1).toUpperCase()} übernehmen, ${measuredLabels[color.measuredBy]}`}
+                          aria-label={m.color_apply_measured({ hex: color.hex.slice(1).toUpperCase(), origin: measuredLabels[color.measuredBy] })}
                           title={`${color.hex.slice(1).toUpperCase()} · ${measuredLabels[color.measuredBy]}`}
                           style={{ background: color.hex }}
                           className={`size-7 rounded-md ring-1 ring-black/10 transition-transform hover:scale-110 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-neutral-900 ${
@@ -82,7 +84,7 @@ export function ReferenceColors({ references, colors, source, onTake }: Props) {
                     })}
                   </div>
                 ) : (
-                  <p className="mt-0.5 text-xs text-neutral-500">Keine gemessenen Farben, nur Pipette</p>
+                  <p className="mt-0.5 text-xs text-neutral-500">{m.reference_no_measured_colors()}</p>
                 )}
               </div>
             </li>
@@ -90,8 +92,7 @@ export function ReferenceColors({ references, colors, source, onTake }: Props) {
         })}
       </ul>
       <p className="text-xs leading-snug text-neutral-500">
-        Farbe übernehmen oder Bild öffnen und mit der Pipette hineintippen. Übernommene Farben werden exakt gesperrt.
-      </p>
+        {m.eyedropper_help()}</p>
 
       {enlarged && (
         <PipetteView
@@ -184,7 +185,7 @@ function PipetteView({ reference, onPick, onClose }: { reference: PoolReference;
   }
 
   function onKeyDown(event: KeyboardEvent) {
-    if (event.key !== "Escape") return;
+    if (event.key !== "Escape" || document.querySelector("dialog[data-language-warning][open]")) return;
     // Only this dialog closes; useDismiss leaves the picker around it open for a handled Escape.
     event.preventDefault();
     close();
@@ -192,17 +193,17 @@ function PipetteView({ reference, onPick, onClose }: { reference: PoolReference;
 
   const hint =
     state === "failed"
-      ? "Das Bild ließ sich nicht laden."
+      ? m.eyedropper_image_failed()
       : taking === "failed"
-        ? "Der Pixel ließ sich nicht lesen. Bitte noch einmal tippen."
+        ? m.eyedropper_pixel_failed()
         : taking === "busy"
-          ? "Pixel wird gelesen …"
-          : "Ins Bild tippen übernimmt den Pixel.";
+          ? m.eyedropper_reading()
+          : m.eyedropper_tap();
 
   return (
     <dialog
       ref={dialog}
-      aria-label={`Pipette in „${reference.title}“`}
+      aria-label={m.source_eyedropper_title({ title: reference.title })}
       // Focusable, so a click on its title or frame keeps the focus (and Escape) inside.
       tabIndex={-1}
       onKeyDown={onKeyDown}
@@ -215,6 +216,7 @@ function PipetteView({ reference, onPick, onClose }: { reference: PoolReference;
     >
       <div className="mx-auto flex h-full w-full max-w-6xl flex-col overflow-hidden bg-white shadow-2xl shadow-black/30 sm:rounded-xl">
         <div className="flex items-center gap-3 border-b border-neutral-200 px-4 py-3">
+          <LanguageControl />
           <Pipette aria-hidden className="size-4 shrink-0 text-neutral-500" strokeWidth={2} />
           <div className="min-w-0 flex-1">
             <p className="truncate text-sm font-medium text-neutral-900">{reference.title}</p>
@@ -243,20 +245,20 @@ function PipetteView({ reference, onPick, onClose }: { reference: PoolReference;
               ) : (
                 <ZoomIn aria-hidden className="size-4" strokeWidth={2} />
               )}
-              {zoomed ? "Einpassen" : "Vergrößern"}
+              {zoomed ? m.action_fit() : m.action_enlarge()}
             </button>
           )}
           <button
             type="button"
             onClick={close}
-            aria-label="Schließen"
+            aria-label={m.action_close()}
             className="grid size-9 shrink-0 place-items-center rounded-md text-neutral-600 hover:bg-neutral-100 hover:text-neutral-900"
           >
             <X aria-hidden className="size-5" strokeWidth={2} />
           </button>
         </div>
         <div ref={frame} className="relative min-h-0 flex-1 overflow-auto overscroll-contain bg-neutral-100">
-          {state === "loading" && <p className="absolute inset-x-0 top-10 text-center text-sm text-neutral-500">Original wird geladen …</p>}
+          {state === "loading" && <p className="absolute inset-x-0 top-10 text-center text-sm text-neutral-500">{m.original_loading()}</p>}
           <img
             ref={image}
             src={reference.imageUrl}

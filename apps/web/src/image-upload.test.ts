@@ -213,7 +213,7 @@ describe("rejecting an upload", () => {
 
     expect(await rejectionFor(truncated, "kaputt.png")).toEqual({
       ok: false,
-      reason: "Die Datei ist beschädigt und lässt sich nicht als Bild öffnen.",
+      reason: "The file is damaged and cannot be opened as an image.",
     });
   });
 
@@ -223,7 +223,7 @@ describe("rejecting an upload", () => {
 
     expect(await rejectionFor(huge, "riesig.png")).toEqual({
       ok: false,
-      reason: "Die Datei ist größer als 25 MB. Speichere sie kleiner oder als JPEG bzw. WebP.",
+      reason: "The file exceeds 25 MB. Save a smaller image or use JPEG or WebP.",
     });
   });
 
@@ -250,7 +250,7 @@ describe("rejecting an upload", () => {
 
     expect(await rejectionFor(png, "megapixel.png")).toEqual({
       ok: false,
-      reason: "Das Bild ist zu groß. Erlaubt sind höchstens 40 Megapixel, zum Beispiel 2.880 × 13.800 px.",
+      reason: "The image is too large. Use at most 40 megapixels, for example 2,880 × 13,800 px.",
     });
   });
 
@@ -261,7 +261,7 @@ describe("rejecting an upload", () => {
 
     expect(await rejectionFor(svg, "logo.png")).toEqual({
       ok: false,
-      reason: "SVG-Dateien werden nicht angenommen. Lade das Bild als PNG, JPEG oder WebP hoch.",
+      reason: "SVG files are not accepted. Upload PNG, JPEG or WebP instead.",
     });
   });
 });

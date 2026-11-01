@@ -1,3 +1,5 @@
+import { useLanguageGuard } from "#/components/language-control";
+import * as m from "#/paraglide/messages.js";
 import { Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { Check, Copy } from "lucide-react";
@@ -14,7 +16,9 @@ import { updateBrandKitNotes } from "#/server/brand-kits.functions";
 export function KitNotes({ slug, notes, onSaved }: { slug: string; notes: string | null; onSaved: () => Promise<void> }) {
   const [text, setText] = useState(notes ?? "");
   const [state, setState] = useState<"idle" | "pending" | "saved" | "failed">("idle");
-  const dirty = text.trim() !== (notes ?? "");
+  const [savedText, setSavedText] = useState(notes ?? "");
+  const dirty = text.trim() !== savedText;
+  useLanguageGuard({ dirty });
 
   useEffect(() => {
     if (state !== "saved") return;
@@ -23,9 +27,11 @@ export function KitNotes({ slug, notes, onSaved }: { slug: string; notes: string
   }, [state]);
 
   async function save() {
+    const submitted = text;
     setState("pending");
     try {
-      await updateBrandKitNotes({ data: { slug, notes: text } });
+      await updateBrandKitNotes({ data: { slug, notes: submitted } });
+      setSavedText(submitted.trim());
       await onSaved();
       setState("saved");
     } catch {
@@ -36,8 +42,7 @@ export function KitNotes({ slug, notes, onSaved }: { slug: string; notes: string
   return (
     <section aria-labelledby="kit-notes">
       <h2 id="kit-notes" className="mb-1.5 text-base font-semibold tracking-tight">
-        Hinweise
-      </h2>
+        {m.kit_notes()}</h2>
       <textarea
         aria-labelledby="kit-notes"
         rows={4}
@@ -47,16 +52,16 @@ export function KitNotes({ slug, notes, onSaved }: { slug: string; notes: string
           setText(event.target.value);
           if (state !== "pending") setState("idle");
         }}
-        placeholder="Wie das Kit gedacht ist, z. B. „Orange nur für Haupt-Aktionen, nie als Fläche.“"
+        placeholder={m.kit_notes_placeholder()}
         className={`${fieldClassName} resize-y`}
       />
       <div className="mt-2 flex min-h-8 items-center justify-between gap-3">
         <p className="text-xs text-neutral-500" role="status">
           {state === "saved"
-            ? "Gespeichert."
+            ? m.saved_notice()
             : state === "failed"
-              ? "Das hat nicht geklappt. Bitte versuche es noch einmal."
-              : "Agenten lesen die Hinweise mit, wenn das Kit freigegeben ist."}
+              ? m.action_failed()
+              : m.kit_notes_agents_help()}
         </p>
         {(dirty || state === "pending") && (
           <button
@@ -65,7 +70,7 @@ export function KitNotes({ slug, notes, onSaved }: { slug: string; notes: string
             disabled={state === "pending"}
             className="shrink-0 rounded-md bg-neutral-900 px-3 py-1.5 text-sm font-medium text-white hover:bg-neutral-700 disabled:opacity-60"
           >
-            Hinweise speichern
+            {m.kit_notes_save()}
           </button>
         )}
       </div>
@@ -89,16 +94,15 @@ export function SourceReferences({ references, sources }: { references: SourceRe
   return (
     <section aria-labelledby="kit-sources">
       <h2 id="kit-sources" className="mb-3 text-base font-semibold tracking-tight">
-        Quell-Referenzen
-      </h2>
+        {m.kit_source_references()}</h2>
       {references.length === 0 && fromDeleted.length === 0 ? (
-        <p className="text-sm text-neutral-500">Keine. Die Farben sind gewürfelt oder von Hand gesetzt.</p>
+        <p className="text-sm text-neutral-500">{m.kit_no_sources()}</p>
       ) : (
         <ul className="divide-y divide-neutral-200/70">
           {references.map((reference) => (
             <li key={reference.id}>
               <Link
-                to="/referenzen/$slug"
+                to="/references/$slug"
                 params={{ slug: reference.slug }}
                 className="group flex items-center gap-3 py-2 first:pt-0"
               >
@@ -116,7 +120,7 @@ export function SourceReferences({ references, sources }: { references: SourceRe
                   <span className="block truncate text-sm font-medium text-neutral-800 group-hover:text-neutral-950 group-hover:underline group-hover:underline-offset-4">
                     {reference.title}
                   </span>
-                  {reference.curationStatus === "archived" && <span className="text-xs text-neutral-500">archiviert</span>}
+                  {reference.curationStatus === "archived" && <span className="text-xs text-neutral-500">{m.status_archived_inline()}</span>}
                 </span>
                 <Swatches hexes={colors.flatMap(({ hex, origin }) => (origin.kind === "reference" && origin.referenceId === reference.id ? [hex] : []))} />
               </Link>
@@ -124,8 +128,7 @@ export function SourceReferences({ references, sources }: { references: SourceRe
           ))}
           {fromDeleted.length > 0 && (
             <li className="flex items-center justify-between gap-3 py-2 text-sm text-neutral-500">
-              Aus einer gelöschten Referenz
-              <Swatches hexes={fromDeleted.map(({ hex }) => hex)} />
+              {m.reference_source_deleted()}<Swatches hexes={fromDeleted.map(({ hex }) => hex)} />
             </li>
           )}
         </ul>
@@ -145,7 +148,7 @@ function Swatches({ hexes }: { hexes: string[] }) {
 }
 
 const formats: { value: CssFormat; label: string }[] = [
-  { value: "css", label: "CSS" },
+  { value: "css", get label() { return m.css_label(); } },
   { value: "tailwind", label: "Tailwind v4" },
 ];
 
@@ -168,10 +171,9 @@ export function CssExport({ css, unsaved }: { css: Record<CssFormat, string>; un
     <section aria-labelledby="kit-css" className="min-w-0">
       <div className="mb-3 flex flex-wrap items-center justify-between gap-x-3 gap-y-2">
         <h2 id="kit-css" className="text-base font-semibold tracking-tight">
-          CSS
-        </h2>
+          {m.css_label()}</h2>
         <div className="flex items-center gap-2">
-          <div className="flex rounded-lg bg-neutral-200/70 p-0.5 text-sm" role="group" aria-label="Format">
+          <div className="flex rounded-lg bg-neutral-200/70 p-0.5 text-sm" role="group" aria-label={m.field_format()}>
             {formats.map((option) => (
               <button
                 key={option.value}
@@ -204,7 +206,7 @@ export function CssExport({ css, unsaved }: { css: Record<CssFormat, string>; un
             ) : (
               <Copy aria-hidden className="size-4" strokeWidth={2} />
             )}
-            {copy === "copied" ? "Kopiert" : "Kopieren"}
+            {copy === "copied" ? m.action_copied() : m.action_copy()}
           </button>
         </div>
       </div>
@@ -213,10 +215,10 @@ export function CssExport({ css, unsaved }: { css: Record<CssFormat, string>; un
       </pre>
       <p className="mt-2 text-xs text-neutral-500" role="status">
         {copy === "failed"
-          ? "Kopieren hat nicht geklappt. Markiere den Block und kopiere ihn von Hand."
+          ? m.copy_failed()
           : unsaved
-            ? "Aus dem gespeicherten Stand. Ungespeicherte Änderungen sind nicht drin."
-            : "Aus dem gespeicherten Stand."}
+            ? m.css_saved_version()
+            : m.saved_version()}
       </p>
     </section>
   );

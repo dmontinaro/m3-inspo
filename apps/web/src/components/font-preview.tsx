@@ -1,3 +1,4 @@
+import * as m from "#/paraglide/messages.js";
 import { useRouter } from "@tanstack/react-router";
 import { useState } from "react";
 import { RotateCw } from "lucide-react";
@@ -9,7 +10,7 @@ const hostOf = (url: string) => new URL(url).hostname.replace(/^www\./, "");
 /**
  * The font preview of a family the app cannot load: the screenshot of its
  * linked page, which opens the page. While the page is captured, a note
- * stands in its place; when the capture failed, the reason. "Neu aufnehmen"
+ * stands in its place; when the capture failed, the reason. The retry action
  * captures the page again. `preview` is missing for a link saved before
  * previews existed.
  */
@@ -42,7 +43,7 @@ export function FontPreviewFigure({ family, pageUrl, preview }: { family: string
             src={preview.image.url}
             width={preview.image.width}
             height={preview.image.height}
-            alt={`Seite von ${family} auf ${host}`}
+            alt={m.font_preview_page_alt({ family, host })}
             className="block h-auto w-full"
           />
         ) : (
@@ -50,19 +51,20 @@ export function FontPreviewFigure({ family, pageUrl, preview }: { family: string
             {capturing ? (
               <span className="inline-flex items-center gap-2">
                 <span aria-hidden className="size-2 animate-pulse rounded-full bg-sky-500" />
-                Die Seite von {host} wird aufgenommen …
+                {m.font_preview_host_capturing({ host })}
               </span>
             ) : (
-              `Noch keine Vorschau von ${host}`
+              m.font_preview_host_missing({ host })
             )}
           </span>
         )}
       </a>
       <figcaption className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-neutral-500">
-        <span>Screenshot von {host}</span>
-        {capturing && preview.image && <span>Wird neu aufgenommen …</span>}
+        <span>{m.font_preview_host_caption({ host })}</span>
+        {capturing && preview.image && <span>{m.font_preview_recapturing()}</span>}
         {preview?.status === "failed" && (
-          <span className="text-rose-700">Aufnahme fehlgeschlagen{preview.error ? `: ${preview.error}` : "."}</span>
+          <div className="text-rose-700">{m.font_preview_failed()}
+            {preview.error && <details><summary>{m.job_original_details()}</summary><span>{preview.error}</span></details>}</div>
         )}
         {!capturing && (
           <button
@@ -71,7 +73,7 @@ export function FontPreviewFigure({ family, pageUrl, preview }: { family: string
             disabled={pending}
             className="inline-flex items-center gap-1 rounded-md px-1.5 py-0.5 font-medium text-neutral-700 hover:bg-neutral-100 hover:text-neutral-950 disabled:opacity-60"
           >
-            <RotateCw aria-hidden className="size-3" /> Neu aufnehmen
+            <RotateCw aria-hidden className="size-3" /> {m.font_preview_retry()}
           </button>
         )}
       </figcaption>

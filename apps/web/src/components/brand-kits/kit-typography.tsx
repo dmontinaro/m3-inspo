@@ -1,3 +1,6 @@
+import { pairingDetailPath } from "#/lib/page-paths";
+import { useLanguageGuard, LanguageControl  } from "#/components/language-control";
+import * as m from "#/paraglide/messages.js";
 /**
  * A kit's typography on its page (#68), above the preview's building
  * blocks: the font roles with where they came from, "Anderes wählen" (a
@@ -14,7 +17,7 @@ import type { Typography } from "@m3-inspo/shared/fonts";
 import { StandInBadge, useFontFaces } from "#/components/font-faces";
 import { roleEntries } from "#/components/pairing-poster";
 import { RoleFontPicker } from "#/components/role-font-picker";
-import { fontRoleLabels, regularWeight } from "#/lib/fonts";
+import { fontRolesKey, fontRoleLabels, regularWeight } from "#/lib/fonts";
 import type { FontRole, FontRoles, RoleFont } from "#/lib/fonts";
 import { keepBrandKitTypography } from "#/server/brand-kits.functions";
 import type { OriginPairing } from "#/server/brand-kits.server";
@@ -47,7 +50,7 @@ export function takeOver(pairing: OriginPairing): TypographyState {
 }
 
 const heaviest = (font: RoleFont) => Math.max(...font.weights);
-const failedMessage = "Das hat nicht geklappt. Bitte versuche es noch einmal.";
+
 const secondaryButton =
   "rounded-md border border-neutral-300 bg-white px-3 py-1.5 font-medium text-neutral-800 hover:bg-neutral-100 disabled:cursor-default disabled:opacity-45 disabled:hover:bg-white";
 
@@ -79,10 +82,10 @@ export function KitTypography({
 
   const matchesOrigin = Boolean(typography && origin && sameFamilies(typography.roles, origin.roles));
   const keepHint = unsaved
-    ? "Erst speichern: gemerkt wird die gespeicherte Typografie."
+    ? m.typography_save_first()
     : matchesOrigin && origin
-      ? `Entspricht dem Pairing „${origin.name}“.`
-      : "Legt aus diesen Schriften ein neues Type Pairing an.";
+      ? m.pairing_matches_origin()
+      : m.typography_keep_help();
 
   async function keepAsPairing() {
     setKeep({ status: "pending" });
@@ -105,16 +108,14 @@ export function KitTypography({
     <section aria-labelledby="kit-fonts" className="rounded-xl bg-white p-4 font-sans text-sm text-neutral-900 ring-1 ring-black/5 sm:p-5">
       <div className="flex items-baseline justify-between gap-3">
         <h3 id="kit-fonts" className="text-base font-semibold tracking-tight">
-          Schriften
-        </h3>
+          {m.typography_title()}</h3>
         {typography && (
           <button
             type="button"
             onClick={() => change({ typography: null, origin: null })}
             className="text-xs text-neutral-500 underline underline-offset-2 hover:text-neutral-900"
           >
-            Entfernen
-          </button>
+            {m.action_remove()}</button>
         )}
       </div>
 
@@ -144,8 +145,7 @@ export function KitTypography({
           </p>
           <div className="mt-3 flex flex-wrap gap-2">
             <button ref={opener} type="button" onClick={() => setChoosing(true)} className={secondaryButton}>
-              Anderes wählen
-            </button>
+              {m.typography_choose_other()}</button>
             <button
               type="button"
               onClick={keepAsPairing}
@@ -153,21 +153,20 @@ export function KitTypography({
               title={keepHint}
               className={secondaryButton}
             >
-              {keep.status === "pending" ? "Merkt …" : "Als Pairing merken"}
+              {keep.status === "pending" ? m.pairing_keeping() : m.pairing_keep_as()}
             </button>
           </div>
           {keep.status === "duplicate" && (
             <p role="status" className="mt-3 rounded-md bg-amber-50 px-3 py-2 text-amber-900">
-              Schon gemerkt als{" "}
-              <Link to="/schriften/$slug" params={{ slug: keep.pairing.slug }} className="font-medium underline underline-offset-2">
+              {m.pairing_already_kept()}{" "}
+              <Link to={pairingDetailPath(keep.pairing.slug)} className="font-medium underline underline-offset-2">
                 {keep.pairing.name}
               </Link>
-              .
             </p>
           )}
           {keep.status === "failed" && (
             <p role="alert" className="mt-3 rounded-md bg-rose-50 px-3 py-2 text-rose-800">
-              {failedMessage}
+              {m.action_failed()}
             </p>
           )}
         </>
@@ -179,9 +178,8 @@ export function KitTypography({
             onClick={() => setChoosing(true)}
             className="mt-3 flex w-full items-center justify-center gap-1.5 rounded-md border border-dashed border-neutral-300 px-3 py-5 text-neutral-700 hover:border-neutral-500 hover:text-neutral-950"
           >
-            <Plus aria-hidden className="size-4" /> Type Pairing wählen
-          </button>
-          <p className="mt-2 text-xs text-neutral-500">Ohne Schriften zeigt die Vorschau die Systemschrift.</p>
+            <Plus aria-hidden className="size-4" /> {m.typography_choose_pairing()}</button>
+          <p className="mt-2 text-xs text-neutral-500">{m.typography_system_preview()}</p>
         </>
       )}
 
@@ -204,16 +202,15 @@ function OriginNote({ typography, origin, matchesOrigin }: { typography: Typogra
   if (origin) {
     return (
       <>
-        Aus dem Pairing „
-        <Link to="/schriften/$slug" params={{ slug: origin.slug }} className="underline underline-offset-2 hover:text-neutral-900">
+        {m.pairing_origin()}{" "}
+        <Link to={pairingDetailPath(origin.slug)} className="underline underline-offset-2 hover:text-neutral-900">
           {origin.name}
-        </Link>
-        “{origin.archived && " (archiviert)"}
-        {!matchesOrigin && " · weicht inzwischen ab"}
+        </Link>{" "}{origin.archived && m.pairing_origin_archived()}{" "}
+        {!matchesOrigin && m.pairing_origin_changed()}
       </>
     );
   }
-  return typography.originPairingDeleted ? "Aus einem gelöschten Pairing" : "Direkt gewählt";
+  return typography.originPairingDeleted ? m.pairing_origin_deleted() : m.typography_chosen_directly();
 }
 
 /**
@@ -259,18 +256,18 @@ function ChooseFonts({
       <div className="flex flex-col gap-4 p-5 sm:p-6">
         <div className="flex items-center justify-between gap-3">
           <h2 id="choose-fonts-heading" className="text-base font-semibold tracking-tight">
-            Schriften wählen
-          </h2>
-          <button type="button" onClick={close} aria-label="Schließen" className="rounded-md p-1 text-neutral-500 hover:bg-neutral-100 hover:text-neutral-900">
+            {m.typography_choose_fonts()}</h2>
+          <button type="button" onClick={close} aria-label={m.action_close()} className="rounded-md p-1 text-neutral-500 hover:bg-neutral-100 hover:text-neutral-900">
             <X aria-hidden className="size-4" />
           </button>
         </div>
 
-        <div role="radiogroup" aria-label="Woher" className="flex max-w-sm gap-1 rounded-lg bg-neutral-100 p-1 text-sm">
+        <LanguageControl />
+        <div role="radiogroup" aria-label={m.typography_source()} className="flex max-w-sm gap-1 rounded-lg bg-neutral-100 p-1 text-sm">
           {(
             [
-              ["pairing", "Type Pairing"],
-              ["direct", "Direkt wählen"],
+              ["pairing", m.type_pairing_label()],
+              ["direct", m.typography_choose_directly()],
             ] as const
           ).map(([option, label]) => (
             <button
@@ -328,17 +325,15 @@ function PairingList({ currentId, onPick }: { currentId: string | undefined; onP
     );
   }, []);
 
-  if (failed) return <p className="text-sm text-rose-700">{failedMessage}</p>;
-  if (!pairings) return <p className="text-sm text-neutral-500">Lädt …</p>;
+  if (failed) return <p className="text-sm text-rose-700">{m.action_failed()}</p>;
+  if (!pairings) return <p className="text-sm text-neutral-500">{m.loading()}</p>;
   if (pairings.length === 0) {
     return (
       <p className="text-sm text-neutral-600">
-        Noch keine Type Pairings.{" "}
-        <Link to="/schriften/neu" className="underline underline-offset-2 hover:text-neutral-900">
-          Neues Pairing anlegen
-        </Link>{" "}
-        oder die Schriften direkt wählen.
-      </p>
+        {m.pairings_none()}{" "}
+        <Link to="/type-pairings/new" className="underline underline-offset-2 hover:text-neutral-900">
+          {m.pairing_create_new()}</Link>{" "}
+        {m.typography_or_direct()}</p>
     );
   }
 
@@ -362,7 +357,7 @@ function PairingList({ currentId, onPick }: { currentId: string | undefined; onP
                   .join(" + ")}
               </span>
             </span>
-            {pairing.id === currentId && <span className="shrink-0 text-xs text-neutral-500">Aktuell</span>}
+            {pairing.id === currentId && <span className="shrink-0 text-xs text-neutral-500">{m.label_current()}</span>}
           </button>
         </li>
       ))}
@@ -404,6 +399,7 @@ function DirectFonts({ roles: start, onApply }: { roles: FontRoles | undefined; 
   }
 
   const { heading, body, mono } = roles;
+  useLanguageGuard({ dirty: fontRolesKey(roles) !== fontRolesKey(start ?? {}) });
   const ready = complete(heading) && complete(body) && (!mono || complete(mono));
   const pickers = (["heading", "body"] as const).map((role) => (
     <RoleFontPicker
@@ -436,20 +432,18 @@ function DirectFonts({ roles: start, onApply }: { roles: FontRoles | undefined; 
             onClick={() => setShowMono(true)}
             className="flex items-center justify-center gap-1.5 rounded-xl border border-dashed border-neutral-300 px-4 py-6 text-sm text-neutral-600 hover:border-neutral-500 hover:text-neutral-900"
           >
-            <Plus aria-hidden className="size-4" /> {fontRoleLabels.mono} hinzufügen
-          </button>
+            <Plus aria-hidden className="size-4" /> {m.font_add_role({ role: fontRoleLabels.mono })}</button>
         )}
       </div>
       <div className="mt-4 flex items-center justify-end gap-3">
-        {!ready && <p className="text-xs text-neutral-500">Überschrift und Fließtext brauchen je eine Schrift und ein Gewicht.</p>}
+        {!ready && <p className="text-xs text-neutral-500">{m.typography_roles_required()}</p>}
         <button
           type="button"
           disabled={!ready}
           onClick={() => heading && body && onApply({ heading, body, ...(mono ? { mono } : {}) })}
           className="shrink-0 rounded-md bg-neutral-900 px-4 py-2 text-sm font-medium text-white hover:bg-neutral-700 disabled:opacity-50"
         >
-          Übernehmen
-        </button>
+          {m.reference_take()}</button>
       </div>
     </div>
   );

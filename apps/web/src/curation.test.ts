@@ -275,12 +275,12 @@ describe("editing a reference", () => {
     expect(result).toEqual({
       ok: false,
       errors: {
-        title: ["Bitte gib einen Titel ein."],
-        sourceUrl: ["Bitte gib eine vollständige Adresse ein, die mit https:// oder http:// beginnt."],
-        attribution: ["Der Urheberhinweis ist zu lang (höchstens 200 Zeichen)."],
-        takeNote: ["Die Notiz ist zu lang (höchstens 5000 Zeichen)."],
-        focus: ["Bitte wähle einen Fokus aus der Liste."],
-        device: ["Bitte wähle ein Format aus der Liste."],
+        title: ["Enter a value for Title."],
+        sourceUrl: ["Enter a complete address starting with https:// or http://."],
+        attribution: ["Use at most 200 characters for Attribution."],
+        takeNote: ["Use at most 5,000 characters for Note."],
+        focus: ["Choose a valid value for Focus."],
+        device: ["Choose a valid value for Format."],
       },
     });
     expect(await getReferenceBySlug(slug)).toMatchObject({ title: "Berghof Buchung", takeNote: "Klare Schritte" });

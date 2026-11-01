@@ -1,3 +1,6 @@
+import { imageDiagnostics } from "./image-diagnostics";
+import * as m from "#/paraglide/messages.js";
+import { issueMessage, validationRule } from "#/lib/validation";
 /**
  * Import jobs: asynchronous work such as capturing a URL. The owner starts
  * and retries them (import-jobs.functions.ts); the capture worker drives them
@@ -23,7 +26,7 @@ import { BlockedUrlError, assertPublicUrl } from "@m3-inspo/shared/public-url";
 import type { BlockReason } from "@m3-inspo/shared/public-url";
 import { MODES, TYPE_ROLES } from "@m3-inspo/taxonomy";
 import { z } from "zod";
-import { maxTitleLength, maxUploadBytes, rejectionReasons } from "#/lib/upload-limits";
+import { maxTitleLength, maxUploadBytes } from "#/lib/image-limits";
 import { prepareImage } from "./image.server";
 import {
   analysisEnabled,
@@ -42,25 +45,25 @@ const urlImport = referenceFields.pick({ takeNote: true, avoidNote: true, tags: 
   requestId: z.uuid(),
   url: referenceFields.shape.sourceUrl.pipe(
     z
-      .string("Bitte gib die Adresse der Website ein.")
-      .refine((value) => !URL.parse(value)?.username && !URL.parse(value)?.password, "Die Adresse darf keine Zugangsdaten enthalten."),
+      .string()
+      .refine((value) => !URL.parse(value)?.username && !URL.parse(value)?.password, validationRule({ code: "url_credentials" })),
   ),
   title: z
     .string()
     .trim()
-    .max(maxTitleLength, `Der Titel ist zu lang (höchstens ${maxTitleLength} Zeichen).`),
+    .max(maxTitleLength),
   /** The owner saw the duplicate warning and imports anyway. */
   confirmDuplicate: z.boolean(),
 });
 
 /** Why the URL guard refused an address, for the owner. An unresolvable name is left to the worker. */
 const blockedReasons: Record<Exclude<BlockReason, "unresolvable">, string> = {
-  invalid: "Bitte gib eine gültige Adresse ein.",
-  scheme: "Bitte gib eine vollständige Adresse ein, die mit https:// oder http:// beginnt.",
-  credentials: "Die Adresse darf keine Zugangsdaten enthalten.",
-  port: "Nur die Standard-Ports 80 und 443 sind erlaubt.",
-  host: "Interne Rechnernamen werden nicht importiert.",
-  "private-address": "Diese Adresse zeigt auf ein internes Netz und wird nicht importiert.",
+  get invalid() { return m.url_invalid(); },
+  get scheme() { return m.validation_web_address(); },
+  get credentials() { return m.validation_url_credentials(); },
+  get port() { return m.url_ports(); },
+  get host() { return m.url_internal_host(); },
+  get "private-address"() { return m.url_private_address(); },
 };
 
 /** The URL guard's refusal in the owner's words, or null if the address may be imported. */
@@ -122,14 +125,14 @@ type QueueResult = { ok: true; jobId: string } | { ok: false; reason: string; du
  * Queues a `url_capture` job from the upload page's form (`requestId`, `url`,
  * `title`, `takeNote`, `avoidNote` as strings, `tags` as a list,
  * `confirmDuplicate` as a flag). Sending the same `requestId` again returns
- * the job it created the first time. Answers a German reason when the input
+ * the job it created the first time. Answers a localized reason when the input
  * is rejected: an address the URL guard refuses, or (with `duplicate`) a
  * page that is already in the library or being imported, until the owner
  * confirms it with `confirmDuplicate`.
  */
 export async function queueUrlImport(input: Record<string, unknown>): Promise<QueueResult> {
   const parsed = urlImport.safeParse(input);
-  if (!parsed.success) return { ok: false, reason: parsed.error.issues[0]?.message ?? "Die Angaben sind ungültig." };
+  if (!parsed.success) return { ok: false, reason: issueMessage(parsed.error.issues[0]) };
   const { requestId, url, title, takeNote, avoidNote, tags, confirmDuplicate } = parsed.data;
 
   // A resent form gets its job back before any check, so its own job does not count as a duplicate.
@@ -142,7 +145,7 @@ export async function queueUrlImport(input: Record<string, unknown>): Promise<Qu
     const duplicate = await findDuplicate(url);
     if (duplicate) {
       const reason =
-        duplicate.references.length > 0 ? "Diese Adresse ist schon in der Bibliothek." : "Diese Adresse wird schon importiert.";
+        duplicate.references.length > 0 ? m.url_already_in_library() : m.url_already_importing();
       return { ok: false, reason, duplicate };
     }
   }
@@ -485,7 +488,7 @@ async function readStaged(key: string): Promise<{ ok: true; bytes: Uint8Array } 
   if (!object) return { ok: false, reason: "not uploaded" };
   if ((object.size ?? 0) > maxUploadBytes) {
     await object.body.cancel();
-    return { ok: false, reason: rejectionReasons.tooLarge };
+    return { ok: false, reason: imageDiagnostics.tooLarge };
   }
   return { ok: true, bytes: new Uint8Array(await new Response(object.body).arrayBuffer()) };
 }
@@ -522,8 +525,9 @@ export async function completeJob(id: string, body: unknown): Promise<Outcome<{ 
   const images = [];
   for (const [index, capture] of captures.entries()) {
     const staged = await readStaged(stagingKey(id, holder, capture.uploadId));
-    const check = staged.ok ? await prepareImage(staged.bytes) : staged;
-    if (!check.ok) return refuse("rejected", `Capture ${index + 1} (${capture.uploadId}): ${check.reason}`);
+    if (!staged.ok) return refuse("rejected", `Capture ${index + 1} (${capture.uploadId}): ${staged.reason}`);
+    const check = await prepareImage(staged.bytes);
+    if (!check.ok) return refuse("rejected", `Capture ${index + 1} (${capture.uploadId}): ${imageDiagnostics[check.reason]}`);
     images.push({ image: check.image, placement: { viewport: capture.viewport, kind: capture.kind } });
   }
 
@@ -585,8 +589,9 @@ export async function completeJob(id: string, body: unknown): Promise<Outcome<{ 
  */
 async function completeFontPreview(id: string, holder: number, uploadId: string): Promise<Outcome<object>> {
   const staged = await readStaged(stagingKey(id, holder, uploadId));
-  const check = staged.ok ? await prepareImage(staged.bytes) : staged;
-  if (!check.ok) return refuse("rejected", `Capture 1 (${uploadId}): ${check.reason}`);
+  if (!staged.ok) return refuse("rejected", `Capture 1 (${uploadId}): ${staged.reason}`);
+  const check = await prepareImage(staged.bytes);
+  if (!check.ok) return refuse("rejected", `Capture 1 (${uploadId}): ${imageDiagnostics[check.reason]}`);
 
   const { preview } = check.image;
   const key = `font-previews/${id}/${randomUUID()}.webp`;

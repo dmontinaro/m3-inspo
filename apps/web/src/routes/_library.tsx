@@ -1,3 +1,4 @@
+import * as m from "#/paraglide/messages.js";
 import { Link, Outlet, createFileRoute } from "@tanstack/react-router";
 import logoUrl from "#/assets/m3-inspo-logo.svg?url";
 import { OwnerMenu } from "#/components/owner-menu";
@@ -32,41 +33,35 @@ function LibraryLayout() {
             settings there.
           */}
           <Link
-            to="/sammlungen"
+            to="/collections"
             className="hidden shrink-0 rounded-md px-2.5 py-1.5 text-neutral-600 hover:bg-neutral-200/60 hover:text-neutral-900 md:inline-block"
           >
-            Sammlungen
-          </Link>
+            {m.collections_title()}</Link>
           <Link
-            to="/schriften"
+            to="/type-pairings"
             className="hidden shrink-0 rounded-md px-2.5 py-1.5 text-neutral-600 hover:bg-neutral-200/60 hover:text-neutral-900 md:inline-block"
           >
-            Schriften
-          </Link>
+            {m.type_pairings_title()}</Link>
           <Link
             to="/brand-kits"
             className="hidden shrink-0 rounded-md px-2.5 py-1.5 text-neutral-600 hover:bg-neutral-200/60 hover:text-neutral-900 md:inline-block"
           >
-            Brand Kits
-          </Link>
+            {m.brand_kits_title()}</Link>
           <Link
-            to="/importe"
+            to="/imports"
             className="hidden shrink-0 rounded-md px-2.5 py-1.5 text-neutral-600 hover:bg-neutral-200/60 hover:text-neutral-900 md:inline-block"
           >
-            Importe
-          </Link>
+            {m.imports_title()}</Link>
           <Link
-            to="/werkzeuge"
+            to="/tools"
             className="hidden shrink-0 rounded-md px-2.5 py-1.5 text-neutral-600 hover:bg-neutral-200/60 hover:text-neutral-900 md:inline-block"
           >
-            Werkzeuge
-          </Link>
+            {m.tools_title()}</Link>
           <Link
-            to="/hochladen"
+            to="/add"
             className="shrink-0 rounded-md bg-neutral-900 px-3.5 py-2 font-medium text-white hover:bg-neutral-700"
           >
-            Hinzufügen
-          </Link>
+            {m.add_title()}</Link>
           <OwnerMenu name={owner.name} image={owner.image} />
         </div>
       </header>

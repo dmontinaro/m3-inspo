@@ -1,3 +1,5 @@
+import { useFormLanguageGuard } from "#/components/language-control";
+import * as m from "#/paraglide/messages.js";
 import { useId, useState } from "react";
 import type { FormEvent } from "react";
 import { maxCollectionDescriptionLength, maxCollectionNameLength } from "#/lib/collections";
@@ -24,6 +26,7 @@ export function CollectionForm({
   onSaved: (slug: string) => Promise<void>;
   onCancel: () => void;
 }) {
+  const languageForm = useFormLanguageGuard();
   const id = useId();
   const [pending, setPending] = useState(false);
   const [errors, setErrors] = useState<CollectionErrors>({});
@@ -57,12 +60,12 @@ export function CollectionForm({
     messages?.[0] && <p className="mt-1.5 text-sm text-rose-700">{messages[0]}</p>;
 
   return (
-    <form onSubmit={submit} className="rounded-xl border border-neutral-200 bg-white p-4 sm:p-5">
+    <form ref={languageForm.form} noValidate onSubmit={submit} className="rounded-xl border border-neutral-200 bg-white p-4 sm:p-5">
+      <fieldset disabled={pending} className="contents">
       <div className="grid gap-4 sm:grid-cols-[minmax(0,1fr)_14rem]">
         <div>
           <label htmlFor={`${id}-name`} className="text-sm font-medium text-neutral-900">
-            Name
-          </label>
+            {m.field_name()}</label>
           <input
             id={`${id}-name`}
             name="name"
@@ -70,14 +73,14 @@ export function CollectionForm({
             autoFocus
             maxLength={maxCollectionNameLength}
             defaultValue={collection?.name}
-            placeholder="z. B. Ruhige Hotels"
+            placeholder={m.collection_name_placeholder()}
             className={fieldClassName}
           />
           {fieldError(errors.name)}
         </div>
         <div>
           <label htmlFor={`${id}-project`} className="text-sm font-medium text-neutral-900">
-            Projekt <span className="font-normal text-neutral-400">(optional)</span>
+            {m.field_project()}<span className="ml-1 font-normal text-neutral-400">{m.field_optional()}</span>
           </label>
           <input
             id={`${id}-project`}
@@ -85,7 +88,7 @@ export function CollectionForm({
             list={`${id}-tags`}
             maxLength={maxTagLength}
             defaultValue={collection?.project ?? ""}
-            placeholder="z. B. sample-project"
+            placeholder={m.project_placeholder()}
             className={fieldClassName}
           />
           <datalist id={`${id}-tags`}>
@@ -97,7 +100,7 @@ export function CollectionForm({
         </div>
         <div className="sm:col-span-2">
           <label htmlFor={`${id}-description`} className="text-sm font-medium text-neutral-900">
-            Beschreibung <span className="font-normal text-neutral-400">(optional)</span>
+            {m.field_description()}<span className="ml-1 font-normal text-neutral-400">{m.field_optional()}</span>
           </label>
           <textarea
             id={`${id}-description`}
@@ -105,7 +108,7 @@ export function CollectionForm({
             rows={2}
             maxLength={maxCollectionDescriptionLength}
             defaultValue={collection?.description ?? ""}
-            placeholder="Was die Referenzen verbindet. Agenten lesen das mit."
+            placeholder={m.collection_description_placeholder()}
             className={fieldClassName}
           />
           {fieldError(errors.description)}
@@ -113,8 +116,7 @@ export function CollectionForm({
       </div>
       {failed && (
         <p role="alert" className="mt-4 rounded-md bg-rose-50 px-3 py-2 text-sm text-rose-800">
-          Das hat nicht geklappt. Bitte versuche es noch einmal.
-        </p>
+          {m.action_failed()}</p>
       )}
       <div className="mt-4 flex items-center justify-end gap-2">
         <button
@@ -122,16 +124,16 @@ export function CollectionForm({
           onClick={onCancel}
           className="rounded-md px-3.5 py-2 text-sm text-neutral-600 hover:bg-neutral-100 hover:text-neutral-900"
         >
-          Abbrechen
-        </button>
+          {m.action_cancel()}</button>
         <button
           type="submit"
           disabled={pending}
           className="rounded-md bg-neutral-900 px-4 py-2 text-sm font-medium text-white hover:bg-neutral-700 disabled:opacity-60"
         >
-          {collection ? "Speichern" : "Sammlung anlegen"}
+          {collection ? m.action_save() : m.collection_create()}
         </button>
       </div>
-    </form>
+    </fieldset>
+      </form>
   );
 }

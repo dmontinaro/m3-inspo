@@ -1,3 +1,6 @@
+import { useFormLanguageGuard } from "#/components/language-control";
+import { formatNumber } from "#/lib/format";
+import * as m from "#/paraglide/messages.js";
 import { Link, useNavigate } from "@tanstack/react-router";
 import { useRef, useState } from "react";
 import type { FormEvent } from "react";
@@ -21,6 +24,7 @@ import { TagInput } from "./tag-input";
  * submits again with "Trotzdem importieren".
  */
 export function UrlImportForm() {
+  const languageForm = useFormLanguageGuard();
   const navigate = useNavigate();
   const lastSubmission = useRef<{ input: string; requestId: string } | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -43,20 +47,20 @@ export function UrlImportForm() {
         if (result.duplicate) return setDuplicate({ reason: result.reason, found: result.duplicate });
         return setError(result.reason);
       }
-      await navigate({ to: "/importe" });
+      await navigate({ to: "/imports" });
     } catch {
-      setError("Der Import konnte nicht gestartet werden. Bitte versuche es noch einmal.");
+      setError(m.import_start_failed());
     } finally {
       setPending(false);
     }
   }
 
   return (
-    <form onSubmit={submit} className="mt-4 grid gap-4 rounded-lg border border-neutral-200 bg-white p-4 sm:grid-cols-2 sm:p-5">
+    <form ref={languageForm.form} noValidate onSubmit={submit} className="mt-4 grid gap-4 rounded-lg border border-neutral-200 bg-white p-4 sm:grid-cols-2 sm:p-5">
+      <fieldset disabled={pending} className="contents">
       <div className="sm:col-span-2">
         <label htmlFor="import-url" className="text-sm font-medium">
-          Adresse
-        </label>
+          {m.field_address()}</label>
         <input
           id="import-url"
           name="url"
@@ -75,43 +79,40 @@ export function UrlImportForm() {
 
       <div className="sm:col-span-2">
         <label htmlFor="import-title" className="text-sm font-medium">
-          Titel <span className="font-normal text-neutral-500">(optional, sonst der Seitentitel)</span>
+          {m.field_title()}<span className="font-normal text-neutral-500">{m.title_optional_page()}</span>
         </label>
         <input id="import-title" name="title" maxLength={maxTitleLength} className={fieldClassName} />
       </div>
 
       <div>
         <label htmlFor="import-take" className="text-sm font-medium">
-          Übernehmen
-        </label>
+          {m.reference_take()}</label>
         <textarea
           id="import-take"
           name="takeNote"
           rows={3}
           maxLength={maxNoteLength}
-          placeholder="Was gefällt dir hier?"
+          placeholder={m.reference_take_placeholder()}
           className={fieldClassName}
         />
       </div>
 
       <div>
         <label htmlFor="import-avoid" className="text-sm font-medium">
-          Vermeiden
-        </label>
+          {m.reference_avoid()}</label>
         <textarea
           id="import-avoid"
           name="avoidNote"
           rows={3}
           maxLength={maxNoteLength}
-          placeholder="Was soll nicht übernommen werden?"
+          placeholder={m.reference_avoid_placeholder()}
           className={fieldClassName}
         />
       </div>
 
       <div className="sm:col-span-2">
         <label htmlFor="import-tags" className="text-sm font-medium">
-          Tags
-        </label>
+          {m.field_tags()}</label>
         <TagInput id="import-tags" />
       </div>
 
@@ -129,7 +130,7 @@ export function UrlImportForm() {
             {duplicate.found.references.map((reference) => (
               <li key={reference.slug}>
                 <Link
-                  to="/referenzen/$slug"
+                  to="/references/$slug"
                   params={{ slug: reference.slug }}
                   className="underline decoration-amber-700/40 underline-offset-2 hover:decoration-amber-900"
                 >
@@ -139,13 +140,13 @@ export function UrlImportForm() {
             ))}
             {duplicate.found.openJobs > 0 && (
               <li>
-                <Link to="/importe" className="underline decoration-amber-700/40 underline-offset-2 hover:decoration-amber-900">
-                  {duplicate.found.openJobs === 1 ? "Ein Import läuft schon" : `${duplicate.found.openJobs} Importe laufen schon`}
+                <Link to="/imports" className="underline decoration-amber-700/40 underline-offset-2 hover:decoration-amber-900">
+                  {m.imports_already_running({ count: duplicate.found.openJobs, formattedCount: formatNumber(duplicate.found.openJobs) })}
                 </Link>
               </li>
             )}
           </ul>
-          <p className="mt-1.5 text-amber-800">Ändere die Adresse oder importiere die Seite bewusst noch einmal.</p>
+          <p className="mt-1.5 text-amber-800">{m.import_duplicate_help()}</p>
         </div>
       )}
 
@@ -155,7 +156,7 @@ export function UrlImportForm() {
           disabled={pending}
           className="rounded-md bg-neutral-900 px-4 py-2.5 text-sm font-medium text-white hover:bg-neutral-700 disabled:opacity-60"
         >
-          {pending ? "Wird gestartet …" : duplicate ? "Trotzdem importieren" : "Import starten"}
+          {pending ? m.action_starting() : duplicate ? m.import_anyway() : m.import_start()}
         </button>
         {duplicate ? (
           <button
@@ -163,12 +164,12 @@ export function UrlImportForm() {
             onClick={() => setDuplicate(null)}
             className="rounded-md px-2.5 py-2.5 text-sm text-neutral-600 hover:bg-neutral-100 hover:text-neutral-900"
           >
-            Abbrechen
-          </button>
+            {m.action_cancel()}</button>
         ) : (
-          <p className="text-sm text-neutral-500">Die Referenz entsteht als Entwurf.</p>
+          <p className="text-sm text-neutral-500">{m.import_creates_draft()}</p>
         )}
       </div>
-    </form>
+    </fieldset>
+      </form>
   );
 }

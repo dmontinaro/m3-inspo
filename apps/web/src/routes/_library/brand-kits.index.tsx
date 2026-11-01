@@ -1,3 +1,5 @@
+import { formatNumber } from "#/lib/format";
+import * as m from "#/paraglide/messages.js";
 import { Link, createFileRoute } from "@tanstack/react-router";
 import { ChevronDown, Shuffle } from "lucide-react";
 import { KitDeleteButton } from "#/components/brand-kits/kit-lifecycle";
@@ -5,7 +7,7 @@ import { KitStatus, ProjectChip } from "#/components/brand-kits/parts";
 import { getBrandKits } from "#/server/brand-kits.functions";
 
 export const Route = createFileRoute("/_library/brand-kits/")({
-  head: () => ({ meta: [{ title: "Brand Kits · m3 inspo" }] }),
+  head: () => ({ meta: [{ title: m.kits_page_title() }] }),
   loader: () => getBrandKits(),
   component: BrandKits,
 });
@@ -26,24 +28,21 @@ function BrandKits() {
       className="inline-flex shrink-0 items-center gap-2 rounded-md bg-neutral-900 px-3.5 py-2 text-sm font-medium text-white hover:bg-neutral-700"
     >
       <Shuffle aria-hidden className="size-4" strokeWidth={2} />
-      Neues Color Scheme
-    </Link>
+      {m.scheme_new()}</Link>
   );
 
   return (
     <main className="mx-auto max-w-screen-2xl px-5 pt-2 pb-16 sm:px-8">
       <div className="flex items-center justify-between gap-4">
-        <h1 className="text-2xl font-semibold tracking-tight">Brand Kits</h1>
+        <h1 className="text-2xl font-semibold tracking-tight">{m.brand_kits_title()}</h1>
         {kits.length > 0 && newScheme}
       </div>
 
       {kits.length === 0 ? (
         <div className="mx-auto max-w-xl py-16 text-center">
-          <p className="font-medium text-neutral-900">Noch keine Brand Kits</p>
+          <p className="font-medium text-neutral-900">{m.kits_empty()}</p>
           <p className="mt-1 mb-5 text-[15px] text-neutral-500">
-            Erwürfle ein Color Scheme aus den gemessenen Farben deiner Referenzen. Sperre, was bleiben soll, und würfle weiter, bis es
-            passt. Dann speicherst du es als Brand Kit.
-          </p>
+            {m.kits_empty_help()}</p>
           {newScheme}
         </div>
       ) : (
@@ -51,13 +50,12 @@ function BrandKits() {
           {active.length > 0 ? (
             <KitGrid kits={active} />
           ) : (
-            <p className="mt-6 text-[15px] text-neutral-500">Alle Brand Kits sind archiviert.</p>
+            <p className="mt-6 text-[15px] text-neutral-500">{m.kits_all_archived()}</p>
           )}
           {archived.length > 0 && (
             <details className="group mt-12 border-t border-neutral-200 pt-5">
               <summary className="flex w-fit cursor-pointer list-none items-center gap-1.5 rounded-md text-sm font-medium text-neutral-600 hover:text-neutral-900 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-neutral-900 [&::-webkit-details-marker]:hidden">
-                Archiviert
-                <span className="font-normal text-neutral-400">{archived.length}</span>
+                {m.status_archived()}<span className="font-normal text-neutral-400">{formatNumber(archived.length)}</span>
                 <ChevronDown aria-hidden className="size-4 transition-transform group-open:rotate-180" strokeWidth={1.75} />
               </summary>
               <KitGrid kits={archived} />
@@ -110,8 +108,7 @@ function KitCard({ kit }: { kit: ListedKit }) {
           className="absolute bottom-3 left-3 rounded-md px-2.5 py-1 text-xs font-medium shadow-sm"
           style={{ background: primary, color: onPrimary }}
         >
-          primary
-        </span>
+          {"primary"}</span>
       </div>
       <div className="mt-2.5 flex items-baseline justify-between gap-3">
         <p className="truncate text-sm font-medium text-neutral-800 group-hover:text-neutral-950">{kit.name}</p>

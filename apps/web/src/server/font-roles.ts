@@ -9,10 +9,10 @@ import { fontCategories } from "@m3-inspo/shared/fonts";
 import { z } from "zod";
 
 const roleFontFields = {
-  family: z.string().trim().min(1, "Jede Schrift braucht einen Familiennamen.").max(100, "Der Familienname ist zu lang."),
+  family: z.string().trim().min(1).max(100),
   weights: z
     .array(z.number().int().min(1).max(1000))
-    .min(1, "Jede Schrift braucht mindestens ein Gewicht.")
+    .min(1)
     .transform((weights) => [...new Set(weights)].sort((a, b) => a - b)),
   category: z.enum(fontCategories),
 };
@@ -24,25 +24,23 @@ const roleFontFields = {
 const pageUrl = z
   .string()
   .trim()
-  .max(2000, "Der Link zur Schrift ist zu lang.")
+  .max(2000)
   .optional()
   .transform((url) => (url && !/^[a-z][a-z0-9+.-]*:/i.test(url) ? `https://${url}` : url || undefined))
   .pipe(
     z
-      .url({ protocol: /^https?$/, error: "Link zur Schrift: Bitte gib eine vollständige Adresse ein, die mit https:// oder http:// beginnt." })
+      .url({ protocol: /^https?$/ })
       .optional(),
   );
 
 const fontsourceFont = z.object({ ...roleFontFields, source: z.literal("fontsource"), fontsourceId: z.string().trim().min(1) });
 const adobeFont = z.object({ ...roleFontFields, source: z.literal("adobe"), pageUrl });
 const localFont = z.object({ ...roleFontFields, source: z.literal("local"), pageUrl });
-const missingRole = (issue: { input?: unknown }) =>
-  issue.input === undefined ? "Überschrift und Fließtext brauchen je eine Schrift." : undefined;
 
 const rolesOf = <T extends z.ZodType>(roleFont: T) => z.object({ heading: roleFont, body: roleFont, mono: roleFont.optional() });
 
 /** Font roles as the pairing form sends them. `adobeSlug` is dropped: the server looks it up. */
-export const pairingFontRoles = rolesOf(z.discriminatedUnion("source", [fontsourceFont, adobeFont, localFont], { error: missingRole }));
+export const pairingFontRoles = rolesOf(z.discriminatedUnion("source", [fontsourceFont, adobeFont, localFont]));
 
 /**
  * Font roles as a Brand Kit's typography stores them: checked like a
@@ -50,7 +48,5 @@ export const pairingFontRoles = rolesOf(z.discriminatedUnion("source", [fontsour
  * up, since a kit copies the roles as they are.
  */
 export const kitFontRoles = rolesOf(
-  z.discriminatedUnion("source", [fontsourceFont, adobeFont.extend({ adobeSlug: z.string().trim().min(1).max(100).optional() }), localFont], {
-    error: missingRole,
-  }),
+  z.discriminatedUnion("source", [fontsourceFont, adobeFont.extend({ adobeSlug: z.string().trim().min(1).max(100).optional() }), localFont]),
 );
