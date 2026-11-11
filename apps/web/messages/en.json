@@ -498,7 +498,7 @@
   "tool_list_kits_purpose": "List approved Brand Kits with name, slug, project, brand colour and primary.",
   "tool_list_kits_example": "Is there already a Brand Kit for Harbor?",
   "tool_list_kits_state": "Only approved kits are visible. Drafts and archived kits stay hidden. Approval takes effect on the next call. Optionally filter by project.",
-  "tool_get_kit_purpose": "Read a complete approved Brand Kit, including roles, contrast, scales, warnings, sources, notes and CSS.",
+  "tool_get_kit_purpose": "Read a complete approved Brand Kit, including roles, contrast, scales, warnings, sources, fonts, notes and CSS.",
   "tool_get_kit_example": "Build Harbor's booking page using the Brand Kit colours.",
   "tool_get_kit_state": "Look up by slug or project, using the saved snapshot. Notes are returned verbatim and CSS matches the copied export. Source references include slug and title. Archived sources are omitted; deleted sources are marked. Missing approved kits are reported without exposing drafts. recommend and search_screens link to a project's kit.",
   "tool_recommend_purpose": "Start a briefing with matching references, your notes, page structure and palette in one call.",

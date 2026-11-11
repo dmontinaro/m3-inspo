@@ -142,7 +142,7 @@ export async function loadCatalogue(db: Database): Promise<Catalogue> {
       },
     }),
     db.query.brandKits.findMany({
-      columns: { slug: true, name: true, project: true, colorScheme: true, notes: true, designBriefing: true },
+      columns: { slug: true, name: true, project: true, colorScheme: true, typography: true, notes: true, designBriefing: true },
       where: (kit, { eq }) => eq(kit.status, "approved"),
       orderBy: (kit) => [sql`lower(${kit.name})`, kit.slug],
     }),

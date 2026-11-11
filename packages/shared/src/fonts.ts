@@ -69,6 +69,18 @@ export const fallbackStacks: Record<FontCategory, string> = {
   handwriting: "'Segoe Print', 'Bradley Hand', Chilanka, TSCu_Comic, casual, cursive",
 };
 
+/**
+ * A role's `font-family` value for exported CSS: the family's names, then
+ * its category's fallback stack. An Adobe family comes first under its
+ * slug, the name Adobe's web kits give it, e.g.
+ * `"freight-text-pro", "Freight Text Pro", Charter, …, serif`.
+ */
+export function cssFontStack(font: RoleFont): string {
+  const family = font.family.trim();
+  const names = font.source === "adobe" && font.adobeSlug && font.adobeSlug !== family ? [font.adobeSlug, family] : [family];
+  return [...names.map((name) => JSON.stringify(name)), fallbackStacks[font.category]].join(", ");
+}
+
 const familyKey = (font: RoleFont | undefined) => font?.family.trim().toLowerCase() ?? "";
 
 /**

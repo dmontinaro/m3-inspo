@@ -153,9 +153,10 @@ const formats: { value: CssFormat; label: string }[] = [
 ];
 
 /**
- * The CSS export of the saved snapshot, to copy into a project: plain CSS
- * (the `:root` and `.dark` blocks) or for Tailwind v4 (plus `@theme inline`). Unsaved
- * changes are not in it; `unsaved` says so.
+ * The CSS export of the saved kit, to copy into a project: plain CSS
+ * (the `:root` and `.dark` blocks, with the font roles if the kit has
+ * typography) or for Tailwind v4 (plus `@theme inline`). Unsaved changes
+ * to colours or fonts are not in it; `unsaved` says so.
  */
 export function CssExport({ css, unsaved }: { css: Record<CssFormat, string>; unsaved: boolean }) {
   const [format, setFormat] = useState<CssFormat>("tailwind");

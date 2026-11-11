@@ -23,6 +23,7 @@ import type {
   Style,
 } from "@m3-inspo/taxonomy";
 import type { ColorScheme } from "@m3-inspo/shared/color-scheme";
+import type { Typography } from "@m3-inspo/shared/fonts";
 import { cosineSim } from "./vector";
 import { isDamaged } from "./quality";
 
@@ -33,6 +34,8 @@ export type ApprovedBrandKit = {
   /** The owner tag of the project the kit applies to; at most one approved kit per project. */
   project: string | null;
   colorScheme: ColorScheme;
+  /** The kit's font roles as saved; null for a kit without typography. */
+  typography: Typography | null;
   notes: string | null;
   /** The owner's brand-specific design briefing, verbatim Markdown. */
   designBriefing: string | null;
