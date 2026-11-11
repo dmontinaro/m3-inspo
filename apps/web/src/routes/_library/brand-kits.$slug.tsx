@@ -152,7 +152,7 @@ function BrandKitPage() {
             <KitNotes slug={kit.slug} notes={kit.notes} onSaved={() => router.invalidate()} />
             <SourceReferences references={kit.sourceReferences} sources={kit.colorScheme.sources} />
           </div>
-          <CssExport css={kit.css} unsaved={colorsChanged} />
+          <CssExport css={kit.css} unsaved={unsaved} />
         </div>
       </GeneratorWorkspace>
       <KitManageActions kit={kit} />

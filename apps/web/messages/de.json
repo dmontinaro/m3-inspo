@@ -498,7 +498,7 @@
   "tool_list_kits_purpose": "Listet deine freigegebenen Brand Kits: Name, Slug, Projekt, Markenfarbe und Primary.",
   "tool_list_kits_example": "Gibt es für Harbor schon ein Brand Kit?",
   "tool_list_kits_state": "Zeigt nur freigegebene Kits, Entwürfe und archivierte nie. Eine Freigabe wirkt beim nächsten Aufruf. Auf Wunsch nur das Kit eines Projekts.",
-  "tool_get_kit_purpose": "Liefert ein freigegebenes Brand Kit vollständig: Rollen mit Kontrastwert, Skalen, Warnungen, Quellfarben, deine Hinweise und den CSS-Block.",
+  "tool_get_kit_purpose": "Liefert ein freigegebenes Brand Kit vollständig: Rollen mit Kontrastwert, Skalen, Warnungen, Quellfarben, Schriften, deine Hinweise und den CSS-Block.",
   "tool_get_kit_example": "Bau die Buchungsseite für Harbor in den Farben des Brand Kits.",
   "tool_get_kit_state": "Per Slug oder Projekt, immer aus der gespeicherten Momentaufnahme. Deine Hinweise kommen wörtlich mit, der CSS-Block ist derselbe wie beim Kopieren. Quell-Referenzen nennt es mit Slug und Titel; archivierte fehlen, gelöschte heißen gelöscht. Ohne freigegebenes Kit meldet es das, ohne Entwürfe zu zeigen. recommend und search_screens verweisen bei einem Projekt mit Kit darauf.",
   "tool_recommend_purpose": "Startpunkt für ein Briefing: deine passenden Referenzen mit deinen Notizen, Seitenaufbau und Palette in einem Aufruf.",

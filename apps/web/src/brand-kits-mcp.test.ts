@@ -17,13 +17,14 @@ import { z } from "zod";
 import { getDb } from "@m3-inspo/db/client";
 import { brandKits, references } from "@m3-inspo/db/library-schema";
 import { exportCss } from "@m3-inspo/shared/color-scheme";
+import type { FontRoles, RoleFont } from "@m3-inspo/shared/fonts";
 import { callServerFunction, startTestApp } from "./test/app";
 import { signInWithGithub, useFakeGithub } from "./test/fake-github";
 import { callTool, connectMcp, createMcpToken, uploadScreenshot } from "./test/library";
 import type { TestApp, TestBrowser } from "./test/app";
 import type { GithubAccount } from "./test/fake-github";
 import type { Client } from "@modelcontextprotocol/sdk/client/index.js";
-import type { saveBrandKit, setBrandKitStatus, updateBrandKitNotes, updateBrandKitDesignBriefing } from "./server/brand-kits.functions";
+import type { saveBrandKit, saveBrandKitChanges, setBrandKitStatus, updateBrandKitNotes, updateBrandKitDesignBriefing } from "./server/brand-kits.functions";
 import type { ColorSchemeInput } from "./server/brand-kits.server";
 import type { deleteReference, setReferenceStatus } from "./server/library.functions";
 
@@ -177,6 +178,7 @@ const kitResult = z.object({
   roles: z.array(z.object({ name: z.string(), hex: z.string(), oklch: z.string(), derivation: z.string(), contrast: z.object({ against: z.string(), ratio: z.number(), min: z.number() }).optional() })),
   scales: z.array(z.object({ name: z.string(), anchorStep: z.number(), steps: z.record(z.string(), z.string()) })),
   warnings: z.array(z.object({ role: z.string(), message: z.string() })),
+  typography: z.object({ roles: z.record(z.string(), z.unknown()) }).nullable(),
   css: z.string(),
   tip: z.string(),
 });
@@ -190,7 +192,7 @@ describe("get_brand_kit", () => {
     const stored = await getDb().query.brandKits.findFirst({ columns: { colorScheme: true }, where: eq(brandKits.slug, kits.approved) });
     const snapshot = stored!.colorScheme.snapshot;
 
-    expect(json).toMatchObject({ slug: kits.approved, name: `Harbor ${run}`, project, notes, primary: "vivid" });
+    expect(json).toMatchObject({ slug: kits.approved, name: `Harbor ${run}`, project, notes, primary: "vivid", typography: null });
     expect(json.css).toBe(exportCss(snapshot));
     expect(json.roles).toHaveLength(11);
     expect(json.roles.find((role) => role.name === "primary")).toEqual({
@@ -207,6 +209,34 @@ describe("get_brand_kit", () => {
     expect(text).not.toContain("/api/assets/");
 
     expect((await callTool(agent, "get_brand_kit", { slug: kits.approved })).json).toEqual((await callTool(agent, "get_brand_kit", { project })).json);
+  });
+
+  it("delivers the kit's fonts as roles and in its CSS, and a change of fonts alone on the next call", async () => {
+    const slug = await saveKit("Typo", violet(), `typo-${run}`);
+    const saveFonts = async (roles: FontRoles) =>
+      callServerFunction<typeof saveBrandKitChanges>(
+        browser,
+        await app.serverFunctionUrl(file, "saveBrandKitChanges"),
+        { slug, scheme: violet(), typography: { roles, originPairingId: null, originPairingDeleted: false, scale: null } },
+        "POST",
+      );
+    const roles: FontRoles = {
+      heading: { family: "Fraunces", weights: [600], category: "serif", source: "fontsource", fontsourceId: "fraunces" },
+      body: { family: "Inter", weights: [400, 500], category: "sans", source: "fontsource", fontsourceId: "inter" },
+    };
+    await saveFonts(roles);
+    await setStatus(slug, "approved");
+    const stored = await getDb().query.brandKits.findFirst({ columns: { colorScheme: true }, where: eq(brandKits.slug, slug) });
+
+    const json = kitResult.parse((await callTool(agent, "get_brand_kit", { slug })).json);
+    expect(json.typography).toEqual({ roles });
+    expect(json.css).toBe(exportCss(stored!.colorScheme.snapshot, "tailwind", roles));
+    expect(json.css).toContain("--font-heading: var(--font-heading);");
+    expect(json.tip).toMatch(/font-heading/);
+
+    const mono: RoleFont = { family: "JetBrains Mono", weights: [400], category: "mono", source: "fontsource", fontsourceId: "jetbrains-mono" };
+    await saveFonts({ ...roles, mono });
+    expect(kitResult.parse((await callTool(agent, "get_brand_kit", { slug })).json).typography?.roles.mono).toEqual(mono);
   });
 
   it("delivers the brand's Markdown verbatim on the next call and keeps draft briefings private", async () => {

@@ -2,7 +2,8 @@
  * The wire format of a Color Scheme for agents: roles with hex, `oklch()`,
  * derivation and contrast, every scale, the warnings, the sources with
  * their origin and the CSS export. generate_color_scheme returns it for a
- * fresh scheme, get_brand_kit for a kit's stored snapshot.
+ * fresh scheme, get_brand_kit for a kit's stored snapshot, whose CSS also
+ * carries the kit's `fonts`.
  */
 
 import { formatOklch, type ScreenSummary } from "@m3-inspo/shared";
@@ -15,6 +16,7 @@ import {
   type Pool,
   type SourceColor,
 } from "@m3-inspo/shared/color-scheme";
+import type { FontRoles } from "@m3-inspo/shared/fonts";
 import { absolute } from "./url";
 
 /** The references a scheme's origins may name: the catalogue's. References not among them (drafts, archived, approved without capture) stay unnamed. */
@@ -36,7 +38,7 @@ function formatSource<T extends SourceColor>(source: T, references: KnownReferen
   return { ...source, origin: { ...origin, ...(reference ? { slug: reference.slug, title: reference.title } : {}) } };
 }
 
-export function formatColorScheme({ sources, primary, snapshot }: ColorScheme, references: KnownReferences) {
+export function formatColorScheme({ sources, primary, snapshot }: ColorScheme, references: KnownReferences, fonts?: FontRoles) {
   return {
     primary,
     sources: {
@@ -50,7 +52,7 @@ export function formatColorScheme({ sources, primary, snapshot }: ColorScheme, r
     }),
     scales: snapshot.scales,
     warnings: snapshot.warnings,
-    css: exportCss(snapshot),
+    css: exportCss(snapshot, "tailwind", fonts),
   };
 }
 

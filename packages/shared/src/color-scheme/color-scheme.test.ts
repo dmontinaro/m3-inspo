@@ -5,6 +5,7 @@
  */
 
 import { describe, expect, test } from "vitest";
+import { fallbackStacks, type FontRoles } from "../fonts";
 import { colorDistanceHex, contrastRatio, formatOklch, hexToOklch } from "../color";
 import {
   ROLE_NAMES,
@@ -181,6 +182,18 @@ describe("export", () => {
 
   test("as plain CSS is the :root and .dark blocks alone", () => {
     expect(exportCss(snapshot, "css")).toBe(css.slice(0, css.indexOf("\n@theme inline")));
+  });
+  test("sets a kit's font roles in :root, after the colours, and maps them to Tailwind's font utilities", () => {
+    const fonts: FontRoles = {
+      heading: { family: "Freight Text Pro", weights: [600], category: "serif", source: "adobe", adobeSlug: "freight-text-pro" },
+      body: { family: "Inter", weights: [400], category: "sans", source: "fontsource", fontsourceId: "inter" },
+    };
+    const withFonts = exportCss(snapshot, "tailwind", fonts);
+    const root = withFonts.slice(0, withFonts.indexOf(".dark {"));
+    expect(root).toContain(`  --font-heading: "freight-text-pro", "Freight Text Pro", ${fallbackStacks.serif};`);
+    expect(root).toContain(`  --font-body: "Inter", ${fallbackStacks.sans};`);
+    expect(withFonts).not.toContain("--font-mono");
+    expect(withFonts.slice(withFonts.indexOf("@theme inline"))).toContain("  --font-heading: var(--font-heading);\n  --font-body: var(--font-body);\n}");
   });
 });
 

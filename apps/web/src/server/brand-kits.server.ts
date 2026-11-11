@@ -395,7 +395,7 @@ export async function findBrandKit(slug: string) {
     typographyOrigin: originId ? ((await findOriginPairing(originId)) ?? null) : null,
     colorScheme: scheme,
     outdated: !sameSnapshot(buildColorScheme(scheme.sources, scheme.primary), scheme.snapshot),
-    css: { css: exportCss(scheme.snapshot, "css"), tailwind: exportCss(scheme.snapshot) },
+    css: { css: exportCss(scheme.snapshot, "css", kit.typography?.roles), tailwind: exportCss(scheme.snapshot, "tailwind", kit.typography?.roles) },
     sourceReferences: sourceReferences
       .map(({ reference: { captures, ...reference } }) => ({
         ...reference,
